@@ -264,8 +264,24 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   border-radius:9px;font-size:12px;z-index:9999;max-width:300px;opacity:0;transition:opacity .3s;
   pointer-events:none}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+
+
+<div id="login-screen" style="display:flex;position:fixed;inset:0;background:var(--bg);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:0">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;padding:40px 48px;width:380px;max-width:95vw;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.08)">
+    <div style="font-size:32px;font-weight:900;letter-spacing:-2px;margin-bottom:4px">KL<em style="color:var(--acc);font-style:normal">AP</em></div>
+    <div style="font-size:12px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:32px">Krishiv Labels and Packaging</div>
+    <div id="login-status" style="font-size:13px;color:var(--t2);margin-bottom:20px;min-height:20px"></div>
+    <button id="google-login-btn" onclick="signInWithGoogle()" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--bdr);background:var(--s1);cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.34-8.16 2.34-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+    <div id="login-error" style="display:none;margin-top:14px;padding:10px 14px;background:var(--rlt);color:var(--rdk);border-radius:8px;font-size:12px"></div>
+  </div>
+  <div style="margin-top:20px;font-size:11px;color:var(--t3)">Access restricted to authorised users only</div>
+</div>
 
 <div id="top">
   <div id="tog" onclick="document.getElementById('sb').classList.toggle('slim')">☰</div>
@@ -816,12 +832,50 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 </div>
 
 <div id="pg-settings" class="pg">
-  <div class="tc"><div class="th"><h3>⚙️ Settings</h3></div>
-  <div style="padding:40px;text-align:center;color:var(--t3)">
-    <div style="font-size:40px;margin-bottom:12px">⚙️</div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Settings</div>
-    <div style="font-size:12px">User preferences, system configuration — Phase 2</div>
-  </div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <h2 style="font-size:18px;font-weight:800">Settings</h2>
+    <div style="font-size:12px;color:var(--t2)" id="settings-user-info"></div>
+  </div>
+  <div class="wft-row" id="settings-tabs">
+    <div class="wft on" onclick="settingsTab(this,'st-users')">👥 Users</div>
+    <div class="wft" onclick="settingsTab(this,'st-roles')">🎭 Roles</div>
+    <div class="wft" onclick="settingsTab(this,'st-perms')">🔐 Permissions</div>
+    <div class="wft" onclick="settingsTab(this,'st-audit')">📋 Audit Log</div>
+  </div>
+  <div id="st-users">
+    <div class="tc">
+      <div class="th"><h3>Users</h3><span class="tc-cnt" id="su-cnt"></span>
+        <div class="flt-row"><button class="btn btn-p" style="font-size:11px" onclick="suNew()">+ Add User</button></div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="su-body"></tbody></table></div>
+    </div>
+  </div>
+  <div id="st-roles" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>Roles</h3><div class="flt-row"><button class="btn btn-p" style="font-size:11px" onclick="srNew()">+ New Role</button></div></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Role ID</th><th>Name</th><th>Description</th><th>Type</th><th>Actions</th></tr></thead><tbody id="sr-body"></tbody></table></div>
+    </div>
+  </div>
+  <div id="st-perms" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>Permissions</h3>
+        <div class="flt-row"><select class="f" id="sp-role" onchange="loadPermissions()"><option value="">Select role…</option></select></div>
+      </div>
+      <div id="sp-grid" style="padding:14px"><div style="color:var(--t3);font-size:12px;text-align:center;padding:24px">Select a role to edit permissions</div></div>
+    </div>
+  </div>
+  <div id="st-audit" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>Audit Log</h3><span class="tc-cnt" id="sa-cnt"></span>
+        <div class="flt-row">
+          <select class="f" id="sa-action" onchange="loadAudit()"><option value="">All Actions</option><option>login</option><option>insert</option><option>update</option><option>delete</option></select>
+          <input class="f" id="sa-q" placeholder="Search user / table…" oninput="filterAudit()">
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Table</th><th>Record</th></tr></thead><tbody id="sa-body"></tbody></table></div>
+      <div class="pg-bar" id="sa-pg"></div>
+    </div>
+  </div>
 </div>
 </div><!-- /ctr -->
 
@@ -840,6 +894,103 @@ let D={o:[],pr:[],dq:[],pd:[],cu:[],ve:[],jo:[],di:[],pl:[],
   rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[["Flexo Press 01","press"],["RF Punching 01","punching"],["RF Punching 02","punching"],["Rewinding 01","rewinding"],["Rewinding 02","rewinding"],["Platen 01","platen"],["Platen 02","platen"],["Tube Labelling 01","tube"],["Core Cutting 01","cutting"],["Core Cutting 02","cutting"],["Tube Seaming 01","tube"]],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
 
 const EDGE_URL=`${SB_URL}/functions/v1/klap-mis-data`;
+
+// ── AUTH ──────────────────────────────────────────────────
+const SB_CLIENT = supabase.createClient(SB_URL, SB_KEY);
+const AUTH_URL = EDGE_URL + '/auth';
+const ADMIN_URL = EDGE_URL + '/admin';
+let CURRENT_USER = null;
+let PERMISSIONS = {};   // {resource: {can_read, can_write, can_delete, hidden_fields, row_filter}}
+let USER_ROLE = null;
+
+async function signInWithGoogle(){
+  document.getElementById('login-status').textContent = 'Redirecting to Google…';
+  document.getElementById('google-login-btn').disabled = true;
+  const {error} = await SB_CLIENT.auth.signInWithOAuth({
+    provider:'google',
+    options:{redirectTo: window.location.href}
+  });
+  if(error){showLoginError(error.message);}
+}
+
+async function handleAuthCallback(){
+  const {data:{session}} = await SB_CLIENT.auth.getSession();
+  if(!session) return false;
+  const email = session.user.email;
+  document.getElementById('login-status').textContent = 'Checking access…';
+  try{
+    const r = await fetch(AUTH_URL, {
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
+    const data = await r.json();
+    if(!r.ok || data.error){
+      showLoginError(data.error === 'not_found'
+        ? 'Your email is not authorised. Contact Manish to get access.'
+        : data.error === 'inactive'
+        ? 'Your account has been deactivated. Contact admin.'
+        : 'Access denied: ' + (data.error||'unknown error'));
+      await SB_CLIENT.auth.signOut();
+      return false;
+    }
+    CURRENT_USER = data.user;
+    USER_ROLE = data.user.role_id;
+    // Build permissions map
+    PERMISSIONS = {};
+    (data.permissions||[]).forEach(p=>{PERMISSIONS[p.resource]=p;});
+    return true;
+  } catch(e){
+    showLoginError('Server error: '+e.message);
+    return false;
+  }
+}
+
+function showLoginError(msg){
+  const el=document.getElementById('login-error');
+  el.textContent=msg; el.style.display='block';
+  const btn=document.getElementById('google-login-btn');
+  if(btn){btn.disabled=false; btn.querySelector('span') && (btn.querySelector('span').textContent='Sign in with Google');}
+  document.getElementById('login-status').textContent='';
+}
+
+function canRead(resource){return USER_ROLE==='owner'||!!PERMISSIONS[resource]?.can_read;}
+function canWrite(resource){return USER_ROLE==='owner'||!!PERMISSIONS[resource]?.can_write;}
+function canDelete(resource){return USER_ROLE==='owner'||!!PERMISSIONS[resource]?.can_delete;}
+function hiddenFields(resource){return PERMISSIONS[resource]?.hidden_fields||[];}
+function visibleFields(resource){return PERMISSIONS[resource]?.visible_fields||[];}
+
+function showApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('top').style.display='flex';
+  document.getElementById('body').style.display='flex';
+  // Update header with user name
+  const nameEl=document.querySelector('#top .tbar-r span[style*="font-weight:600"]');
+  if(nameEl&&CURRENT_USER) nameEl.textContent=CURRENT_USER.name||CURRENT_USER.email.split('@')[0];
+  // Hide nav items user can't access
+  applyNavPermissions();
+}
+
+function applyNavPermissions(){
+  // Map nav data-p values to resources
+  const navMap={
+    'orders':'orders','products':'products','customers':'accounts',
+    'vendors':'accounts','transporters':'accounts','pros':'production_orders',
+    'jobs':'jobs','processes':'pro_steps','dies':'dies','plates':'plates',
+    'wflow-order':'orders','wflow-prod':'production_orders',
+    'wpk':'fg_inventory','winv':'fg_inventory','wdep':'delivery_orders',
+    'wp':'purchase_orders','rm-inv':'rm_in','rm-cat':'rm_categories','rm-subcat':'rm_subcategories'
+  };
+  if(USER_ROLE==='owner') return; // owner sees everything
+  document.querySelectorAll('.ni[data-p],.ng2[data-p]').forEach(el=>{
+    const p=el.dataset.p;
+    const resource=navMap[p];
+    if(resource && !canRead(resource)){
+      el.style.display='none';
+    }
+  });
+}
+
 
 function showLoader(msg){
   let el=document.getElementById('sb-loader');
@@ -2444,7 +2595,348 @@ function initApp(){
 }
 
 // Start loading — when done, init the app
-loadData().then(()=>initApp()).catch(e=>console.error('Init error:',e));
+
+
+// ── SETTINGS ─────────────────────────────────────────────
+const RESOURCES = ['orders','production_orders','pro_steps','jobs','products','accounts',
+  'delivery_orders','delivery_order_items','purchase_orders','fg_inventory',
+  'rm_in','rm_out','rm_list','rm_categories','rm_subcategories','dies','plates',
+  'app_users','roles','role_permissions','audit_log'];
+
+function settingsTab(el, show){
+  document.querySelectorAll('#settings-tabs .wft').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  ['st-users','st-roles','st-perms','st-audit'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.style.display=id===show?'block':'none';
+  });
+  if(show==='st-users') loadUsers();
+  if(show==='st-roles') loadRoles();
+  if(show==='st-audit') loadAudit();
+}
+
+async function adminGet(type, extra=''){
+  const r = await fetch(`${ADMIN_URL}?type=${type}${extra}`, {
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  });
+  return r.json();
+}
+
+async function adminPost(body){
+  const r = await fetch(ADMIN_URL, {
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+// USERS
+let _users = [], _roles_cache = [];
+async function loadUsers(){
+  if(USER_ROLE!=='owner'){document.getElementById('su-body').innerHTML='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">Owner access required</td></tr>';return;}
+  _users = await adminGet('users');
+  _roles_cache = await adminGet('roles');
+  const cnt = document.getElementById('su-cnt'); if(cnt) cnt.textContent = _users.length + ' users';
+  document.getElementById('su-body').innerHTML = _users.map(u => {
+    const role = _roles_cache.find(r=>r.id===u.role_id)||{};
+    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString('en-IN') : 'Never';
+    return `<tr>
+      <td><strong>${u.name||'—'}</strong></td>
+      <td class="mono" style="font-size:11px">${u.email}</td>
+      <td><span class="b bb">${role.name||u.role_id||'—'}</span></td>
+      <td>${u.is_active?'<span class="b bg">Active</span>':'<span class="b br">Inactive</span>'}</td>
+      <td style="font-size:11px;color:var(--t2)">${lastLogin}</td>
+      <td>
+        <button class="ab ab-b" onclick="suEdit('${u.id}')">✏️ Edit</button>
+        <button class="ab ab-y" onclick="suToggle('${u.id}',${!u.is_active})">${u.is_active?'⏸ Deactivate':'▶ Activate'}</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No users</td></tr>';
+}
+
+function suNew(){
+  const roles = _roles_cache.length ? _roles_cache : [];
+  const roleOpts = roles.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  showModal('Add User', `
+    <div class="nof-row">
+      <div class="nof-field"><label class="nof-lbl">Full Name</label><input class="f" id="su-name" style="width:100%" placeholder="Name…"></div>
+      <div class="nof-field"><label class="nof-lbl">Gmail Address *</label><input class="f" id="su-email" style="width:100%" placeholder="name@gmail.com"></div>
+    </div>
+    <div class="nof-row">
+      <div class="nof-field"><label class="nof-lbl">Role *</label><select class="f" id="su-role" style="width:100%">${roleOpts}</select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="suSave()">✅ Add User</button>
+    </div>`);
+}
+
+async function suSave(){
+  const email = document.getElementById('su-email')?.value?.trim().toLowerCase();
+  const name = document.getElementById('su-name')?.value?.trim();
+  const role_id = document.getElementById('su-role')?.value;
+  if(!email){toast('⚠️ Email required');return;}
+  await adminPost({op:'upsert_user', data:{email,name,role_id,is_active:true}});
+  closeModal(); loadUsers(); toast('User added ✅');
+}
+
+async function suToggle(id, active){
+  const u = _users.find(x=>x.id===id); if(!u) return;
+  await adminPost({op:'upsert_user', data:{...u, is_active:active}});
+  loadUsers(); toast(active ? 'User activated' : 'User deactivated');
+}
+
+function suEdit(id){
+  const u = _users.find(x=>x.id===id); if(!u) return;
+  const roleOpts = _roles_cache.map(r=>`<option value="${r.id}" ${r.id===u.role_id?'selected':''}>${r.name}</option>`).join('');
+  showModal('Edit User — ' + (u.name||u.email), `
+    <div class="nof-row">
+      <div class="nof-field"><label class="nof-lbl">Full Name</label><input class="f" id="su-name" style="width:100%" value="${u.name||''}"></div>
+      <div class="nof-field"><label class="nof-lbl">Email (read-only)</label><input class="f" style="width:100%" value="${u.email}" disabled></div>
+    </div>
+    <div class="nof-row">
+      <div class="nof-field"><label class="nof-lbl">Role</label><select class="f" id="su-role" style="width:100%">${roleOpts}</select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="suSaveEdit('${u.id}','${u.email}')">✅ Save</button>
+    </div>`);
+}
+
+async function suSaveEdit(id, email){
+  const name = document.getElementById('su-name')?.value?.trim();
+  const role_id = document.getElementById('su-role')?.value;
+  await adminPost({op:'upsert_user', data:{id,email,name,role_id}});
+  closeModal(); loadUsers(); toast('User updated ✅');
+}
+
+// ROLES
+async function loadRoles(){
+  if(USER_ROLE!=='owner'){return;}
+  _roles_cache = await adminGet('roles');
+  document.getElementById('sr-body').innerHTML = _roles_cache.map(r=>`<tr>
+    <td class="mono">${r.id}</td>
+    <td><strong>${r.name}</strong></td>
+    <td style="color:var(--t2)">${r.description||'—'}</td>
+    <td>${r.is_system?'<span class="b bd">System</span>':'<span class="b bg">Custom</span>'}</td>
+    <td>
+      <button class="ab ab-b" onclick="srEdit('${r.id}')">✏️ Edit</button>
+      ${!r.is_system?`<button class="ab ab-r" onclick="srDelete('${r.id}')">🗑</button>`:''}
+    </td>
+  </tr>`).join('');
+}
+
+function srNew(){
+  showModal('New Role',`
+    <div class="nof-row">
+      <div class="nof-field"><label class="nof-lbl">Role ID (lowercase, no spaces)</label><input class="f" id="sr-id" style="width:100%" placeholder="e.g. qa_checker"></div>
+      <div class="nof-field"><label class="nof-lbl">Display Name</label><input class="f" id="sr-name" style="width:100%" placeholder="e.g. QA Checker"></div>
+    </div>
+    <div class="nof-row">
+      <div class="nof-field" style="flex:2"><label class="nof-lbl">Description</label><input class="f" id="sr-desc" style="width:100%" placeholder="What this role does…"></div>
+      <div class="nof-field"><label class="nof-lbl">Color</label><input type="color" id="sr-color" value="#6b7280" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--bdr)"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="srSave()">✅ Create Role</button>
+    </div>`);
+}
+
+async function srSave(){
+  const id = document.getElementById('sr-id')?.value?.trim().toLowerCase().replace(/\s+/g,'_');
+  const name = document.getElementById('sr-name')?.value?.trim();
+  const description = document.getElementById('sr-desc')?.value?.trim();
+  const color = document.getElementById('sr-color')?.value;
+  if(!id||!name){toast('⚠️ ID and name required');return;}
+  await adminPost({op:'upsert_role', data:{id,name,description,color,is_system:false}});
+  closeModal(); loadRoles(); toast('Role created ✅');
+}
+
+function srEdit(id){
+  const r = _roles_cache.find(x=>x.id===id); if(!r) return;
+  showModal('Edit Role — ' + r.name,`
+    <div class="nof-row">
+      <div class="nof-field"><label class="nof-lbl">Display Name</label><input class="f" id="sr-name" style="width:100%" value="${r.name}"></div>
+      <div class="nof-field"><label class="nof-lbl">Color</label><input type="color" id="sr-color" value="${r.color||'#6b7280'}" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--bdr)"></div>
+    </div>
+    <div class="nof-row">
+      <div class="nof-field" style="flex:2"><label class="nof-lbl">Description</label><input class="f" id="sr-desc" style="width:100%" value="${r.description||''}"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="srSaveEdit('${id}')">✅ Save</button>
+    </div>`);
+}
+
+async function srSaveEdit(id){
+  const r = _roles_cache.find(x=>x.id===id);
+  const name = document.getElementById('sr-name')?.value?.trim();
+  const description = document.getElementById('sr-desc')?.value?.trim();
+  const color = document.getElementById('sr-color')?.value;
+  await adminPost({op:'upsert_role', data:{...r,name,description,color}});
+  closeModal(); loadRoles(); toast('Role updated ✅');
+}
+
+async function srDelete(id){
+  if(!confirm('Delete this role? Users with this role will lose access.')) return;
+  await adminPost({op:'delete_role', id});
+  loadRoles(); toast('Role deleted');
+}
+
+// PERMISSIONS
+let _all_perms = {};
+async function loadPermissions(){
+  const roleId = document.getElementById('sp-role')?.value;
+  if(!roleId){document.getElementById('sp-grid').innerHTML='<div style="color:var(--t3);font-size:12px;text-align:center;padding:24px">Select a role</div>';return;}
+  const perms = await adminGet('permissions', '&role='+roleId);
+  _all_perms = {};
+  (perms||[]).forEach(p=>{_all_perms[p.resource]=p;});
+  renderPermGrid(roleId);
+}
+
+function renderPermGrid(roleId){
+  const grid = document.getElementById('sp-grid');
+  const labels = {
+    orders:'Orders', production_orders:'Production Orders', pro_steps:'Processes / Steps',
+    jobs:'Jobs', products:'Products', accounts:'Accounts (CRM)',
+    delivery_orders:'Delivery Orders', delivery_order_items:'DO Items',
+    purchase_orders:'Purchase Orders', fg_inventory:'FG Inventory',
+    rm_in:'RM In (GRN)', rm_out:'RM Out (Issued)', rm_list:'RM Master',
+    rm_categories:'RM Categories', rm_subcategories:'RM Sub-Categories',
+    dies:'Dies', plates:'Plates',
+    app_users:'Users (Admin)', roles:'Roles (Admin)',
+    role_permissions:'Permissions (Admin)', audit_log:'Audit Log'
+  };
+  grid.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:10px">
+      Editing permissions for: <span style="color:var(--txt)">${roleId}</span>
+      <button class="btn btn-p" style="font-size:11px;margin-left:12px" onclick="saveAllPerms('${roleId}')">💾 Save All</button>
+    </div>
+    <div style="overflow-x:auto"><table style="width:100%">
+      <thead><tr>
+        <th>Resource / Table</th>
+        <th style="text-align:center;width:80px">Read</th>
+        <th style="text-align:center;width:80px">Write</th>
+        <th style="text-align:center;width:80px">Delete</th>
+        <th>Row Filter</th>
+        <th>Hidden Fields</th>
+      </tr></thead>
+      <tbody>
+        ${RESOURCES.map(res=>{
+          const p = _all_perms[res]||{can_read:false,can_write:false,can_delete:false};
+          const rowFilter = p.row_filter||'';
+          const hiddenF = (p.hidden_fields||[]).join(', ');
+          return `<tr>
+            <td><strong style="font-size:12px">${labels[res]||res}</strong><div style="font-size:10px;color:var(--t3);font-family:monospace">${res}</div></td>
+            <td style="text-align:center"><input type="checkbox" class="perm-cb" data-res="${res}" data-field="can_read" ${p.can_read?'checked':''}></td>
+            <td style="text-align:center"><input type="checkbox" class="perm-cb" data-res="${res}" data-field="can_write" ${p.can_write?'checked':''}></td>
+            <td style="text-align:center"><input type="checkbox" class="perm-cb" data-res="${res}" data-field="can_delete" ${p.can_delete?'checked':''}></td>
+            <td><input class="f perm-filter" data-res="${res}" style="width:160px;font-size:11px" placeholder='e.g. created_by = "{me}"' value="${rowFilter}"></td>
+            <td><input class="f perm-hidden" data-res="${res}" style="width:160px;font-size:11px" placeholder="field1, field2…" value="${hiddenF}"></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+async function saveAllPerms(roleId){
+  const rows = document.querySelectorAll('#sp-grid tr[class!=""]');
+  const saves = RESOURCES.map(async res=>{
+    const read = document.querySelector(`.perm-cb[data-res="${res}"][data-field="can_read"]`)?.checked||false;
+    const write = document.querySelector(`.perm-cb[data-res="${res}"][data-field="can_write"]`)?.checked||false;
+    const del = document.querySelector(`.perm-cb[data-res="${res}"][data-field="can_delete"]`)?.checked||false;
+    const rowFilter = document.querySelector(`.perm-filter[data-res="${res}"]`)?.value?.trim()||null;
+    const hiddenRaw = document.querySelector(`.perm-hidden[data-res="${res}"]`)?.value?.trim()||'';
+    const hidden = hiddenRaw ? hiddenRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    if(read||write||del||rowFilter||hidden.length){
+      await adminPost({op:'upsert_permission', data:{
+        role_id:roleId, resource:res,
+        can_read:read, can_write:write, can_delete:del,
+        row_filter:rowFilter, hidden_fields:hidden
+      }});
+    }
+  });
+  await Promise.all(saves);
+  toast('Permissions saved ✅');
+  loadPermissions();
+}
+
+// AUDIT LOG
+let _audit_raw = [];
+async function loadAudit(){
+  if(USER_ROLE!=='owner'&&USER_ROLE!=='manager'){document.getElementById('sa-body').innerHTML='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">Access restricted</td></tr>';return;}
+  _audit_raw = await adminGet('audit');
+  filterAudit();
+}
+
+function filterAudit(){
+  const action = document.getElementById('sa-action')?.value||'';
+  const q = (document.getElementById('sa-q')?.value||'').toLowerCase();
+  const items = (_audit_raw||[]).filter(r=>
+    (!action||r.action===action)&&
+    (!q||[r.user_email||'',r.resource||'',r.record_id||''].join(' ').toLowerCase().includes(q))
+  );
+  const cnt = document.getElementById('sa-cnt'); if(cnt) cnt.textContent = items.length + ' entries';
+  const slice = pgr(items,'audit','filterAudit','sa-pg','');
+  document.getElementById('sa-body').innerHTML = slice.map(r=>`<tr>
+    <td style="font-size:11px;white-space:nowrap">${r.created_at?new Date(r.created_at).toLocaleString('en-IN',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
+    <td><div style="font-weight:600;font-size:12px">${r.user_name||'—'}</div><div style="font-size:10px;color:var(--t2)">${r.user_email||'—'}</div></td>
+    <td><span class="b bd">${r.role_id||'—'}</span></td>
+    <td>${r.action==='login'?'<span class="b bg">login</span>':r.action==='insert'?'<span class="b bb">insert</span>':r.action==='update'?'<span class="b by">update</span>':r.action==='delete'?'<span class="b br">delete</span>':'<span class="b bd">'+r.action+'</span>'}</td>
+    <td class="mono">${r.resource||'—'}</td>
+    <td class="mono">${r.record_id||'—'}</td>
+  </tr>`).join('') || '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No entries</td></tr>';
+}
+
+// Load role dropdown in permissions tab
+R.settings = function(){
+  const info = document.getElementById('settings-user-info');
+  if(info&&CURRENT_USER) info.textContent = '👤 '+CURRENT_USER.name+' · '+USER_ROLE;
+  if(USER_ROLE!=='owner') return;
+  adminGet('roles').then(roles=>{
+    _roles_cache = roles||[];
+    const sel = document.getElementById('sp-role');
+    if(sel&&sel.options.length===1){
+      roles.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.name;sel.appendChild(o);});
+    }
+  });
+  loadUsers();
+};
+
+// MODAL HELPER
+function showModal(title, body){
+  let m = document.getElementById('generic-modal');
+  if(!m){m=document.createElement('div');m.id='generic-modal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(m);}
+  m.innerHTML=`<div style="background:var(--s1);border-radius:14px;width:560px;max-width:96vw;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:15px;font-weight:800;flex:1">${title}</h3>
+      <span onclick="closeModal()" style="cursor:pointer;font-size:20px;color:var(--t2)">✕</span>
+    </div>${body}</div>`;
+  m.style.display='flex';
+}
+function closeModal(){const m=document.getElementById('generic-modal');if(m)m.style.display='none';}
+
+// ── BOOT SEQUENCE ─────────────────────────────────────────
+// 1. Hide app until auth confirmed
+document.getElementById('top').style.display='none';
+document.getElementById('body').style.display='none';
+
+async function boot(){
+  // Check if returning from OAuth redirect
+  const loggedIn = await handleAuthCallback();
+  if(loggedIn){
+    showApp();
+    loadData().then(()=>initApp()).catch(e=>console.error('Init error:',e));
+  } else {
+    // Show login screen — hide loader if it appeared
+    hideLoader();
+    document.getElementById('login-screen').style.display='flex';
+  }
+}
+boot();
+
 </script>
 
 <div id="new-order-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;padding:16px"></div>
