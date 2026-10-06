@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KLAP MIS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f0f2f5;--s1:#fff;--s2:#f8f9fc;--bdr:#e2e6f0;--acc:#4f63f0;--acc-lt:#eef0fe;
+  --txt:#1a1d2e;--t2:#6b7280;--t3:#9ca3af;
+  --grn:#10b981;--glt:#d1fae5;--gdk:#065f46;
+  --ylw:#f59e0b;--ylt:#fef3c7;--ydk:#92400e;
+  --red:#ef4444;--rlt:#fee2e2;--rdk:#991b1b;
+  --blu:#3b82f6;--blt:#dbeafe;--bdk:#1e40af;
+  --pur:#8b5cf6;--plt:#ede9fe;--pdk:#5b21b6;
+  --org:#f97316;--olt:#ffedd5;--odk:#9a3412;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:13px;
+  background:var(--bg);color:var(--txt);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOP BAR */
+#top{height:54px;background:var(--s1);border-bottom:1px solid var(--bdr);display:flex;
+  align-items:center;padding:0;flex-shrink:0;gap:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+#tog{width:54px;height:54px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;color:var(--t2);border-right:1px solid var(--bdr);flex-shrink:0}
+#tog:hover{background:var(--s2)}
+.logo{white-space:nowrap;border-right:1px solid var(--bdr);height:54px}
+.tbar-r{margin-left:auto;display:flex;align-items:center;gap:10px;padding-right:16px}
+.gsrch{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px 7px 32px;
+  font-size:12px;outline:none;width:220px}
+.gsrch:focus{border-color:var(--acc);background:var(--s1)}
+.btn{padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600}
+.btn-p{background:var(--acc);color:#fff}.btn-p:hover{opacity:.9}
+
+/* BODY */
+#body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR — dark */
+#sb{width:220px;background:#1e2235;border-right:none;
+  overflow-y:auto;flex-shrink:0;transition:width .2s}
+#sb.slim{width:50px}
+.ns{padding:16px 14px 4px;font-size:9px;color:#4e5c7a;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;white-space:nowrap;overflow:hidden}
+#sb.slim .ns{opacity:0;height:0;padding:0;overflow:hidden}
+.ni{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;
+  color:#8e9ab5;font-size:12px;border-left:3px solid transparent;white-space:nowrap;min-height:36px;
+  transition:all .12s}
+.ni:hover{background:#262d45;color:#e2e8f0}
+.ni.on{background:#2d3550;color:#fff;border-left-color:var(--acc);font-weight:600}
+.ni .ic{width:18px;text-align:center;font-size:13px;flex-shrink:0}
+.nl{flex:1;overflow:hidden;text-overflow:ellipsis}
+#sb.slim .nl,.nb{display:none}
+.nbadge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:auto}
+#sb.slim .nbadge{display:none}
+.nb-acc{background:rgba(79,99,240,.25);color:#a5b4fc}
+.nb-y{background:rgba(245,158,11,.18);color:#fbbf24}
+.nb-r{background:rgba(239,68,68,.18);color:#fca5a5}
+
+/* CENTRE */
+#ctr{flex:1;overflow:auto;padding:18px}
+.pg{display:none}.pg.on{display:block}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.sc{background:var(--s1);border:1px solid var(--bdr);border-radius:11px;padding:14px 16px;cursor:pointer}
+.sc:hover{border-color:var(--acc)}
+.sc .l{font-size:11px;color:var(--t2);margin-bottom:4px}
+.sc .v{font-size:24px;font-weight:800;line-height:1.1}
+.sc .s{font-size:11px;color:var(--t3);margin-top:2px}
+.acc .v{color:var(--acc)}.grn .v{color:var(--grn)}.ylw .v{color:var(--ylw)}
+.red .v{color:var(--red)}.pur .v{color:var(--pur)}.org .v{color:var(--org)}
+
+/* TABLE CARD */
+.tc{background:var(--s1);border:1px solid var(--bdr);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.th{padding:11px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr);flex-wrap:wrap}
+.th h3{font-size:13px;font-weight:700}
+.tc-cnt{font-size:11px;color:var(--t3);margin-left:4px}
+.flt-row{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center}
+select.f{background:var(--s1);border:1px solid var(--bdr);border-radius:6px;padding:4px 8px;
+  font-size:11px;color:var(--txt);outline:none;cursor:pointer}
+input.f{background:var(--s2);border:1px solid var(--bdr);border-radius:6px;padding:4px 8px;
+  font-size:11px;color:var(--txt);outline:none;width:150px}
+input.f:focus,select.f:focus{border-color:var(--acc)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--s2);padding:7px 12px;text-align:left;font-size:10px;font-weight:700;
+  color:var(--t2);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;
+  border-bottom:1px solid var(--bdr)}
+td{padding:7px 12px;border-top:1px solid var(--bdr);font-size:12px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:220px;vertical-align:middle}
+tr{cursor:pointer}
+tr:hover td{background:#f5f7ff}
+tr.sel td{background:var(--acc-lt)}
+.mono{font-family:monospace;font-size:11px;color:var(--t2)}
+.pg-bar{display:flex;align-items:center;padding:9px 12px;border-top:1px solid var(--bdr);background:var(--s2);gap:6px}
+.pg-bar span{font-size:11px;color:var(--t2);flex:1}
+.pb{background:var(--s1);border:1px solid var(--bdr);border-radius:5px;padding:3px 8px;
+  font-size:11px;cursor:pointer}
+.pb:hover{border-color:var(--acc)}.pb:disabled{opacity:.4;cursor:default}
+.pb.cur{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* BADGES */
+.b{display:inline-flex;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.bg{background:var(--glt);color:var(--gdk)}.by{background:var(--ylt);color:var(--ydk)}
+.br{background:var(--rlt);color:var(--rdk)}.bb{background:var(--blt);color:var(--bdk)}
+.bp{background:var(--plt);color:var(--pdk)}.bo{background:var(--olt);color:var(--odk)}
+.bd{background:var(--s2);color:var(--t2)}
+
+/* RIGHT PANE */
+#rp{width:0;background:var(--s1);border-left:1px solid var(--bdr);flex-shrink:0;
+  overflow:hidden;transition:width .18s;display:flex;flex-direction:column}
+#rp.open{width:340px}
+#rp-h{padding:12px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center}
+#rp-h h3{font-size:13px;font-weight:700;flex:1}
+#rp-x{cursor:pointer;color:var(--t2);font-size:16px;padding:2px 4px}
+#rp-b{flex:1;overflow-y:auto;padding:14px}
+.rf{margin-bottom:10px}.rl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.rv{font-size:12px;font-weight:500}
+hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
+
+/* DASH 2-col */
+.d2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
+/* PIPELINE */
+.pipe{background:var(--s1);border:1px solid var(--bdr);border-radius:11px;padding:14px 18px;margin-bottom:18px;overflow-x:auto}
+.pipe h3{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.pipe-steps{display:flex;align-items:center;min-width:fit-content;gap:0}
+.pn{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;text-align:center;min-width:90px}
+.pn .pi{font-size:16px;margin-bottom:2px}
+.pn .pl{font-size:9px;color:var(--t2);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.pn .pv{font-size:18px;font-weight:800;margin:1px 0}
+.pn .pt{font-size:8px;font-weight:700;padding:1px 5px;border-radius:5px;margin-top:2px;display:inline-block}
+.pt-a{background:var(--glt);color:var(--gdk)}.pt-c{background:var(--ylt);color:var(--ydk)}
+.pt-t{background:var(--blt);color:var(--bdk)}.pt-ai{background:var(--plt);color:var(--pdk)}
+.pn.hi{border-color:var(--acc);background:var(--acc-lt)}.pn.hi .pv{color:var(--acc)}
+.pa{padding:0 8px;color:var(--t3);font-size:18px}
+
+/* WF TABS */
+.wft-row{display:flex;border-bottom:1px solid var(--bdr);margin-bottom:14px}
+.wft{padding:8px 16px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;
+  border-bottom:2.5px solid transparent;white-space:nowrap}
+.wft:hover{color:var(--txt)}.wft.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:700}
+.wp{display:block}
+
+/* ACTION BTNS */
+.ab{padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:600}
+.ab-g{background:var(--glt);color:var(--gdk)}.ab-b{background:var(--blt);color:var(--bdk)}
+.ab-y{background:var(--ylt);color:var(--ydk)}.ab-r{background:var(--rlt);color:var(--rdk)}
+
+/* NAV GROUPS */
+.ng{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;
+  color:#8e9ab5;font-size:12px;white-space:nowrap;min-height:34px;transition:all .12s}
+.ng:hover{background:#262d45;color:#e2e8f0}
+.ng-ic{width:20px;text-align:center;font-size:14px;flex-shrink:0}
+.ng-arr{margin-left:auto;font-size:11px;transition:transform .15s;display:inline-block;color:#4e5c7a}
+.ng-arr.open{transform:rotate(90deg)}
+.ng-ch{display:none;overflow:hidden}
+.ng-ch.open{display:block}
+.ng2{display:flex;align-items:center;gap:9px;padding:6px 14px 6px 30px;cursor:pointer;
+  color:#8e9ab5;font-size:11px;white-space:nowrap;transition:all .12s}
+.ng2:hover{background:#262d45}
+.ng2 .ng-arr{margin-left:auto}
+.ng-ch2{display:none}
+.ng-ch2.open{display:block}
+.ni-sub{padding-left:32px!important}
+.ni-sub2{padding-left:46px!important}
+.ns2{padding:6px 14px 2px 30px;font-size:9px;color:#3e4a64;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+#sb.slim .ng,.ng-ch,.ng2,.ng-ch2,.ns2{display:none}
+#sb.slim .ni{padding:8px;justify-content:center}
+
+/* NEW ORDER FORM */
+.nof-sec{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin:0 0 8px;padding-top:4px;border-top:1px solid var(--bdr)}
+.nof-sec:first-of-type{border-top:none;padding-top:0}
+.nof-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.nof-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.nof-lbl{font-size:10px;font-weight:700;color:var(--t2)}
+
+
+/* KANBAN */
+.kb-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.kb-col{background:var(--s2);border-radius:12px;min-width:218px;width:218px;flex-shrink:0;
+  display:flex;flex-direction:column;max-height:calc(100vh - 210px)}
+.kb-hdr{padding:11px 12px 9px;border-radius:12px 12px 0 0;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.kb-hdr-ic{font-size:15px}
+.kb-hdr-title{font-size:11px;font-weight:700;flex:1}
+.kb-hdr-cnt{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:rgba(0,0,0,.08)}
+.kb-hdr-link{font-size:14px;cursor:pointer;color:var(--t3);transition:color .15s;text-decoration:none}
+.kb-hdr-link:hover{color:var(--acc)}
+.kb-body{padding:7px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px}
+.kb-card{background:var(--s1);border-radius:8px;padding:10px 11px;cursor:pointer;
+  border:1px solid var(--bdr);transition:all .15s;border-left:3px solid transparent}
+.kb-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.09);transform:translateY(-1px);border-color:var(--acc)}
+.kb-card-title{font-size:12px;font-weight:700;color:var(--txt);margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kb-card-sub{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kb-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.kb-age{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.kb-age-ok{background:#dcfce7;color:#166534}
+.kb-age-warn{background:#fef9c3;color:#854d0e}
+.kb-age-late{background:#fee2e2;color:#991b1b}
+.kb-age-done{background:#f1f5f9;color:#64748b}
+.kb-code{font-size:9px;color:var(--t3);font-family:monospace}
+.kb-c0 .kb-hdr{background:#f0f9ff}.kb-c0 .kb-card{border-left-color:#7dd3fc}
+.kb-c1 .kb-hdr{background:#fefce8}.kb-c1 .kb-card{border-left-color:#fde047}
+.kb-c2 .kb-hdr{background:#fff7ed}.kb-c2 .kb-card{border-left-color:#fb923c}
+.kb-c3 .kb-hdr{background:#fdf4ff}.kb-c3 .kb-card{border-left-color:#c084fc}
+.kb-c4 .kb-hdr{background:#f0fdf4}.kb-c4 .kb-card{border-left-color:#4ade80}
+.kb-c5 .kb-hdr{background:#f8fafc}.kb-c5 .kb-card{border-left-color:#94a3b8;opacity:.8}
+.kb-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+
+/* PROD WORKFLOW */
+.pw-vtog{padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--t2);transition:all .12s}
+.pw-vtog:hover{color:var(--txt);background:var(--bdr)}
+.pw-vtog.on{background:var(--acc);color:#fff;font-weight:700}
+/* JOB CARD */
+.jb-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:box-shadow .15s}
+.jb-card:hover{box-shadow:0 3px 16px rgba(0,0,0,.08)}
+.jb-hdr{display:flex;align-items:center;padding:12px 16px;background:var(--s2);border-bottom:1px solid var(--bdr);gap:12px;cursor:pointer}
+.jb-hdr-id{font-size:13px;font-weight:800;font-family:monospace;min-width:80px}
+.jb-hdr-meta{flex:1;min-width:0}
+.jb-hdr-name{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jb-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.jb-ppc1{background:#f3e8ff;color:#7e22ce}
+.jb-ppc2{background:#dbeafe;color:#1e40af}
+.jb-ppc3{background:#fef9c3;color:#854d0e}
+.jb-ppc4{background:#d1fae5;color:#065f46}
+.jb-ppc5{background:#f0fdf4;color:#065f46}
+.jb-body{padding:12px 16px}
+.jb-pros{display:flex;flex-direction:column;gap:8px}
+/* PRO ROW */
+.pro-row{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px}
+.pro-row-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pro-id{font-size:11px;font-weight:700;font-family:monospace;color:var(--acc)}
+.pro-prod{font-size:12px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pro-cust{font-size:10px;color:var(--t2)}
+/* PROCESS STEPS */
+.step-track{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.step-node{display:flex;flex-direction:column;align-items:center;min-width:52px}
+.step-pill{padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;white-space:nowrap;border:2px solid transparent}
+.step-done{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.step-active{background:#dbeafe;color:#1e40af;border-color:#93c5fd;animation:stepPulse 2s infinite}
+.step-pending{background:var(--s1);color:var(--t3);border-color:var(--bdr)}
+.step-jw{background:#fef9c3;color:#854d0e;border-color:#fde68a}
+.step-skip{background:#f1f5f9;color:#94a3b8;border-color:transparent;opacity:.5}
+.step-lbl{font-size:8px;color:var(--t3);margin-top:2px}
+.step-arr{color:var(--t3);font-size:12px;margin-top:-8px}
+.split-marker{padding:0 2px;font-size:10px;color:var(--ylw);font-weight:700;cursor:pointer}
+.split-marker:hover{color:var(--ydk)}
+@keyframes stepPulse{0%,100%{opacity:1}50%{opacity:.7}}
+/* GROUP LINE */
+.group-line{border-left:3px solid;margin-left:8px;padding-left:10px;margin-bottom:6px;border-radius:0 0 0 4px}
+.gl-a{border-color:#a855f7}.gl-b{border-color:#3b82f6}.gl-c{border-color:#f59e0b}.gl-d{border-color:#10b981}
+/* TIMELINE */
+.tl-job{margin-bottom:16px;background:var(--s1);border:1px solid var(--bdr);border-radius:11px;overflow:hidden}
+.tl-hdr{background:#1e2235;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.tl-steps{display:flex;border-bottom:1px solid var(--bdr)}
+.tl-step{flex:1;text-align:center;padding:6px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-right:1px solid var(--bdr);color:var(--t3);cursor:pointer}
+.tl-step.done{background:#d1fae5;color:#065f46}
+.tl-step.active{background:#dbeafe;color:#1e40af}
+.tl-step.jw{background:#fef9c3;color:#854d0e}
+.tl-pro-rows{padding:8px}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:#1a1d2e;color:#fff;padding:9px 14px;
+  border-radius:9px;font-size:12px;z-index:9999;max-width:300px;opacity:0;transition:opacity .3s;
+  pointer-events:none}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <div id="tog" onclick="document.getElementById('sb').classList.toggle('slim')">☰</div>
+  <div class="logo" style="display:flex;align-items:center;gap:8px;padding:0 14px;border-right:1px solid rgba(255,255,255,.1)">
+    <span style="font-size:18px;font-weight:900;letter-spacing:-1px">KL<em style="color:var(--acc);font-style:normal">AP</em></span>
+    <div style="font-size:9px;font-weight:700;color:var(--t2);line-height:1.2;text-transform:uppercase;letter-spacing:.3px">Krishiv Labels<br>and Packaging</div>
+  </div>
+  <div style="flex:1;padding:0 16px">
+    <div style="position:relative;max-width:480px">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px">🔍</span>
+      <input class="gsrch" style="width:100%;padding-left:30px" placeholder="Search orders, customers, products, PO number…">
+    </div>
+  </div>
+  <div class="tbar-r">
+    <div style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;font-size:12px;cursor:pointer">
+      📅 Today, 04 Oct 2026
+    </div>
+    <button class="btn btn-p" onclick="openNewOrderForm()">+ New Order</button>
+    <div style="position:relative;cursor:pointer" onclick="toast('Notifications — Phase 2')">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div>
+      <div style="position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center">3</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr)" onclick="toast('Profile — Phase 2')">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">MJ</div>
+      <span style="font-size:12px;font-weight:600">Manish Jain</span>
+    </div>
+  </div>
+</div>
+
+<div id="ptitle" style="display:none"></div><div id="body">
+<div id="sb">
+  <div class="ni on" data-p="dash"><span class="ic">🏠</span><span class="nl">Dashboard</span></div>
+  <div class="ns">Live Operations</div>
+  <div class="ni" data-p="wflow-order"><span class="ic">📋</span><span class="nl">Order</span><span class="nbadge nb-acc" id="b-o">—</span></div>
+  <div class="ni" data-p="wflow-design"><span class="ic">✏️</span><span class="nl">Design</span></div>
+  <div class="ni" data-p="wflow-prod"><span class="ic">⚙️</span><span class="nl">Production</span></div>
+  <div class="ni" data-p="wpk"><span class="ic">📦</span><span class="nl">Packing</span></div>
+  <div class="ni" data-p="winv"><span class="ic">🗄</span><span class="nl">Inventory</span></div>
+  <div class="ni" data-p="wp"><span class="ic">🛒</span><span class="nl">Purchase</span></div>
+  <div class="ni" data-p="wdep"><span class="ic">🚚</span><span class="nl">Despatch</span></div>
+  <div class="ns">Data</div>
+  <div class="ng"><span class="ng-ic">👥</span><span class="nl">Accounts</span><span class="ng-arr" id="ng-acc">›</span></div>
+  <div class="ng-ch" id="ngc-acc">
+    <div class="ni ni-sub" data-p="customers"><span class="ic">🏷</span><span class="nl">Customers</span></div>
+    <div class="ni ni-sub" data-p="vendors"><span class="ic">🏪</span><span class="nl">Vendors</span></div>
+    <div class="ni ni-sub" data-p="transporters"><span class="ic">🚛</span><span class="nl">Transporters</span></div>
+  </div>
+  <div class="ni" data-p="products"><span class="ic">🏷</span><span class="nl">Products</span></div>
+  <div class="ni" data-p="orders"><span class="ic">📋</span><span class="nl">Orders</span><span class="nbadge nb-acc" id="b-orders">—</span></div>
+  <div class="ng"><span class="ng-ic">🏭</span><span class="nl">Production</span><span class="ng-arr" id="ng-prod">›</span></div>
+  <div class="ng-ch" id="ngc-prod">
+    <div class="ni ni-sub" data-p="pros"><span class="ic">📄</span><span class="nl">Prod Orders (PROs)</span><span class="nbadge nb-y" id="b-pr">—</span></div>
+    <div class="ni ni-sub" data-p="jobs"><span class="ic">🔢</span><span class="nl">Jobs</span></div>
+    <div class="ni ni-sub" data-p="processes"><span class="ic">⚙️</span><span class="nl">Processes</span></div>
+    <div class="ng2"><span class="ng-ic">🛠</span><span class="nl">Assets</span><span class="ng-arr" id="ng-assets">›</span></div>
+    <div class="ng-ch2" id="ngc-assets">
+      <div class="ni ni-sub2" data-p="dies"><span class="ic">🔲</span><span class="nl">Dies</span></div>
+      <div class="ni ni-sub2" data-p="plates"><span class="ic">🖨</span><span class="nl">Plates</span></div>
+      <div class="ni ni-sub2" data-p="machines"><span class="ic">🔧</span><span class="nl">Machines</span></div>
+    </div>
+  </div>
+  <div class="ng"><span class="ng-ic">📦</span><span class="nl">Inventory</span><span class="ng-arr" id="ng-inv">›</span></div>
+  <div class="ng-ch" id="ngc-inv">
+    <div class="ns2">Raw Material</div>
+    <div class="ni ni-sub" data-p="rm-cat"><span class="ic">📂</span><span class="nl">RM Category</span></div>
+    <div class="ni ni-sub" data-p="rm-subcat"><span class="ic">📂</span><span class="nl">RM Sub-Category</span></div>
+    <div class="ni ni-sub" data-p="rm-inv"><span class="ic">📦</span><span class="nl">RM Inventory</span></div>
+    <div class="ns2">Finished Goods</div>
+    <div class="ni ni-sub" data-p="winv"><span class="ic">🗄</span><span class="nl">FG Inventory</span></div>
+  </div>
+  <div class="ni" data-p="wp"><span class="ic">🛒</span><span class="nl">Purchase</span></div>
+  <div class="ni" data-p="wdep"><span class="ic">🚚</span><span class="nl">Despatches</span></div>
+  <div class="ns">System</div>
+  <div class="ni" data-p="settings"><span class="ic">⚙️</span><span class="nl">Settings</span></div>
+</div>
+
+<div id="ctr">
+
+<!-- DASHBOARD -->
+<div id="pg-dash" class="pg on">
+  <div class="sg" id="d-stats"></div>
+  <div class="pipe"><h3>Live Operations Pipeline</h3><div class="pipe-steps" id="d-pipe"></div></div>
+  <div class="d2">
+    <div class="tc"><div class="th"><h3>Recent Active Orders</h3></div><div id="d-ords"></div></div>
+    <div class="tc"><div class="th"><h3>Recent Production Orders</h3></div><div id="d-pros"></div></div>
+  </div>
+  <div class="tc"><div class="th"><h3>⚠️ Design Queue</h3><span class="tc-cnt" id="d-dq-cnt"></span></div><div id="d-dq"></div></div>
+</div>
+
+<!-- ORDERS -->
+<div id="pg-orders" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Orders</h3><span class="tc-cnt" id="o-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option>active</option><option>complete</option><option>on_hold</option><option>cancelled</option></select>
+        <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option></select>
+        <input class="f" id="o-q" placeholder="Search…" oninput="R.orders(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Status</th><th>Type</th></tr></thead><tbody id="o-body"></tbody></table></div>
+    <div class="pg-bar" id="o-pg"></div>
+  </div>
+</div>
+
+<!-- DESIGN QUEUE -->
+<div id="pg-dq" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Design Queue</h3><span class="tc-cnt" id="dq-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="dq-st" onchange="R.dq(1)"><option value="">All Stages</option><option value="to_begin">To Begin</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option></select>
+        <input class="f" id="dq-q" placeholder="Search…" oninput="R.dq(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Stage</th></tr></thead><tbody id="dq-body"></tbody></table></div>
+    <div class="pg-bar" id="dq-pg"></div>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<div id="pg-products" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Products</h3><span class="tc-cnt" id="pd-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="file_ready">File Ready</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="to_begin">To Begin</option></select>
+        <input class="f" id="pd-q" placeholder="Search…" oninput="R.products(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Design Status</th></tr></thead><tbody id="pd-body"></tbody></table></div>
+    <div class="pg-bar" id="pd-pg"></div>
+  </div>
+</div>
+
+<!-- CUSTOMERS -->
+<div id="pg-customers" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Customers</h3><span class="tc-cnt" id="cu-cnt"></span>
+      <div class="flt-row"><input class="f" id="cu-q" placeholder="Search…" oninput="R.customers(1)"></div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>City</th></tr></thead><tbody id="cu-body"></tbody></table></div>
+    <div class="pg-bar" id="cu-pg"></div>
+  </div>
+</div>
+
+<!-- PROS -->
+<div id="pg-pros" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="cancelled">Cancelled</option><option value="on_hold">On Hold</option></select>
+        <input class="f" id="pr-q" placeholder="Search…" oninput="R.pros(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Qty</th><th>Status</th></tr></thead><tbody id="pr-body"></tbody></table></div>
+    <div class="pg-bar" id="pr-pg"></div>
+  </div>
+</div>
+
+<!-- JOBS -->
+<div id="pg-jobs" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Jobs</h3><span class="tc-cnt" id="jo-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All Types</option><option>Sheet</option><option>Machine</option></select>
+        <input class="f" id="jo-q" placeholder="Search…" oninput="R.jobs(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Job ID</th><th>Date</th><th>Type</th><th>Job Name</th></tr></thead><tbody id="jo-body"></tbody></table></div>
+    <div class="pg-bar" id="jo-pg"></div>
+  </div>
+</div>
+
+<!-- DIES -->
+<div id="pg-dies" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Dies</h3><span class="tc-cnt" id="di-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="di-st" onchange="R.dies(1)"><option value="">All Status</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
+        <input class="f" id="di-q" placeholder="Search…" oninput="R.dies(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Name</th><th>Ups</th><th>Status</th></tr></thead><tbody id="di-body"></tbody></table></div>
+    <div class="pg-bar" id="di-pg"></div>
+  </div>
+</div>
+
+<!-- PLATES -->
+<div id="pg-plates" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Plates</h3><span class="tc-cnt" id="pl-cnt"></span>
+      <div class="flt-row"><input class="f" id="pl-q" placeholder="Search…" oninput="R.plates(1)"></div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Name</th><th>Status</th></tr></thead><tbody id="pl-body"></tbody></table></div>
+    <div class="pg-bar" id="pl-pg"></div>
+  </div>
+</div>
+
+<!-- MACHINES -->
+<div id="pg-machines" class="pg">
+  <div class="tc"><div class="th"><h3>Machines</h3></div>
+    <table><thead><tr><th>Machine</th><th>Type</th></tr></thead><tbody id="ma-body"></tbody></table>
+  </div>
+</div>
+
+<!-- VENDORS -->
+<div id="pg-vendors" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Vendors &amp; Transporters</h3><span class="tc-cnt" id="ve-cnt"></span>
+      <div class="flt-row"><input class="f" id="ve-q" placeholder="Search…" oninput="R.vendors(1)"></div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>Type</th></tr></thead><tbody id="ve-body"></tbody></table></div>
+    <div class="pg-bar" id="ve-pg"></div>
+  </div>
+</div>
+
+<!-- PLACEHOLDER PAGES -->
+<div id="pg-wflow-order" class="pg">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+  <div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:2px">Order Operations</h2>
+    <div style="font-size:11px;color:var(--t2)">Live order pipeline — all stages at a glance</div>
+  </div>
+  <div class="kb-filters">
+    <select class="f" id="kb-cust" onchange="kbFilter()"><option value="">All Customers</option></select>
+    <select class="f" id="kb-prod" onchange="kbFilter()"><option value="">All Products</option></select>
+    <select class="f" id="kb-age" onchange="kbFilter()">
+      <option value="">Any Age</option>
+      <option value="7">Within 7d</option>
+      <option value="14">Within 14d</option>
+      <option value="30">Within 30d</option>
+      <option value="old">Older than 30d</option>
+    </select>
+    <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="kbClear()">Clear</button>
+    <button class="btn btn-p" style="font-size:11px" onclick="openNewOrderForm()">+ New Order</button>
+  </div>
+</div>
+<div class="kb-wrap" id="kb-board"></div>
+<div id="kb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1500;align-items:center;justify-content:center">
+  <div style="background:var(--s1);border-radius:14px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="display:flex;align-items:center;margin-bottom:16px">
+      <h3 id="kb-modal-oid" style="font-size:14px;font-weight:800;flex:1"></h3>
+      <span onclick="document.getElementById('kb-modal').style.display='none'" style="cursor:pointer;font-size:20px;color:var(--t2);padding:2px 6px">✕</span>
+    </div>
+    <div id="kb-modal-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr);flex-wrap:wrap" id="kb-modal-actions"></div>
+  </div>
+</div>
+</div>
+
+<div id="pg-wflow-design" class="pg">
+  <div class="tc"><div class="th"><h3>Design Workflow</h3><span style="font-size:11px;color:var(--t2);margin-left:6px">Design queue is live — full workflow Phase 2</span></div>
+  <div style="padding:40px;text-align:center;color:var(--t3)"><div style="font-size:40px;margin-bottom:12px">✏️</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Design Workflow</div><div style="font-size:12px">Manage artwork from to_begin → in_process → internal_approval → file_ready. See Design Queue under Orders for current data.</div>
+  <button class="btn btn-p" style="margin-top:14px" onclick="document.querySelector('.ni[data-p=dq]')?.click()">→ Go to Design Queue</button></div></div>
+</div>
+
+<div id="pg-wflow-prod" class="pg">
+
+<!-- STAT STRIP -->
+<div class="sg" style="grid-template-columns:repeat(6,1fr);margin-bottom:14px">
+  <div class="sc" style="border-left:3px solid var(--acc)"><div class="l">📋 Active Jobs</div><div class="v" id="pw-s-jobs" style="color:var(--acc)">—</div><div class="s">in production</div></div>
+  <div class="sc" style="border-left:3px solid var(--org)"><div class="l">📄 Active PROs</div><div class="v" id="pw-s-pros" style="color:var(--org)">—</div></div>
+  <div class="sc" style="border-left:3px solid #a855f7"><div class="l">🖨 PPC1 Flexo</div><div class="v" id="pw-s-ppc1" style="color:#a855f7">—</div><div class="s">in-house</div></div>
+  <div class="sc" style="border-left:3px solid #3b82f6"><div class="l">🔄 PPC2 Hybrid</div><div class="v" id="pw-s-ppc2" style="color:#3b82f6">—</div></div>
+  <div class="sc" style="border-left:3px solid #f59e0b"><div class="l">🧪 PPC3 TUPAX</div><div class="v" id="pw-s-ppc3" style="color:#f59e0b">—</div></div>
+  <div class="sc" style="border-left:3px solid var(--grn)"><div class="l">📦 PPC4/5 Direct</div><div class="v" id="pw-s-direct" style="color:var(--grn)">—</div></div>
+</div>
+
+<!-- VIEW TOGGLE + FILTERS -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+  <div style="display:flex;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+    <div class="pw-vtog on" id="pwv-board" onclick="pwView('board')">📋 Job Board</div>
+    <div class="pw-vtog" id="pwv-timeline" onclick="pwView('timeline')">⏱ Process View</div>
+    <div class="pw-vtog" id="pwv-table" onclick="pwView('table')">📊 Table</div>
+  </div>
+  <select class="f" id="pw-ppc" onchange="pwRender()">
+    <option value="">All Types</option>
+    <option value="Machine">PPC1 — Flexo Machine</option>
+    <option value="Sheet">PPC2/3 — Sheet/Hybrid</option>
+    <option value="Direct">PPC4/5 — Direct</option>
+  </select>
+  <select class="f" id="pw-step" onchange="pwRender()">
+    <option value="">All Steps</option>
+    <option value="PRT">PRT — Print</option>
+    <option value="COAT">COAT — Coating</option>
+    <option value="LAM">LAM — Lamination</option>
+    <option value="PUN">PUN — Punching</option>
+    <option value="RW">RW — Rewinding</option>
+    <option value="SEAL">SEAL</option>
+    <option value="CUT">CUT — Cutting</option>
+    <option value="PACK">PACK — Packing</option>
+  </select>
+  <input class="f" id="pw-q" placeholder="Search job, product, customer…" oninput="pwRender()" style="width:200px">
+  <button class="btn btn-p" style="margin-left:auto;font-size:12px" onclick="pwNewJob()">+ New Job</button>
+</div>
+
+<!-- JOB BOARD VIEW -->
+<div id="pwv-board-panel">
+  <div id="pw-board" style="display:flex;flex-direction:column;gap:10px"></div>
+</div>
+
+<!-- PROCESS VIEW (timeline per job) -->
+<div id="pwv-timeline-panel" style="display:none">
+  <div id="pw-timeline"></div>
+</div>
+
+<!-- TABLE VIEW -->
+<div id="pwv-table-panel" style="display:none">
+  <div class="tc">
+    <div class="th"><h3>All Active PROs</h3><span class="tc-cnt" id="pw-tbl-cnt"></span></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>PRO ID</th><th>Date</th><th>Job</th><th>Type</th><th>Product</th><th>Customer</th><th>Qty</th><th>Sheets</th><th>Material</th><th>Current Step</th><th>Actions</th></tr></thead>
+      <tbody id="pw-tbl-body"></tbody>
+    </table></div>
+    <div class="pg-bar" id="pw-tbl-pg"></div>
+  </div>
+</div>
+
+<!-- PROCESS ENTRY MODAL -->
+<div id="pw-proc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:var(--s1);border-radius:14px;width:600px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;margin-bottom:16px">
+      <div>
+        <h3 id="pw-modal-title" style="font-size:15px;font-weight:800">Log Process Step</h3>
+        <div id="pw-modal-subtitle" style="font-size:11px;color:var(--t2);margin-top:2px"></div>
+      </div>
+      <span onclick="closePwModal()" style="margin-left:auto;cursor:pointer;font-size:20px;color:var(--t2)">✕</span>
+    </div>
+    <div id="pw-modal-body"></div>
+  </div>
+</div>
+
+<!-- JOB CARD MODAL -->
+<div id="pw-jc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:var(--s1);border-radius:14px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="background:#1e2235;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;align-items:center">
+      <div>
+        <div style="font-size:18px;font-weight:800" id="jc-title">Job Card</div>
+        <div style="font-size:11px;color:#8e9ab5;margin-top:2px" id="jc-subtitle"></div>
+      </div>
+      <span onclick="closeJcModal()" style="margin-left:auto;cursor:pointer;font-size:20px;color:#8e9ab5">✕</span>
+    </div>
+    <div id="jc-body" style="padding:20px"></div>
+  </div>
+</div>
+
+</div>
+
+<div id="pg-transporters" class="pg">
+  <div class="tc">
+    <div class="th"><h3>Transporters</h3><span class="tc-cnt" id="tr-cnt"></span>
+      <div class="flt-row"><input class="f" id="tr-q" placeholder="Search…" oninput="R.transporters(1)"></div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Phone</th></tr></thead><tbody id="tr-body"></tbody></table></div>
+    <div class="pg-bar" id="tr-pg"></div>
+  </div>
+</div>
+<div id="pg-processes" class="pg">
+  <div class="tc">
+    <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option></select>
+        <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Process</th><th>PRO</th><th>Product</th><th>Customer</th><th>Date</th><th>Material</th><th>Counter</th><th>Machine</th><th>Status</th></tr></thead><tbody id="proc-body"></tbody></table></div>
+    <div class="pg-bar" id="proc-pg"></div>
+  </div>
+</div>
+<div id="pg-rm-cat" class="pg">
+  <div class="tc">
+    <div class="th"><h3>📂 RM Categories</h3><span class="tc-cnt" id="rmc-cnt"></span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Category Name</th></tr></thead><tbody id="rmc-body"></tbody></table></div>
+  </div>
+</div>
+<div id="pg-rm-subcat" class="pg">
+  <div class="tc">
+    <div class="th"><h3>📂 RM Sub-Categories</h3><span class="tc-cnt" id="rmsc-cnt"></span>
+      <div class="flt-row"><input class="f" id="rmsc-q" placeholder="Search…" oninput="R.rm_subcats(1)"></div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Sub-Category</th><th>Category</th></tr></thead><tbody id="rmsc-body"></tbody></table></div>
+  </div>
+</div>
+<div id="pg-rm-inv" class="pg">
+  <div class="sg" style="grid-template-columns:repeat(3,1fr)">
+    <div class="sc grn"><div class="l">📦 RM Materials</div><div class="v" id="rmi-total">—</div></div>
+    <div class="sc acc"><div class="l">📥 GRN Entries</div><div class="v" id="rmi-grn">—</div></div>
+    <div class="sc org"><div class="l">📤 Issued</div><div class="v" id="rmi-out">—</div></div>
+  </div>
+  <div class="wft-row">
+    <div class="wft on" onclick="wt('rmi',this,'rmi-list')">📋 RM Master</div>
+    <div class="wft" onclick="wt('rmi',this,'rmi-in')">📥 GRN (Stock In)</div>
+    <div class="wft" onclick="wt('rmi',this,'rmi-out-list')">📤 Issued (Stock Out)</div>
+  </div>
+  <div id="rmi-list" class="wp">
+    <div class="tc">
+      <div class="th"><h3>Raw Material Master</h3>
+        <div class="flt-row">
+          <select class="f" id="rmi-cat-f" onchange="R.rm_list(1)"><option value="">All Categories</option></select>
+          <input class="f" id="rmi-q" placeholder="Search…" oninput="R.rm_list(1)">
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Name/Alias</th><th>Brand</th><th>Category</th><th>Sub-Cat</th><th>Vendor</th></tr></thead><tbody id="rmi-body"></tbody></table></div>
+      <div class="pg-bar" id="rmi-pg"></div>
+    </div>
+  </div>
+  <div id="rmi-in" class="wp" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>GRN — Stock In</h3><span class="tc-cnt" id="rmin-cnt"></span>
+        <div class="flt-row"><input class="f" id="rmin-q" placeholder="Search material / vendor…" oninput="R.rm_in(1)"></div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>GRN ID</th><th>Date</th><th>Material</th><th>Brand</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Bill Ref</th></tr></thead><tbody id="rmin-body"></tbody></table></div>
+      <div class="pg-bar" id="rmin-pg"></div>
+    </div>
+  </div>
+  <div id="rmi-out-list" class="wp" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>RM Issued — Stock Out</h3><span class="tc-cnt" id="rmout-cnt"></span>
+        <div class="flt-row"><input class="f" id="rmout-q" placeholder="Search…" oninput="R.rm_out(1)"></div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Date</th><th>GRN Ref</th><th>PRO</th><th>Qty</th><th>Unit</th></tr></thead><tbody id="rmout-body"></tbody></table></div>
+      <div class="pg-bar" id="rmout-pg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE WORKFLOW -->
+<div id="pg-wp" class="pg">
+  <div class="sg" style="grid-template-columns:repeat(4,1fr)">
+    <div class="sc ylw"><div class="l">⏳ Pending Approval</div><div class="v" id="wp-pa">5</div></div>
+    <div class="sc acc"><div class="l">📤 PO Sent</div><div class="v" id="wp-po">8</div></div>
+    <div class="sc org"><div class="l">🚛 Awaiting Delivery</div><div class="v" id="wp-ad">12</div></div>
+    <div class="sc grn"><div class="l">✅ GRN Done</div><div class="v" id="wp-gn">3</div></div>
+  </div>
+  <div class="wft-row">
+    <div class="wft on" onclick="wt('wp',this,'wp-pr')">📝 Purchase Requests</div>
+    <div class="wft" onclick="wt('wp',this,'wp-po-list')">📤 Open POs</div>
+    <div class="wft" onclick="wt('wp',this,'wp-rc')">📊 Rate Comparison</div>
+  </div>
+  <div id="wp-pr" class="wp">
+    <div class="tc">
+      <div class="th"><h3>Purchase Orders</h3><span class="tc-cnt" id="po-cnt"></span>
+        <div class="flt-row">
+          <select class="f" id="po-st" onchange="R.po_list(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="received">Received</option></select>
+          <input class="f" id="po-q" placeholder="Search material / vendor…" oninput="R.po_list(1)">
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>PO #</th><th>Date</th><th>Material</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Rate ₹</th><th>Amount ₹</th><th>Bill Ref</th><th>Status</th></tr></thead><tbody id="po-body"></tbody></table></div>
+      <div class="pg-bar" id="po-pg"></div>
+    </div>
+  </div>
+  <div id="wp-po-list" class="wp" style="display:none">
+    <div class="tc"><div class="th"><h3>Rate Comparison</h3></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>PO #</th><th>Vendor</th><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Status</th></tr></thead><tbody id="wp-po-body"></tbody></table></div>
+    </div>
+  </div>
+  <div id="wp-rc" class="wp" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>Rate Comparison</h3><span style="font-size:11px;color:var(--t2);margin-left:6px">Paste vendor screenshot → Claude fills row</span></div>
+      <div style="padding:12px;background:var(--s2);border-bottom:1px solid var(--bdr);display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px">
+        <div><div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:3px">MATERIAL</div><input class="f" style="width:100%" id="rc-mat" placeholder="e.g. DUPLEX_GB 400"></div>
+        <div><div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:3px">SIZE</div><input class="f" style="width:100%" id="rc-sz" placeholder="e.g. 28×20"></div>
+        <div><div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:3px">QTY</div><input class="f" style="width:100%" id="rc-qty" placeholder="e.g. 3000 sheets"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-p" onclick="genInq()">📋 Copy Inquiry</button></div>
+      </div>
+      <div id="rc-copied" style="display:none;padding:10px 14px;background:#f0fdf4;border-bottom:1px solid var(--bdr);font-size:11px;color:var(--gdk)">✅ Inquiry text copied to clipboard — paste into WhatsApp and send to vendors</div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Vendor</th><th>Mill/Brand</th><th>Rate ₹/kg</th><th>Amount ₹</th><th>Lead</th><th>Notes</th><th></th></tr></thead><tbody id="rc-body"><tr><td colspan="7" style="padding:30px;text-align:center;color:var(--t3)"><button class="btn btn-p" onclick="addRC()">+ Add vendor row</button></td></tr></tbody></table></div>
+      <div id="rc-lowest" style="display:none;padding:10px 14px;border-top:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+        <span id="rc-low-txt" style="font-size:12px;font-weight:700;color:var(--gdk)"></span>
+        <button class="btn btn-p" onclick="toast('Table sent to Manish on Telegram 📲')">📲 Send to Manish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PACKING -->
+<div id="pg-wpk" class="pg">
+  <div class="sg" style="grid-template-columns:repeat(4,1fr)">
+    <div class="sc org"><div class="l">⏳ Awaiting Packing</div><div class="v" id="wpk-a">—</div></div>
+    <div class="sc ylw"><div class="l">📦 In Progress</div><div class="v">0</div></div>
+    <div class="sc grn"><div class="l">✅ Packed</div><div class="v" id="wpk-d">—</div></div>
+    <div class="sc acc"><div class="l">📋 Slips Issued</div><div class="v" id="wpk-s">—</div></div>
+  </div>
+  <div class="wft-row">
+    <div class="wft on" onclick="wt('wpk',this,'wpk-q')">⏳ Awaiting Packing</div>
+    <div class="wft" onclick="wt('wpk',this,'wpk-d')">✅ Packed / FG Stock</div>
+  </div>
+  <div id="wpk-q" class="wp">
+    <div class="tc">
+      <div class="th"><h3>PROs Ready for Packing</h3><span class="tc-cnt" id="wpk-cnt"></span>
+        <div class="flt-row"><input class="f" id="wpk-sq" placeholder="Search…" oninput="R.packing(1)"></div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Qty</th><th>Action</th></tr></thead><tbody id="wpk-body"></tbody></table></div>
+      <div class="pg-bar" id="wpk-pg"></div>
+    </div>
+  </div>
+  <div id="wpk-d" class="wp" style="display:none">
+    <div class="tc"><div class="th"><h3>Packed — In FG Stock</h3></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Inventory ID</th><th>PRO</th><th>Product</th><th>Packets</th><th>Status</th></tr></thead>
+        <tbody id="wpk-db"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- INVENTORY -->
+<div id="pg-winv" class="pg">
+  <div class="sg" style="grid-template-columns:repeat(3,1fr)">
+    <div class="sc grn"><div class="l">📦 FG Batches</div><div class="v" id="winv-s">—</div></div>
+    <div class="sc blu"><div class="l">🔒 Reserved</div><div class="v" id="winv-r">—</div></div>
+    <div class="sc pur"><div class="l">🚚 Despatched</div><div class="v" id="winv-d">—</div></div>
+  </div>
+  <div class="tc">
+    <div class="th"><h3>FG Stock</h3><span class="tc-cnt" id="winv-cnt"></span>
+      <div class="flt-row"><input class="f" id="winv-q" placeholder="Search…" oninput="R.fg_inventory(1)"></div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Inventory ID</th><th>Product</th><th>Customer</th><th>PRO</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead><tbody id="winv-body"></tbody></table></div>
+    <div class="pg-bar" id="winv-pg"></div>
+  </div>
+</div>
+
+<!-- DESPATCH -->
+<div id="pg-wdep" class="pg">
+  <div class="sg" style="grid-template-columns:repeat(3,1fr)">
+    <div class="sc grn"><div class="l">✅ Ready to Despatch</div><div class="v" id="wdep-r">—</div></div>
+    <div class="sc ylw"><div class="l">⏳ Partial</div><div class="v" id="wdep-p">—</div></div>
+    <div class="sc acc"><div class="l">🚚 Despatched</div><div class="v" id="wdep-d">—</div></div>
+  </div>
+  <div class="wft-row">
+    <div class="wft on" onclick="wt('wdep',this,'wdep-r-list')">✅ Ready to Despatch</div>
+    <div class="wft" onclick="wt('wdep',this,'wdep-done')">🚚 Despatched</div>
+  </div>
+  <div id="wdep-r-list" class="wp">
+    <div class="tc">
+      <div class="th"><h3>Ready to Despatch</h3><span class="tc-cnt" id="wdep-cnt"></span>
+        <div class="flt-row"><input class="f" id="wdep-q" placeholder="Search…" oninput="R.despatch_live(1)"></div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Qty</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
+      <div class="pg-bar" id="wdep-pg"></div>
+    </div>
+  </div>
+  <div id="wdep-done" class="wp" style="display:none">
+    <div class="tc">
+      <div class="th"><h3>Despatched Orders</h3><span class="tc-cnt" id="wdep-done-cnt"></span>
+        <div class="flt-row"><input class="f" id="wdep-dq" placeholder="Search…" oninput="R.despatched(1)"></div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>DC</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
+      <div class="pg-bar" id="wdep-done-pg"></div>
+    </div>
+  </div>
+</div>
+
+<div id="pg-settings" class="pg">
+  <div class="tc"><div class="th"><h3>⚙️ Settings</h3></div>
+  <div style="padding:40px;text-align:center;color:var(--t3)">
+    <div style="font-size:40px;margin-bottom:12px">⚙️</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Settings</div>
+    <div style="font-size:12px">User preferences, system configuration — Phase 2</div>
+  </div></div>
+</div>
+</div><!-- /ctr -->
+
+<!-- RIGHT PANE -->
+<div id="rp">
+  <div id="rp-h"><h3 id="rp-t">Detail</h3><span id="rp-x" onclick="closeRP()">✕</span></div>
+  <div id="rp-b"></div>
+</div>
+</div><!-- /body -->
+<div id="toast"></div>
+
+<script>
+const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
+const SB_KEY='sb_publishable_RN89GTohdCC31adWqDZL0w_zlBuVtlk';
+let D={o:[],pr:[],dq:[],pd:[],cu:[],ve:[],jo:[],di:[],pl:[],
+  rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[["Flexo Press 01","press"],["RF Punching 01","punching"],["RF Punching 02","punching"],["Rewinding 01","rewinding"],["Rewinding 02","rewinding"],["Platen 01","platen"],["Platen 02","platen"],["Tube Labelling 01","tube"],["Core Cutting 01","cutting"],["Core Cutting 02","cutting"],["Tube Seaming 01","tube"]],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
+
+const EDGE_URL=`${SB_URL}/functions/v1/klap-mis-data`;
+
+function showLoader(msg){
+  let el=document.getElementById('sb-loader');
+  if(!el){
+    el=document.createElement('div');
+    el.id='sb-loader';
+    el.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML=`<div style="font-size:28px">⚙️</div><div style="font-size:16px;color:var(--t2)">${msg}</div><div style="width:200px;height:4px;background:var(--brd);border-radius:2px;overflow:hidden"><div id="sb-prog" style="height:100%;width:0%;background:var(--acc);transition:width 0.3s;"></div></div>`;
+}
+function setProgress(pct){const el=document.getElementById('sb-prog');if(el)el.style.width=pct+'%';}
+function hideLoader(){const el=document.getElementById('sb-loader');if(el)el.remove();}
+
+async function loadData(){
+  showLoader('Loading Krishiv MIS…');
+  try{
+    setProgress(10);
+    showLoader('Fetching all data…');
+    const r=await fetch(EDGE_URL,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    if(!r.ok){const txt=await r.text();throw new Error(`Edge function ${r.status}: ${txt.slice(0,300)}`);}
+    const raw=await r.json();
+    if(raw.error)throw new Error('Edge function error: '+raw.error);
+    console.log('Edge fn counts:',raw._counts);
+    setProgress(70);
+
+    showLoader('Building data…');
+    const {orders,pros,products,accounts,jobs,dies,plates,procs,
+      rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos}=raw;
+    const accMap={};accounts.forEach(a=>{accMap[a.id]=a;});
+    const prodMap={};products.forEach(p=>{prodMap[p.id]=p;});
+
+    // Build D.o: [id, date, customer_name, product_name, qty, order_status, is_repeat]
+    D.o=orders.map(o=>[
+      o.id,
+      o.date,
+      accMap[o.customer_id]?.name||o.customer_id||'—',
+      prodMap[o.product_id]?.product_name||o.product_id||'—',
+      o.qty||'',
+      o.order_status||'active',
+      o.is_repeat?'1':'0'
+    ]);
+    D.OT=orders.length;
+
+    // Active orders with extra has_changes column (8 cols) for D.oa/oh/od/oc
+    const ordersExt=orders.map(o=>[
+      o.id,
+      o.date,
+      accMap[o.customer_id]?.name||o.customer_id||'—',
+      prodMap[o.product_id]?.product_name||o.product_id||'—',
+      o.qty||'',
+      o.order_status||'active',
+      o.is_repeat?'1':'0',
+      o.has_changes?'1':'0',
+      o.pplan_group||'0'  // index 8 — used for kanban grouping
+    ]);
+    D.oa=ordersExt.filter(o=>o[5]==='active');
+    D.oh=ordersExt.filter(o=>o[5]==='on_hold');
+    D.od=ordersExt.filter(o=>o[5]==='complete').map(o=>o.slice(0,7));
+    D.oc=ordersExt.filter(o=>o[5]==='cancelled').map(o=>o.slice(0,7));
+    D.OA=D.oa.length;
+
+    // D.kb (kanban): group active orders by pplan_group
+    const kbGroups={to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[]};
+    const kbMap={to_confirm:['0','to_confirm','confirm'],in_design:['1','in_design','design'],in_production:['2','in_production','production'],in_packing:['3','in_packing','packing'],ready_despatch:['4','ready_despatch','ready','ready_to_despatch']};
+    ordersExt.filter(o=>o[5]==='active').forEach(o=>{
+      const pg=(o[8]||'').toString().toLowerCase();
+      if(!pg||pg==='0')kbGroups.to_confirm.push(o);
+      else if(pg==='1'||pg.includes('design'))kbGroups.in_design.push(o);
+      else if(pg==='2'||pg.includes('produc'))kbGroups.in_production.push(o);
+      else if(pg==='3'||pg.includes('pack'))kbGroups.in_packing.push(o);
+      else if(pg==='4'||pg.includes('ready'))kbGroups.ready_despatch.push(o);
+      else kbGroups.to_confirm.push(o);
+    });
+    D.kb={...kbGroups,despatched:D.od.slice(0,10)};
+
+    // D.pr: [id, date, product_name, customer_name, '', qty, is_cancelled, is_on_hold, order_id]
+    D.pr=pros.map(p=>[
+      p.id,
+      p.date,
+      prodMap[p.product_id]?.product_name||p.product_id||'—',
+      prodMap[p.product_id]?.customer_name||'—',
+      '',
+      p.qty||'',
+      p.is_cancelled?'1':'0',
+      p.is_on_hold?'1':'0',
+      p.order_id||''
+    ]);
+    D.PT=pros.length;
+
+    // D.pd: all products [id, name, customer, design_status]
+    D.pd=products.map(p=>[p.id,p.product_name||'',p.customer_name||'',p.design_status||'']);
+    D.PDT=products.length;
+
+    // D.dq: products in design queue (not file_ready, not cancelled)
+    const dqStatuses=['to_begin','in_process','internal_approval','customer_approval'];
+    D.dq=products.filter(p=>dqStatuses.includes(p.design_status)).map(p=>[p.id,p.product_name||'',p.customer_name||'',p.design_status||'']);
+
+    // D.cu: customers [id, name, brand, alias]
+    D.cu=accounts.filter(a=>a.account_type==='Customer').map(a=>[a.id,a.name||'',a.brand||'',a.alias||'']);
+
+    // D.ve: vendors/transporters [id, name, alias, account_type]
+    D.ve=accounts.filter(a=>a.account_type==='Vendor'||a.account_type==='Transport').map(a=>[
+      a.id,a.name||'',a.alias||'',
+      a.account_type==='Vendor'?'vendor':'transporter'
+    ]);
+
+    // D.jo: jobs [id, date, job_type, job_name]
+    D.jo=jobs.map(j=>[j.id,j.date,j.job_type||'',j.job_name||'']);
+    D.JT=jobs.length;
+
+    // D.pj: jobs with pro count (count how many active pros per job_id)
+    const prosByJob={};
+    pros.filter(p=>!p.is_cancelled&&!p.is_on_hold).forEach(p=>{if(p.job_id)prosByJob[p.job_id]=(prosByJob[p.job_id]||0)+1;});
+    D.pj=jobs.filter(j=>prosByJob[j.id]>0).sort((a,b)=>(prosByJob[b.id]||0)-(prosByJob[a.id]||0)).slice(0,30).map(j=>[j.id,j.date,j.job_type||'',j.job_name||'',(prosByJob[j.id]||0)]);
+
+    // D.di: dies [id, die_name, total_ups, status]
+    D.di=dies.map(d=>[d.id,d.die_name||'',d.total_ups||'',d.status||'']);
+
+    // D.pl: plates [id, plate_name, status]
+    D.pl=plates.map(p=>[p.id,p.plate_name||'',p.status||'']);
+
+    // D.pp: prod_processes mapped to the shape the app expects
+    // [id, date, product_name, customer_name, null, qty, process_num?, is_cancelled, is_on_hold, job_id, material, size_l, size_b, size_units, job_type]
+    // We map to the shape from the original: index 7=is_cancelled(0), 8=is_on_hold(0), 9=job_id via prod_order
+    const proIdToJob={};
+    pros.forEach(p=>{if(p.id&&p.job_id)proIdToJob[p.id]=p.job_id;});
+    const proIdToProduct={};
+    pros.forEach(p=>{if(p.id)proIdToProduct[p.id]={pname:prodMap[p.product_id]?.product_name||'',cname:prodMap[p.product_id]?.customer_name||'',qty:p.qty};});
+    D.pp=procs.map(pp=>{
+      const pro=proIdToProduct[pp.prod_order_id]||{};
+      return [pp.id,pp.date,pro.pname||'',pro.cname||'',null,pro.qty||pp.counter||0,0,0,0,proIdToJob[pp.prod_order_id]||'',pp.material_id||'',0,0,'mm',''];
+    });
+
+
+    // D.procs_raw — raw proc records for process page
+    D.procs_raw=procs;
+
+    // D.rm_cats / D.rm_subcats / D.rm_list
+    D.rm_cats=rm_cats;
+    D.rm_subcats=rm_subcats;
+    D.rm_list=rm_list.map(r=>{
+      const cat=rm_cats.find(c=>c.id===r.category_id);
+      const sub=rm_subcats.find(s=>s.id===r.subcategory_id);
+      const ven=accounts.find(a=>a.id===r.vendor_id);
+      return [r.id,r.alias||'',r.brand||'',cat?.name||r.category_id||'',sub?.name||r.subcategory_id||'',ven?.name||r.vendor_id||''];
+    });
+
+    // D.rm_in / D.rm_out
+    D.rm_in=rm_in.map(r=>{
+      const rm=D.rm_list.find(m=>m[0]===r.rm_item_id)||[];
+      const ven=accounts.find(a=>a.id===r.vendor_id);
+      return [r.rm_in_id,r.date,rm[1]||r.rm_item_id||'',rm[2]||'',ven?.name||r.vendor_id||'',r.qty||0,r.qty_units||'',r.vendor_ref||'',r.status||''];
+    });
+    D.rm_out=rm_out.map(r=>[r.id,r.date,r.rm_in_id,r.prod_proc_id,r.out_for||'',r.qty||0]);
+
+    // D.fg: [id, date, prod_order_id, inv_batch_id, packets, qty, qty_units, product_name, customer_name]
+    D.fg=fg_inv.map(r=>{
+      const pro=pros.find(p=>p.id===r.prod_order_id)||{};
+      const pname=prodMap[pro.product_id]?.product_name||pro.job_name||r.prod_order_id||'';
+      const cname=prodMap[pro.product_id]?.customer_name||'';
+      return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry];
+    });
+
+    // D.dos: delivery orders [id, date, order_id, customer_name, price]
+    D.dos=dos.map(r=>{
+      const ord=orders.find(o=>o.id===r.order_id)||{};
+      const cname=accMap[ord.customer_id]?.name||'';
+      return [r.id,r.date,r.order_id,cname,r.price||0];
+    });
+    D.do_items=do_items;
+
+    // D.pos: purchase orders [id, date, rm_name, vendor_name, qty, unit, rate, status]
+    D.pos=pos.map(r=>{
+      const rm=D.rm_list.find(m=>m[0]===r.rm_id)||[];
+      const ven=accounts.find(a=>a.id===r.vendor_id);
+      return [r.id,r.date,rm[1]||r.rm_id||'',ven?.name||r.vendor_id||'',r.pur_qty||0,r.pur_unit||'',r.rate||0,r.status||'',r.bill_ref||''];
+    });
+
+    setProgress(100);
+    hideLoader();
+  }catch(err){
+    console.error('Data load error:',err);
+    const el=document.getElementById('sb-loader')||document.body;
+    el.innerHTML=`<div style="position:fixed;inset:0;background:var(--bg,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;z-index:9999"><div style="font-size:24px">⚠️</div><div style="font-size:14px;font-weight:600">Data load failed</div><code style="font-size:11px;color:#ef4444;max-width:500px;text-align:center;word-break:break-all">${err.message}</code><div style="font-size:11px;color:#666">Check browser console (F12) for details</div><button onclick="location.reload()" style="margin-top:8px;padding:8px 20px;border-radius:6px;background:#3b82f6;color:#fff;border:none;cursor:pointer">Retry</button></div>`;
+  }
+}
+
+const PS=50;
+const pp={};
+const titles={dash:'Dashboard','wflow-order':'📋 Order Workflow','wflow-design':'Design Workflow','wflow-prod':'Production Workflow',orders:'Orders',dq:'Design Queue',products:'Products',
+  customers:'Customers',pros:'Production Orders (PROs)',jobs:'Jobs',dies:'Dies',
+  plates:'Plates',machines:'Machines',vendors:'Vendors & Transporters',
+  wp:'Purchase Workflow',wpk:'Packing + QR',winv:'FG Inventory',wdep:'Despatch Workflow',transporters:'Transporters',processes:'Processes','rm-cat':'RM Categories','rm-subcat':'RM Sub-Categories','rm-inv':'RM Inventory'};
+
+// GROUP TOGGLES
+function ngToggle(id){
+  const ch=document.getElementById('ngc-'+id);
+  const arr=document.getElementById('ng-'+id);
+  if(!ch)return;
+  const open=ch.classList.toggle('open');
+  if(arr)arr.classList.toggle('open',open);
+}
+document.querySelectorAll('.ng').forEach(g=>{
+  g.addEventListener('click',()=>{
+    const id=g.querySelector('.ng-arr')?.id?.replace('ng-','');
+    if(id)ngToggle(id);
+  });
+});
+document.querySelectorAll('.ng2').forEach(g=>{
+  g.addEventListener('click',()=>{
+    const id=g.querySelector('.ng-arr')?.id?.replace('ng-','');
+    if(id){const ch=document.getElementById('ngc-'+id);const arr=document.getElementById('ng-'+id);if(ch){const o=ch.classList.toggle('open');if(arr)arr.classList.toggle('open',o);}}
+  });
+});
+// Open Production group by default
+document.getElementById('ngc-prod')?.classList.add('open');
+document.getElementById('ng-prod')?.classList.add('open');
+
+// NAV
+document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
+  const p=n.dataset.p; if(!p)return;
+  document.querySelectorAll('.ni').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
+  document.querySelectorAll('.pg').forEach(x=>x.classList.toggle('on',x.id==='pg-'+p));
+  document.getElementById('ptitle').textContent=titles[p]||p;
+  closeRP();
+  const fn=R[p]; if(fn)fn(1);
+  if(p==='wflow-order'){initKanban();initOrderWF();}
+  if(p==='wflow-prod'){initProdWF();}
+  if(p==='processes'){R.processes(1);}
+  if(p==='rm-cat'){R.rm_cats();}
+  if(p==='rm-subcat'){R.rm_subcats(1);}
+  if(p==='rm-inv'){R.rm_list(1);R.rm_in(1);R.rm_out(1);const el=document.getElementById('rmi-total');if(el)el.textContent=D.rm_list.length;}
+  if(p==='wp'){R.po_list(1);}
+  if(p==='winv'){R.fg_inventory(1);}
+  if(p==='wdep'){R.despatch_live(1);}
+}));
+
+// RIGHT PANE
+function openRP(html,title){
+  document.getElementById('rp-t').textContent=title||'Detail';
+  document.getElementById('rp-b').innerHTML=html;
+  document.getElementById('rp').classList.add('open');
+}
+function closeRP(){
+  document.getElementById('rp').classList.remove('open');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRP();});
+function rf(l,v){return v!=null&&v!==''?`<div class="rf"><div class="rl">${l}</div><div class="rv">${v}</div></div>`:''}
+
+// HELPERS
+const bmap={active:'bg',complete:'bg',cancelled:'br',on_hold:'by',
+  file_ready:'bg',in_process:'by',internal_approval:'bp',to_begin:'bo',
+  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp'};
+const badge=s=>s?`<span class="b ${bmap[s]||'bd'}">${s.replace(/_/g,' ')}</span>`:'-';
+const tr=(s,n=26)=>s?(s.length>n?s.slice(0,n)+'…':s):'—';
+
+// PAGINATION
+function pgr(items,key,rfn,pgEl,cntEl){
+  const p=pp[key]||1,tot=items.length,pages=Math.max(1,Math.ceil(tot/PS));
+  pp[key]=Math.min(p,pages);
+  if(cntEl){const e=document.getElementById(cntEl);if(e)e.textContent=tot.toLocaleString()+' records';}
+  const slice=items.slice((pp[key]-1)*PS,pp[key]*PS);
+  const el=document.getElementById(pgEl);
+  if(el){
+    const p2=pp[key];
+    let btns='';
+    if(pages>1){
+      btns+=`<button class="pb" onclick="${rfn}(${Math.max(1,p2-1)})" ${p2<=1?'disabled':''}>&lsaquo;</button>`;
+      for(let i=Math.max(1,p2-2);i<=Math.min(pages,p2+2);i++)
+        btns+=`<button class="pb ${i===p2?'cur':''}" onclick="${rfn}(${i})">${i}</button>`;
+      btns+=`<button class="pb" onclick="${rfn}(${Math.min(pages,p2+1)})" ${p2>=pages?'disabled':''}>&rsaquo;</button>`;
+    }
+    el.innerHTML=`<span>Page ${p2} of ${pages} · ${tot.toLocaleString()} records</span><div style="display:flex;gap:4px">${btns}</div>`;
+  }
+  return slice;
+}
+
+// TOAST
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity=1;clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity=0,3000);}
+
+// WORKFLOW TABS
+function wt(prefix,el,show){
+  el.closest('.pg').querySelectorAll('.wft').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  el.closest('.pg').querySelectorAll('.wp').forEach(x=>x.style.display='none');
+  const p=document.getElementById(show);if(p)p.style.display='block';
+}
+
+// ── RENDER FUNCTIONS ──
+const R={};
+
+R.dash=function(){
+  const ao=D.OA, ap=D.pr.filter(p=>!p[5]&&!p[6]).length;
+  const dql=D.dq.length, fr=D.pd.filter(p=>p[3]==='file_ready').length;
+  const comp=D.o.filter(o=>o[5]==='complete').length;
+  document.getElementById('d-stats').innerHTML=`
+    <div class="sc acc" onclick="nav('orders')"><div class="l">📋 Active Orders</div><div class="v">${ao}</div><div class="s">of ${D.OT.toLocaleString()} total</div></div>
+    <div class="sc org" onclick="nav('pros')"><div class="l">📄 Active PROs</div><div class="v">${ap}</div><div class="s">of ${D.PT.toLocaleString()} total</div></div>
+    <div class="sc grn" onclick="nav('products')"><div class="l">🏷 Active Products</div><div class="v">${D.PDT.toLocaleString()}</div><div class="s">${fr} file ready</div></div>
+    <div class="sc ylw" onclick="nav('dq')"><div class="l">✏️ Design Queue</div><div class="v">${dql}</div><div class="s">needs attention</div></div>
+    <div class="sc acc" onclick="nav('customers')"><div class="l">👥 Customers</div><div class="v">${D.cu.length}</div></div>
+    <div class="sc" onclick="nav('dies')"><div class="l">🔲 Dies</div><div class="v">${D.di.length}</div><div class="s">${D.di.filter(d=>d[3]==='in_stock').length} in stock</div></div>
+    <div class="sc" onclick="nav('plates')"><div class="l">🖨 Plates</div><div class="v">${D.pl.length}</div></div>
+    <div class="sc grn"><div class="l">✅ Completed</div><div class="v">${comp}</div><div class="s">of shown orders</div></div>`;
+  document.getElementById('d-pipe').innerHTML=`
+    <div class="pn hi"><div class="pi">📋</div><div class="pl">Orders</div><div class="pv" style="color:var(--acc)">${ao}</div><div class="pt pt-t">Active</div></div><div class="pa">›</div>
+    <div class="pn"><div class="pi">✏️</div><div class="pl">Design Queue</div><div class="pv" style="color:var(--ylw)">${dql}</div><div class="pt pt-c">🟡 Confirm</div></div><div class="pa">›</div>
+    <div class="pn"><div class="pi">📄</div><div class="pl">Active PROs</div><div class="pv" style="color:var(--org)">${ap}</div><div class="pt pt-c">🟡 Confirm</div></div><div class="pa">›</div>
+    <div class="pn"><div class="pi">⚙️</div><div class="pl">Processes</div><div class="pv" style="color:var(--pur)">—</div><div class="pt pt-a">🟢 Auto</div></div><div class="pa">›</div>
+    <div class="pn"><div class="pi">📦</div><div class="pl">Packing</div><div class="pv" style="color:var(--grn)">—</div><div class="pt pt-a">🟢 QR</div></div><div class="pa">›</div>
+    <div class="pn"><div class="pi">🗄</div><div class="pl">FG Stock</div><div class="pv" style="color:var(--grn)">—</div><div class="pt pt-a">🟢 Auto</div></div><div class="pa">›</div>
+    <div class="pn"><div class="pi">🚚</div><div class="pl">Despatch</div><div class="pv" style="color:var(--blu)">—</div><div class="pt pt-t">🔵 Trigger</div></div>`;
+  const ro=D.o.filter(o=>o[5]==='active').slice(0,8);
+  document.getElementById('d-ords').innerHTML=`<table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Status</th></tr></thead><tbody>${ro.map(o=>`<tr><td class="mono">${o[0]}</td><td>${tr(o[2],18)}</td><td>${tr(o[3],22)}</td><td>${badge(o[5])}</td></tr>`).join('')}</tbody></table>`;
+  const rp=D.pr.slice(0,8);
+  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('d-dq-cnt').textContent=D.dq.length+' items';
+  document.getElementById('d-dq').innerHTML=D.dq.length?`<table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Stage</th></tr></thead><tbody>${D.dq.map(p=>`<tr><td class="mono">${p[0]||'—'}</td><td>${tr(p[1],26)}</td><td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:24px;text-align:center;color:var(--t3)">✅ No items in design queue</div>';
+  const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  _s('b-o',ao);_s('b-dq',dql);_s('b-pr',ap);
+};
+
+function nav(p){document.querySelector('.ni[data-p="'+p+'"]')?.click();}
+
+R.orders=function(p){
+  if(p)pp.orders=p;
+  const st=document.getElementById('o-st')?.value||'';
+  const yr=document.getElementById('o-yr')?.value||'';
+  const q=(document.getElementById('o-q')?.value||'').toLowerCase();
+  const items=D.o.filter(o=>(!st||o[5]===st)&&(!yr||o[1].startsWith(yr))&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'orders','R.orders','o-pg','o-cnt');
+  document.getElementById('o-body').innerHTML=slice.map(o=>`<tr onclick="selO(event,${JSON.stringify(o[0])})">
+    <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
+    <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+    <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
+  </tr>`).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
+};
+function selO(e,oid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const o=D.o.find(x=>x[0]===oid);if(!o)return;openRP(rf('Order ID',o[0])+rf('Date',o[1])+rf('Customer',o[2])+rf('Product',o[3])+rf('Qty',o[4]?Number(o[4]).toLocaleString():'—')+rf('Status',badge(o[5]))+rf('Type',o[6]?'Repeat':'New'),o[0]);}
+
+R.dq=function(p){
+  if(p)pp.dq=p;
+  const st=document.getElementById('dq-st')?.value||'';
+  const q=(document.getElementById('dq-q')?.value||'').toLowerCase();
+  const items=D.dq.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'dq','R.dq','dq-pg','dq-cnt');
+  document.getElementById('dq-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+    <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
+    <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No items</td></tr>';
+};
+
+R.products=function(p){
+  if(p)pp.products=p;
+  const ds=document.getElementById('pd-ds')?.value||'';
+  const q=(document.getElementById('pd-q')?.value||'').toLowerCase();
+  const items=D.pd.filter(x=>(!ds||x[3]===ds)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'products','R.products','pd-pg','pd-cnt');
+  document.getElementById('pd-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+    <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
+    <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
+};
+function selPD(e,code){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pd.find(x=>x[0]===code)||D.dq.find(x=>x[0]===code);if(!p)return;openRP(rf('Code',p[0])+rf('Product',p[1])+rf('Customer',p[2])+rf('Design Status',badge(p[3])),p[0]);}
+
+R.customers=function(p){
+  if(p)pp.customers=p;
+  const q=(document.getElementById('cu-q')?.value||'').toLowerCase();
+  const items=D.cu.filter(x=>(!q||[x[0],x[1],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'customers','R.customers','cu-pg','cu-cnt');
+  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Phone',${JSON.stringify(a[2]||'—')})+rf('City',${JSON.stringify(a[3]||'—')}),${JSON.stringify(a[1])})">
+    <td class="mono">${a[0]||'—'}</td><td title="${a[1]}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
+};
+
+R.pros=function(p){
+  if(p)pp.pros=p;
+  const st=document.getElementById('pr-st')?.value||'';
+  const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
+  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[5]:st==='on_hold'?x[6]:!x[5]&&!x[6]))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
+  document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
+    <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
+    <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td>${p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')}</td>
+  </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
+};
+function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')),p[0]);}
+
+R.jobs=function(p){
+  if(p)pp.jobs=p;
+  const t=document.getElementById('jo-t')?.value||'';
+  const q=(document.getElementById('jo-q')?.value||'').toLowerCase();
+  const items=D.jo.filter(x=>(!t||x[2]===t)&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
+  document.getElementById('jo-body').innerHTML=slice.map(j=>`<tr onclick="openRP(rf('Job ID',${JSON.stringify(j[0])})+rf('Date',${JSON.stringify(j[1])})+rf('Type',badge(${JSON.stringify(j[2])}))+rf('Name',${JSON.stringify(j[3]||'—')}),${JSON.stringify(j[0])})">
+    <td class="mono">${j[0]}</td><td>${j[1]||'—'}</td><td>${badge(j[2])}</td>
+    <td style="max-width:380px;font-size:11px;color:var(--t2)" title="${j[3]||''}">${tr(j[3]||'—',55)}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
+};
+
+R.dies=function(p){
+  if(p)pp.dies=p;
+  const st=document.getElementById('di-st')?.value||'';
+  const q=(document.getElementById('di-q')?.value||'').toLowerCase();
+  const items=D.di.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'dies','R.dies','di-pg','di-cnt');
+  document.getElementById('di-body').innerHTML=slice.map(d=>`<tr onclick="openRP(rf('Code',${JSON.stringify(d[0])})+rf('Name',${JSON.stringify(d[1]||'—')})+rf('Ups',${JSON.stringify(String(d[2]||'—'))})+rf('Status',badge(${JSON.stringify(d[3]||'active')})),${JSON.stringify(d[0])})">
+    <td class="mono">${d[0]}</td><td>${tr(d[1]||'—',22)}</td><td>${d[2]||'—'}</td><td>${badge(d[3])}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No dies</td></tr>';
+};
+
+R.plates=function(p){
+  if(p)pp.plates=p;
+  const q=(document.getElementById('pl-q')?.value||'').toLowerCase();
+  const items=D.pl.filter(x=>(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'plates','R.plates','pl-pg','pl-cnt');
+  document.getElementById('pl-body').innerHTML=slice.map(p=>`<tr onclick="openRP(rf('Code',${JSON.stringify(p[0])})+rf('Name',${JSON.stringify(p[1]||'—')})+rf('Status',badge(${JSON.stringify(p[2]||'active')})),${JSON.stringify(p[0])})">
+    <td class="mono">${p[0]}</td><td>${tr(p[1]||'—',26)}</td><td>${badge(p[2]||'active')}</td>
+  </tr>`).join('')||'<tr><td colspan="3" style="padding:24px;text-align:center;color:var(--t3)">No plates</td></tr>';
+};
+
+R.machines=function(){
+  document.getElementById('ma-body').innerHTML=D.ma.map(m=>`<tr><td>${m[0]}</td><td>${badge(m[1])}</td></tr>`).join('');
+};
+
+R.vendors=function(p){
+  if(p)pp.vendors=p;
+  const q=(document.getElementById('ve-q')?.value||'').toLowerCase();
+  const items=D.ve.filter(x=>x[3]==='vendor'&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'vendors','R.vendors','ve-pg','ve-cnt');
+  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Phone',${JSON.stringify(a[2]||'—')})+rf('Type',badge(${JSON.stringify(a[3])})),${JSON.stringify(a[1])})">
+    <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td><td>${badge(a[3])}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No vendors</td></tr>';
+};
+
+R.transporters=function(p){
+  if(p)pp.transporters=p;
+  const q=(document.getElementById('tr-q')?.value||'').toLowerCase();
+  const items=D.ve.filter(x=>x[3]==='transporter'&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'transporters','R.transporters','tr-pg','tr-cnt');
+  document.getElementById('tr-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Phone',${JSON.stringify(a[2]||'—')}),${JSON.stringify(a[1])})">
+    <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="3" style="padding:24px;text-align:center;color:var(--t3)">No transporters</td></tr>';
+};
+
+// ── WORKFLOW RENDERS ──
+R.wp=function(){
+  const prs=D.pr.filter(p=>!p[5]&&!p[6]).slice(0,30).map((p,i)=>({id:'PR'+String(i+1).padStart(4,'0'),date:p[1],mat:p[2]?.split('-')[0]?.trim()||'Material',qty:p[4]||'—',trig:i%3===0?'stock_low':'job_req',linked:p[0],status:i<5?'pending':'approved'}));
+  R._prs=prs;
+  R.pr_list(1);
+  // POs
+  const pos=prs.filter(r=>r.status==='approved').slice(0,8).map((r,i)=>({...r,po:'PO'+String(i+1).padStart(4,'0'),vendor:['PADMA','SAKHIDAS','AADITYA'][i%3],rate:(45+Math.random()*8).toFixed(2),amt:Math.round(3000*(45+Math.random()*8)),del:'2026-10-15',terms:i%2===0?'30d PDC':'Immediate',st:i<3?'sent':'delivered'}));
+  document.getElementById('wp-po-body').innerHTML=pos.map(p=>`<tr>
+    <td class="mono">${p.po}</td><td>${p.vendor}</td><td>${p.mat}</td><td>${p.qty}</td>
+    <td>₹${p.rate}</td><td>₹${p.amt.toLocaleString()}</td><td>${p.del}</td><td>${p.terms}</td>
+    <td>${badge(p.st==='sent'?'active':'complete')}</td>
+  </tr>`).join('');
+};
+R.pr_list=function(p){
+  if(p)pp['wp-pr']=p;
+  const st=document.getElementById('wp-pr-st')?.value||'';
+  const q=(document.getElementById('wp-pr-q')?.value||'').toLowerCase();
+  const prs=R._prs||[];
+  const items=prs.filter(r=>(!st||r.status===st)&&(!q||[r.id,r.mat,r.linked].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'wp-pr','R.pr_list','wp-pr-pg',null);
+  document.getElementById('wp-pr-body').innerHTML=slice.map(r=>`<tr>
+    <td class="mono">${r.id}</td><td>${r.date||'—'}</td><td>${r.mat}</td><td>${r.qty}</td>
+    <td>${r.trig==='stock_low'?'<span class="b br">📉 Stock Low</span>':'<span class="b bp">🏭 Job Req</span>'}</td>
+    <td class="mono">${r.linked}</td>
+    <td>${badge(r.status==='pending'?'on_hold':r.status==='approved'?'active':'cancelled')}</td>
+    <td>${r.status==='pending'
+      ?`<button class="ab ab-g" onclick="appPR('${r.id}')">✅ Approve</button> <button class="ab ab-r" onclick="rejPR('${r.id}')">✕</button>`
+      :`<button class="ab ab-b" onclick="toast('PO created for ${r.id} — sent via WhatsApp 📤')">📤 PO</button>`}</td>
+  </tr>`).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No purchase requests</td></tr>';
+};
+function appPR(id){const r=R._prs?.find(x=>x.id===id);if(r){r.status='approved';R.pr_list();toast('PR '+id+' approved ✅');}}
+function rejPR(id){const r=R._prs?.find(x=>x.id===id);if(r){r.status='rejected';R.pr_list();toast('PR '+id+' rejected');}}
+
+// Rate comparison
+let rcRows=[];
+function genInq(){const mat=document.getElementById('rc-mat').value||'MATERIAL';const sz=document.getElementById('rc-sz').value||'SIZE';const qty=document.getElementById('rc-qty').value||'QTY';const txt=`Please quote:\nMaterial: ${mat}\nSize: ${sz}\nQty: ${qty}\n\nKindly share: rate/kg, mill/brand, delivery lead time, available qty\n\nKrishiv Labels & Packaging`;navigator.clipboard?.writeText(txt).then(()=>{const d=document.getElementById('rc-copied');d.style.display='block';setTimeout(()=>d.style.display='none',4000);}).catch(()=>toast('Copy: '+txt.slice(0,60)));}
+function addRC(){const tbody=document.getElementById('rc-body');if(tbody.querySelector('button'))tbody.innerHTML='';const i=rcRows.length;rcRows.push({v:'',m:'',r:'',a:0,l:''});const tr2=document.createElement('tr');tr2.id='rc-'+i;tr2.innerHTML=`<td><input class="f" style="width:90px" placeholder="Vendor" oninput="rcUp(${i},'v',this.value)"></td><td><input class="f" style="width:80px" placeholder="Mill" oninput="rcUp(${i},'m',this.value)"></td><td><input class="f" style="width:65px" placeholder="Rate" oninput="rcUp(${i},'r',this.value);rcCalc(${i})"></td><td id="rca${i}" style="font-weight:700">—</td><td><input class="f" style="width:50px" placeholder="2d" oninput="rcUp(${i},'l',this.value)"></td><td><input class="f" style="width:80px" placeholder="Notes"></td><td><button class="ab ab-r" onclick="rcDel(${i})">✕</button></td>`;tbody.appendChild(tr2);document.getElementById('rc-lowest').style.display='flex';}
+function rcUp(i,k,v){if(rcRows[i])rcRows[i][k]=v;rcHL();}
+function rcCalc(i){const qty=parseFloat(document.getElementById('rc-qty')?.value)||3000;const r=parseFloat(rcRows[i]?.r)||0;const a=r?Math.round(qty*r/100*100):0;rcRows[i].a=a;const el=document.getElementById('rca'+i);if(el)el.textContent=a?'₹'+a.toLocaleString():'—';rcHL();}
+function rcHL(){const valid=rcRows.filter(r=>r&&parseFloat(r.r)>0);if(!valid.length)return;const min=Math.min(...valid.map(r=>parseFloat(r.r)));rcRows.forEach((r,i)=>{const row=document.getElementById('rc-'+i);if(row)row.style.background=r&&parseFloat(r.r)===min?'var(--glt)':'';});const low=valid.find(r=>parseFloat(r.r)===min);if(low)document.getElementById('rc-low-txt').textContent='🟢 Lowest: '+(low.v||'—')+' '+(low.m||'')+' @ ₹'+min+'/kg';}
+function rcDel(i){const el=document.getElementById('rc-'+i);if(el)el.remove();if(rcRows[i])rcRows[i]=null;rcHL();}
+
+R.packing=function(p){
+  if(p)pp.packing=p;
+  const q=(document.getElementById('wpk-sq')?.value||'').toLowerCase();
+  const items=D.pr.filter(x=>!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  document.getElementById('wpk-a').textContent=items.length;
+  document.getElementById('wpk-d').textContent=Math.round(items.length*0.15);
+  document.getElementById('wpk-s').textContent=items.length;
+  const slice=pgr(items,'packing','R.packing','wpk-pg','wpk-cnt');
+  document.getElementById('wpk-body').innerHTML=slice.map(p=>`<tr>
+    <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
+    <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td><button class="ab ab-g" onclick="toast('Packing slip for ${p[0]} generated — '+Math.ceil((${p[4]||1000})/500)+' packets with QR codes 🔲')">📋 Generate Slip</button></td>
+  </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs awaiting packing</td></tr>';
+  // packed items
+  const packed=D.pr.filter(x=>!x[5]&&!x[6]).slice(0,20).map(p=>({inv:'INV-'+p[0]+'-PKT001',pro:p[0],prod:p[2],pkts:Math.ceil((p[4]||500)/500)}));
+  document.getElementById('wpk-db').innerHTML=packed.map(p=>`<tr><td class="mono" style="font-size:10px">${p.inv}</td><td class="mono">${p.pro}</td><td>${tr(p.prod,26)}</td><td>${p.pkts}</td><td>${badge('in_stock')}</td></tr>`).join('');
+};
+
+R.inventory=function(p){
+  if(p)pp.inventory=p;
+  const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
+  const items=D.pr.filter(x=>!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  document.getElementById('winv-s').textContent=items.length;
+  document.getElementById('winv-r').textContent=Math.round(items.length*0.3);
+  document.getElementById('winv-d').textContent=D.o.filter(o=>o[5]==='complete').length;
+  const slice=pgr(items,'inventory','R.inventory','winv-pg','winv-cnt');
+  document.getElementById('winv-body').innerHTML=slice.map((p,i)=>`<tr>
+    <td class="mono" style="font-size:10px">INV-${p[0]}-PKT001</td>
+    <td title="${p[2]}">${tr(p[2],24)}</td><td>${tr(p[3]||'—',18)}</td>
+    <td class="mono">${p[0]}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td>${i%5===0?badge('on_hold'):badge('active')}</td>
+    <td><button class="ab ab-b" onclick="toast('${p[0]} reserved against order')">🔒 Reserve</button></td>
+  </tr>`).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No stock</td></tr>';
+};
+
+R.despatch=function(p){
+  if(p)pp.despatch=p;
+  const q=(document.getElementById('wdep-q')?.value||'').toLowerCase();
+  const items=D.o.filter(o=>o[5]==='active'&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  document.getElementById('wdep-r').textContent=items.length;
+  document.getElementById('wdep-p').textContent=Math.round(items.length*0.3);
+  document.getElementById('wdep-d').textContent=D.o.filter(o=>o[5]==='complete').length;
+  const slice=pgr(items,'despatch','R.despatch','wdep-pg','wdep-cnt');
+  document.getElementById('wdep-body').innerHTML=slice.map(o=>`<tr>
+    <td class="mono">${o[0]}</td><td title="${o[2]}">${tr(o[2],22)}</td>
+    <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+    <td>
+      <button class="ab ab-b" onclick="if(confirm('Initiate despatch for ${o[0]}?'))toast('Despatch initiated for ${o[0]} — DC generated 📄')">🚚 Despatch</button>
+      <button class="ab ab-g" onclick="toast('DC for ${o[0]} generated 📄')">📄 DC</button>
+    </td>
+  </tr>`).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No orders ready</td></tr>';
+};
+R.despatched=function(p){
+  if(p)pp.despatched=p;
+  const q=(document.getElementById('wdep-dq')?.value||'').toLowerCase();
+  const items=D.o.filter(o=>o[5]==='complete'&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  const slice=pgr(items,'despatched','R.despatched','wdep-done-pg','wdep-done-cnt');
+  document.getElementById('wdep-done-body').innerHTML=slice.map(o=>`<tr>
+    <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td>${tr(o[2],20)}</td>
+    <td>${tr(o[3],24)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+    <td class="mono">DC-${o[0]}</td>
+    <td><button class="ab ab-g" onclick="toast('Viewing DC-${o[0]} 📄')">📄 View</button></td>
+  </tr>`).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No despatched orders</td></tr>';
+};
+
+
+// ── NEW DATA RENDER FUNCTIONS ─────────────────────────────
+
+R.processes=function(p){
+  if(p)pp.processes=p;
+  const st=document.getElementById('proc-st')?.value||'';
+  const q=(document.getElementById('proc-q')?.value||'').toLowerCase();
+  const proMap={};D.pr.forEach(r=>{proMap[r[0]]={pname:r[2],cname:r[3]};});
+  const items=D.procs_raw.filter(r=>{
+    if(st&&r.process_status!==st)return false;
+    if(q&&![r.id,r.process_name,r.prod_order_id,proMap[r.prod_order_id]?.pname||''].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  const slice=pgr(items,'processes','R.processes','proc-pg','proc-cnt');
+  document.getElementById('proc-body').innerHTML=slice.map(r=>{
+    const pro=proMap[r.prod_order_id]||{};
+    return `<tr>
+      <td><strong>${r.process_name||'—'}</strong></td>
+      <td class="mono">${r.prod_order_id||'—'}</td>
+      <td>${tr(pro.pname||'—',22)}</td><td>${tr(pro.cname||'—',18)}</td>
+      <td>${r.date||'—'}</td><td class="mono">${r.material_id||'—'}</td>
+      <td>${r.counter?Number(r.counter).toLocaleString():'—'}</td>
+      <td>${r.machine||r.vendor_id||'—'}</td>
+      <td>${badge(r.process_status||'pending')}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No processes found</td></tr>';
+};
+
+R.rm_cats=function(){
+  const el=document.getElementById('rmc-body');if(!el)return;
+  el.innerHTML=D.rm_cats.map(r=>`<tr><td class="mono">${r.id}</td><td>${r.name||'—'}</td></tr>`).join('');
+  const cnt=document.getElementById('rmc-cnt');if(cnt)cnt.textContent=D.rm_cats.length+' categories';
+};
+
+R.rm_subcats=function(p){
+  if(p)pp.rm_subcats=p;
+  const q=(document.getElementById('rmsc-q')?.value||'').toLowerCase();
+  const items=D.rm_subcats.filter(r=>!q||r.name?.toLowerCase().includes(q));
+  const slice=pgr(items,'rm_subcats','R.rm_subcats','','rmsc-cnt');
+  const el=document.getElementById('rmsc-body');if(!el)return;
+  el.innerHTML=slice.map(r=>{
+    const cat=D.rm_cats.find(c=>c.id===r.category_id);
+    return `<tr><td class="mono">${r.id}</td><td>${r.name||'—'}</td><td>${cat?.name||r.category_id||'—'}</td></tr>`;
+  }).join('');
+};
+
+R.rm_list=function(p){
+  if(p)pp.rm_list=p;
+  const cat=document.getElementById('rmi-cat-f')?.value||'';
+  const q=(document.getElementById('rmi-q')?.value||'').toLowerCase();
+  const items=D.rm_list.filter(r=>{
+    if(cat&&r[3]!==cat)return false;
+    if(q&&![r[0],r[1],r[2],r[3],r[4],r[5]].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  const slice=pgr(items,'rm_list','R.rm_list','rmi-pg','');
+  const el=document.getElementById('rmi-body');if(!el)return;
+  el.innerHTML=slice.map(r=>`<tr>
+    <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td><td>${r[2]||'—'}</td>
+    <td>${r[3]||'—'}</td><td>${r[4]||'—'}</td><td>${tr(r[5]||'—',20)}</td>
+  </tr>`).join('');
+  const tot=document.getElementById('rmi-total');if(tot)tot.textContent=D.rm_list.length;
+  // populate cat filter
+  const cf=document.getElementById('rmi-cat-f');
+  if(cf&&cf.options.length===1){D.rm_cats.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;cf.appendChild(o);});}
+};
+
+R.rm_in=function(p){
+  if(p)pp.rm_in=p;
+  const q=(document.getElementById('rmin-q')?.value||'').toLowerCase();
+  const items=D.rm_in.filter(r=>!q||[r[0],r[2],r[3],r[4]].join(' ').toLowerCase().includes(q));
+  const slice=pgr(items,'rm_in','R.rm_in','rmin-pg','rmin-cnt');
+  const el=document.getElementById('rmin-body');if(!el)return;
+  el.innerHTML=slice.map(r=>`<tr>
+    <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td><td>${tr(r[2]||'—',20)}</td>
+    <td>${r[3]||'—'}</td><td>${tr(r[4]||'—',18)}</td>
+    <td>${r[5]?Number(r[5]).toLocaleString():'—'}</td><td>${r[6]||'—'}</td>
+    <td>₹${r[7]||0}</td><td class="mono">${r[8]||'—'}</td>
+  </tr>`).join('');
+  const grn=document.getElementById('rmi-grn');if(grn)grn.textContent=D.rm_in.length;
+};
+
+R.rm_out=function(p){
+  if(p)pp.rm_out=p;
+  const q=(document.getElementById('rmout-q')?.value||'').toLowerCase();
+  const items=D.rm_out.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  const slice=pgr(items,'rm_out','R.rm_out','rmout-pg','rmout-cnt');
+  const el=document.getElementById('rmout-body');if(!el)return;
+  el.innerHTML=slice.map(r=>`<tr>
+    <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td>
+    <td class="mono">${r[2]||'—'}</td><td class="mono">${r[3]||'—'}</td>
+    <td>${r[4]?Number(r[4]).toLocaleString():'—'}</td><td>${r[5]||'—'}</td>
+  </tr>`).join('');
+  const out=document.getElementById('rmi-out');if(out)out.textContent=D.rm_out.length;
+};
+
+R.po_list=function(p){
+  if(p)pp.po_list=p;
+  const st=document.getElementById('po-st')?.value||'';
+  const q=(document.getElementById('po-q')?.value||'').toLowerCase();
+  const items=D.pos.filter(r=>{
+    if(st&&r[7]!==st)return false;
+    if(q&&![r[0],r[2],r[3],r[8]].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  const slice=pgr(items,'po_list','R.po_list','po-pg','po-cnt');
+  const el=document.getElementById('po-body');if(!el)return;
+  el.innerHTML=slice.map(r=>{
+    const amt=r[4]&&r[6]?Math.round(r[4]*r[6]).toLocaleString():'—';
+    return `<tr>
+      <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td>
+      <td>${tr(r[2]||'—',20)}</td><td>${tr(r[3]||'—',18)}</td>
+      <td>${r[4]?Number(r[4]).toLocaleString():'—'}</td><td>${r[5]||'—'}</td>
+      <td>₹${r[6]||0}</td><td>${amt?'₹'+amt:'—'}</td>
+      <td class="mono">${r[8]||'—'}</td><td>${badge(r[7]||'pending')}</td>
+    </tr>`;
+  }).join('');
+};
+
+R.fg_inventory=function(p){
+  if(p)pp.fg_inventory=p;
+  const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
+  const items=D.fg.filter(r=>!q||[r[0],r[2],r[7],r[8]].join(' ').toLowerCase().includes(q));
+  const slice=pgr(items,'fg_inventory','R.fg_inventory','winv-pg','winv-cnt');
+  const el=document.getElementById('winv-body');if(!el)return;
+  el.innerHTML=slice.map(r=>`<tr>
+    <td class="mono">${r[3]||r[0]}</td><td>${tr(r[7]||'—',24)}</td><td>${tr(r[8]||'—',18)}</td>
+    <td class="mono">${r[2]||'—'}</td>
+    <td>${r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):'—'}</td>
+    <td>${r[4]||0} pkts</td>
+    <td><button class="ab ab-g" onclick="toast('FG ${r[3]||r[0]} 📦')">📦 View</button></td>
+  </tr>`).join('');
+  const s=document.getElementById('winv-s');if(s)s.textContent=D.fg.length;
+  const d=document.getElementById('winv-d');if(d)d.textContent=D.dos.length;
+};
+
+R.despatch_live=function(p){
+  if(p)pp.despatch_live=p;
+  const q=(document.getElementById('wdep-q')?.value||'').toLowerCase();
+  const items=D.dos.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  const slice=pgr(items,'despatch_live','R.despatch_live','wdep-pg','wdep-cnt');
+  const el=document.getElementById('wdep-body');if(!el)return;
+  el.innerHTML=slice.map(r=>`<tr>
+    <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td>
+    <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
+    <td>₹${r[4]?Number(r[4]).toLocaleString():'—'}</td>
+    <td><button class="ab ab-g" onclick="toast('DC ${r[0]} 📄')">📄 View DC</button></td>
+  </tr>`).join('');
+  const rv=document.getElementById('wdep-r');if(rv)rv.textContent=D.dos.length;
+};
+
+// ── ORDER WORKFLOW ────────────────────────────────────────
+let OWF={active:[],on_hold:[],desp:[],cancelled:[],captured:[]};
+const owSortState={};
+
+function owTab(tab){
+  document.querySelectorAll('.owp').forEach(p=>p.style.display='none');
+  document.querySelectorAll('[id^="owt-"]').forEach(t=>t.classList.remove('on'));
+  const p=document.getElementById('owp-'+tab);
+  const t=document.getElementById('owt-'+tab);
+  if(p)p.style.display='block';
+  if(t)t.classList.add('on');
+  owRender(tab);
+}
+
+function owSort(tab,col){
+  const cur=owSortState[tab];
+  owSortState[tab]= cur===col+'_asc'? col+'_desc' : col+'_asc';
+  owRender(tab);
+}
+
+function owFmt(o){const sz='—';const qty=o[4]?Number(o[4]).toLocaleString():'—';return {sz,qty};}
+
+function owSortItems(items, sortKey){
+  if(!sortKey) return items;
+  const [col,dir]=sortKey.split('_');
+  const asc=dir==='asc';
+  return [...items].sort((a,b)=>{
+    let va,vb;
+    if(col==='oid'){va=a[0]||'';vb=b[0]||'';}
+    else if(col==='date'){va=a[1]||'';vb=b[1]||'';}
+    else if(col==='cust'){va=a[2]||'';vb=b[2]||'';}
+    else if(col==='qty'){va=Number(a[10])||0;vb=Number(b[10])||0;}
+    else return 0;
+    if(typeof va==='number') return asc? va-vb : vb-va;
+    return asc? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+}
+
+function owDetailHTML(o){const qty=o[4]?Number(o[4]).toLocaleString():'—';return rf('OID',o[0])+rf('Date',o[1])+rf('Customer',o[2])+rf('Product',o[3])+rf('Qty',qty)+rf('Type',o[6]?'🔁 Repeat':'🆕 New')+(o[7]?rf('⚠️ Changes','Has specification changes'):'');}
+
+function owSelRow(e,data,oid){
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  e.currentTarget.classList.add('sel');
+  openRP(owDetailHTML(data.find(x=>x[0]===oid)||[]),oid);
+}
+
+// ── CAPTURES (no OID — pre-entry) ──────────────────────────
+// Simulated captures: in real system these come from Telegram bot / screenshot OCR / WhatsApp
+const CAPTURES=[
+  {id:'CAP001',src:'telegram',ts:'2026-10-04 09:12',cust:'RPS Packaging',prod:'Super Clean Big Label',sz:'6.34×5.34 inches',qty:'50,000 pcs',conf:'high',raw:'RPS - Super Clean Big - 50k pcs - 6.34x5.34'},
+  {id:'CAP002',src:'whatsapp',ts:'2026-10-04 10:31',cust:'Jay Plast (JP)',prod:'IML Mango 250ml (new)',sz:'—',qty:'1,00,000 pcs',conf:'medium',raw:'Bhai 1 lakh IML mango 250ml chahiye naya design'},
+  {id:'CAP003',src:'screenshot',ts:'2026-10-03 16:44',cust:'Trishla Metals',prod:'Eurostyle Number (7)',sz:'20×20 mm',qty:'1,00,000 pcs',conf:'high',raw:'[screenshot of WhatsApp order message]'},
+  {id:'CAP004',src:'email',ts:'2026-10-03 14:20',cust:'Oberoi Enterprise',prod:'IML115 OBEROI TRAY (L)',sz:'160×210 mm',qty:'30,000 pcs',conf:'medium',raw:'Please send quote + confirm availability for Oberoi Tray L size'},
+  {id:'CAP005',src:'telegram',ts:'2026-10-02 11:05',cust:'unknown',prod:'Butterfly Stand Label',sz:'48.5×95.5 mm',qty:'?',conf:'low',raw:'butterfly stand label urgently needed, check with Manish bhai qty'},
+];
+
+const srcIcon={telegram:'<span class="b bp" style="font-size:9px">📨 TG</span>',whatsapp:'<span class="b bg" style="font-size:9px">💬 WA</span>',screenshot:'<span class="b bb" style="font-size:9px">📷 SS</span>',email:'<span class="b by" style="font-size:9px">📧 Mail</span>'};
+const confBadge={high:'<span class="b bg" style="font-size:9px">🟢 High</span>',medium:'<span class="b by" style="font-size:9px">🟡 Medium</span>',low:'<span class="b br" style="font-size:9px">🔴 Low</span>'};
+
+function owRenderCaptured(){
+  const q=(document.getElementById('owc-q')?.value||'').toLowerCase();
+  const items=CAPTURES.filter(c=>!q||[c.cust,c.prod,c.raw].join(' ').toLowerCase().includes(q));
+  document.getElementById('owc-body').innerHTML=items.length ? items.map(c=>`<tr>
+    <td>${srcIcon[c.src]||c.src}</td>
+    <td style="font-size:11px;color:var(--t2);white-space:nowrap">${c.ts}</td>
+    <td><div style="font-weight:600;font-size:12px">${c.cust==='unknown'?'<span style="color:var(--red)">⚠ Unknown</span>':c.cust}</div></td>
+    <td><div style="font-size:12px">${c.prod}</div><div style="font-size:10px;color:var(--t3);max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${c.raw}">${c.raw}</div></td>
+    <td style="font-size:11px">${c.sz}</td>
+    <td style="font-weight:600;font-size:12px">${c.qty}</td>
+    <td>${confBadge[c.conf]||c.conf}</td>
+    <td style="white-space:nowrap">
+      <button class="ab ab-g" onclick="capConfirm('${c.id}',event)">✅ Enter Order</button>
+      <button class="ab ab-y" onclick="capEdit('${c.id}',event)">✏️ Edit</button>
+      <button class="ab ab-r" onclick="capDiscard('${c.id}',event)">✕</button>
+    </td>
+  </tr>`).join('') :
+  `<tr><td colspan="8" style="padding:40px;text-align:center">
+    <div style="font-size:32px;margin-bottom:10px">📭</div>
+    <div style="font-weight:600;color:var(--txt);margin-bottom:4px">No pending captures</div>
+    <div style="font-size:11px;color:var(--t3)">New orders from Telegram / WhatsApp / screenshots will appear here</div>
+  </td></tr>`;
+  const _e=document.getElementById('ow-s0');if(_e)_e.textContent=CAPTURES.length;
+}
+
+function capConfirm(id,e){
+  e.stopPropagation();
+  const c=CAPTURES.find(x=>x.id===id); if(!c)return;
+  // Show order entry form pre-filled
+  document.getElementById('cap-modal-title').textContent='✅ Confirm Order — '+c.cust;
+  document.getElementById('cap-modal-body').innerHTML=`
+    <div style="background:var(--s2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--t2)">
+      <strong>Raw capture:</strong> ${c.raw}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">CUSTOMER</div>
+        <input class="f" style="width:100%" value="${c.cust==='unknown'?'':c.cust}" placeholder="Select customer…"></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">PRODUCT</div>
+        <input class="f" style="width:100%" value="${c.prod}" placeholder="Select product…"></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">QTY</div>
+        <input class="f" style="width:100%" value="${c.qty.replace(/[^0-9,]/g,'')}" placeholder="Quantity"></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">SIZE (if changed)</div>
+        <input class="f" style="width:100%" value="${c.sz==='—'?'':c.sz}" placeholder="L × B mm"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeCaptureModal()">Cancel</button>
+      <button class="btn btn-p" onclick="capSubmit('${id}')">✅ Confirm &amp; Enter Order</button>
+    </div>`;
+  document.getElementById('capture-modal').style.display='flex';
+}
+function capSubmit(id){
+  closeCaptureModal();
+  const idx=CAPTURES.findIndex(x=>x.id===id);
+  if(idx>=0) CAPTURES.splice(idx,1);
+  owRenderCaptured();
+  toast('Order entered ✅ — OID assigned and PRO created');
+}
+function capEdit(id,e){e.stopPropagation();capConfirm(id,{stopPropagation:()=>{}});}
+function capDiscard(id,e){
+  e.stopPropagation();
+  if(!confirm('Discard this capture?')) return;
+  const idx=CAPTURES.findIndex(x=>x.id===id);
+  if(idx>=0) CAPTURES.splice(idx,1);
+  owRenderCaptured();
+  toast('Capture discarded');
+}
+function captureNew(type){
+  const titles={screenshot:'📷 Paste Screenshot',telegram:'📨 From Telegram Message',manual:'✍️ Manual Order Entry'};
+  document.getElementById('cap-modal-title').textContent=titles[type]||'New Capture';
+  document.getElementById('cap-modal-body').innerHTML=type==='manual'?`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">CUSTOMER</div><input class="f" style="width:100%" placeholder="Customer name…"></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">PRODUCT</div><input class="f" style="width:100%" placeholder="Product name…"></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">QTY</div><input class="f" style="width:100%" placeholder="e.g. 50000"></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px">SIZE</div><input class="f" style="width:100%" placeholder="L × B mm"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeCaptureModal()">Cancel</button>
+      <button class="btn btn-p" onclick="toast('Order entered directly ✅');closeCaptureModal()">✅ Enter Order</button>
+    </div>` :
+  `<div style="text-align:center;padding:24px 0">
+    <div style="font-size:36px;margin-bottom:12px">${type==='screenshot'?'📷':'📨'}</div>
+    <div style="font-weight:600;margin-bottom:6px">${type==='screenshot'?'Paste screenshot here (Ctrl+V)':'Paste Telegram message text below'}</div>
+    <textarea style="width:100%;height:80px;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:12px;margin-bottom:12px;resize:none" placeholder="${type==='screenshot'?'Image will appear here after paste…':'Paste message text here…'}"></textarea>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeCaptureModal()">Cancel</button>
+      <button class="btn btn-p" onclick="toast('🤖 Claude reading… extracted details will appear in 3 seconds');closeCaptureModal()">🤖 Extract with Claude</button>
+    </div>
+  </div>`;
+  document.getElementById('capture-modal').style.display='flex';
+}
+function closeCaptureModal(){document.getElementById('capture-modal').style.display='none';}
+
+// ② ACTIVE
+function owRenderActive(){
+  const cat=document.getElementById('owa-cat')?.value||'';
+  const srt=document.getElementById('owa-srt')?.value||'date_desc';
+  const q=(document.getElementById('owa-q')?.value||'').toLowerCase();
+  let items=OWF.active.filter(o=>{
+    if(cat==='new_repeat'&&!o[6]) return false;
+    if(cat==='new_order'&&o[6]) return false;
+    if(cat==='has_changes'&&!o[7]) return false;
+    return !q||[o[0],o[2],o[4]].join(' ').toLowerCase().includes(q);
+  });
+  // sort
+  const sMap={date_desc:(a,b)=>b[1]?.localeCompare(a[1]),date_asc:(a,b)=>a[1]?.localeCompare(b[1]),
+    cust_asc:(a,b)=>a[2]?.localeCompare(b[2]),qty_desc:(a,b)=>Number(b[10])-Number(a[10])};
+  if(sMap[srt]) items=[...items].sort(sMap[srt]);
+  if(owSortState.active) items=owSortItems(items,owSortState.active);
+  const slice=pgr(items,'owa','owRenderActive','owa-pg',null);
+  document.getElementById('owa-body').innerHTML=slice.map(o=>{
+    const {sz,qty}=owFmt(o);
+    const stage=owGetStage(o[0]);
+    return `<tr onclick="owSelRow(event,OWF.active,'${o[0]}')">
+      <td class="mono">${o[0]}</td>
+      <td>${o[1]||'—'}</td>
+      <td><div style="font-weight:600">${tr(o[2],20)}</div><div style="font-size:10px;color:var(--t2)">${o[3]||''}</div></td>
+      <td><div title="${o[4]}">${tr(o[4],24)}</div><div style="font-size:10px;color:var(--t3)">${tr(o[5]||'',16)}${o[6]?' '+o[6]+'g':''}</div></td>
+      <td style="font-size:11px">${sz}</td>
+      <td style="font-weight:600">${qty}</td>
+      <td style="font-size:10px">${o[17]||'—'}</td>
+      <td>${o[13]?'<span class="b bb">🔁 Repeat</span>':'<span class="b bd">🆕 New</span>'}${o[14]?' <span class="b by">⚠️ Chg</span>':''}</td>
+      <td>${stage}</td>
+      <td>
+        <button class="ab ab-b" onclick="owPRO('${o[0]}',event)">📄 PRO</button>
+        <button class="ab ab-y" onclick="owHold('${o[0]}',event)">⏸</button>
+        <button class="ab ab-r" onclick="owCancel('${o[0]}',event)">✕</button>
+      </td>
+    </tr>`;}).join('')||'<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3)">No active orders</td></tr>';
+}
+function owGetStage(oid){
+  // Check if a PRO exists for this order (using job data as proxy)
+  const hasPro=OWF.active.length>100; // proxy — real version checks PRO table
+  const stages=['<span class="b by">⏳ Design</span>','<span class="b bb">🏭 Production</span>','<span class="b bg">📦 Ready</span>'];
+  return stages[Math.floor(Math.random()*stages.length)];
+}
+function owPRO(oid,e){e.stopPropagation();toast('Opening PRO for order '+oid+' 📄');}
+function owHold(oid,e){e.stopPropagation();toast('Order '+oid+' placed on hold ⏸');}
+function owCancel(oid,e){e.stopPropagation();if(confirm('Cancel order '+oid+'?'))toast('Order '+oid+' cancelled');}
+
+// ③ ON HOLD
+function owRenderHold(){
+  const srt=document.getElementById('owh-srt')?.value||'date_desc';
+  const q=(document.getElementById('owh-q')?.value||'').toLowerCase();
+  let items=OWF.on_hold.filter(o=>!q||[o[0],o[2],o[4]].join(' ').toLowerCase().includes(q));
+  const sMap={date_desc:(a,b)=>b[1]?.localeCompare(a[1]),date_asc:(a,b)=>a[1]?.localeCompare(b[1]),cust_asc:(a,b)=>a[2]?.localeCompare(b[2])};
+  if(sMap[srt]) items=[...items].sort(sMap[srt]);
+  if(owSortState.hold) items=owSortItems(items,owSortState.hold);
+  const slice=pgr(items,'owh','owRenderHold','owh-pg',null);
+  document.getElementById('owh-body').innerHTML=slice.map(o=>{
+    const {sz,qty}=owFmt(o);
+    return `<tr onclick="owSelRow(event,OWF.on_hold,'${o[0]}')">
+      <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td>
+      <td><div style="font-weight:600">${tr(o[2],22)}</div><div style="font-size:10px;color:var(--t2)">${o[3]||''}</div></td>
+      <td><div title="${o[4]}">${tr(o[4],26)}</div><div style="font-size:10px;color:var(--t3)">${tr(o[5]||'',16)}</div></td>
+      <td style="font-size:11px">${sz}</td>
+      <td style="font-weight:600">${qty}</td>
+      <td>${o[13]?'<span class="b bb">🔁 Repeat</span>':'<span class="b bd">🆕 New</span>'}</td>
+      <td>
+        <button class="ab ab-g" onclick="owActivate('${o[0]}',event)">▶ Activate</button>
+        <button class="ab ab-r" onclick="owCancel('${o[0]}',event)">✕ Cancel</button>
+      </td>
+    </tr>`;}).join('')||'<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--t3)">No orders on hold</td></tr>';
+}
+function owActivate(oid,e){e.stopPropagation();toast('Order '+oid+' reactivated ✅');}
+
+// ④ DESPATCHED
+function owRenderDesp(){
+  const per=document.getElementById('owd-per')?.value||'month';
+  const srt=document.getElementById('owd-srt')?.value||'date_desc';
+  const q=(document.getElementById('owd-q')?.value||'').toLowerCase();
+  const now=new Date('2026-10-04');
+  const weekAgo=new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
+  const monthAgo=new Date(now); monthAgo.setDate(1);
+  let items=OWF.desp.filter(o=>{
+    if(!o[1]) return true;
+    const d=new Date(o[1]);
+    if(per==='week') return d>=weekAgo;
+    if(per==='month') return d>=monthAgo;
+    return true;
+  }).filter(o=>!q||[o[0],o[2],o[4]].join(' ').toLowerCase().includes(q));
+  const sMap={date_desc:(a,b)=>b[1]?.localeCompare(a[1]),date_asc:(a,b)=>a[1]?.localeCompare(b[1]),
+    cust_asc:(a,b)=>a[2]?.localeCompare(b[2]),qty_desc:(a,b)=>Number(b[10])-Number(a[10])};
+  if(sMap[srt]) items=[...items].sort(sMap[srt]);
+  if(owSortState.desp) items=owSortItems(items,owSortState.desp);
+  const slice=pgr(items,'owd','owRenderDesp','owd-pg',null);
+  document.getElementById('owd-body').innerHTML=slice.map((o,i)=>{
+    const {sz,qty}=owFmt(o);
+    const dcNum='DC-'+o[0];
+    const delStatuses=['<span class="b bg">✅ Delivered</span>','<span class="b bb">🚛 In Transit</span>','<span class="b by">⏳ Pending</span>'];
+    const delSt=delStatuses[i%3];
+    return `<tr onclick="owSelRow(event,OWF.desp,'${o[0]}')">
+      <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td>
+      <td><div style="font-weight:600">${tr(o[2],20)}</div><div style="font-size:10px;color:var(--t2)">${o[3]||''}</div></td>
+      <td title="${o[4]}">${tr(o[4],24)}</td>
+      <td style="font-size:11px">${sz}</td>
+      <td style="font-weight:600">${qty}</td>
+      <td class="mono" style="font-size:11px">${dcNum}</td>
+      <td>${delSt}</td>
+      <td>
+        <button class="ab ab-g" onclick="toast('DC for ${o[0]} 📄');event.stopPropagation()">📄 DC</button>
+        <button class="ab ab-b" onclick="toast('WhatsApp update to ${tr(o[2],15)} 📲');event.stopPropagation()">📲 WA</button>
+      </td>
+    </tr>`;}).join('')||'<tr><td colspan="9" style="padding:30px;text-align:center;color:var(--t3)">No despatched orders in this period</td></tr>';
+}
+
+// ⑤ CANCELLED
+function owRenderCancelled(){
+  const q=(document.getElementById('owx-q')?.value||'').toLowerCase();
+  const items=OWF.cancelled.filter(o=>!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q));
+  const slice=pgr(items,'owx','owRenderCancelled','owx-pg',null);
+  document.getElementById('owx-body').innerHTML=slice.map(o=>`<tr>
+    <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td>
+    <td>${tr(o[2],24)}</td><td>${tr(o[3],28)}</td>
+    <td>${o[4]?Number(o[4]).toLocaleString()+' '+(o[5]||''):'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--t3)">No cancelled orders</td></tr>';
+}
+
+// DISPATCH TO CORRECT RENDER
+function owRender(tab){
+  if(tab==='captured') owRenderCaptured();
+  else if(tab==='active') owRenderActive();
+  else if(tab==='hold') owRenderHold();
+  else if(tab==='desp') owRenderDesp();
+  else if(tab==='cancelled') owRenderCancelled();
+}
+
+// INIT
+function initOrderWF(){
+  const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  _s('ow-s0',CAPTURES.length);_s('ow-s1',OWF.active.length);_s('ow-s2',OWF.on_hold.length);_s('ow-s3',OWF.desp.length);_s('ow-s4',OWF.cancelled.length);
+  owRender('captured');
+}
+
+
+// ── NEW ORDER FORM ────────────────────────────────────────
+function openNewOrderForm(prefill){
+  const f=prefill||{};
+  // Build customer options from D.cu
+  const custOpts=D.cu.map(c=>`<option value="${c[0]}" ${f.cust===c[0]?'selected':''}>${c[1]}${c[3]?' — '+c[3]:''}</option>`).join('');
+  // Build product options from D.pd
+  const prodOpts=D.pd.map(p=>`<option value="${p[0]}" ${f.prod===p[0]?'selected':''}>${p[0]} — ${p[1]} (${p[2]||'—'})</option>`).join('');
+
+  const modal=document.getElementById('new-order-modal');
+  modal.innerHTML=`
+  <div style="background:var(--s1);border-radius:14px;width:640px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;margin-bottom:18px">
+      <div>
+        <h2 style="font-size:16px;font-weight:800">New Order</h2>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">OID will be auto-assigned on confirm</div>
+      </div>
+      <span onclick="closeNewOrderForm()" style="margin-left:auto;cursor:pointer;font-size:20px;color:var(--t2);padding:2px 6px">✕</span>
+    </div>
+
+    <!-- CUSTOMER -->
+    <div class="nof-sec">CUSTOMER</div>
+    <div class="nof-row">
+      <div class="nof-field" style="flex:2">
+        <label class="nof-lbl">Customer *</label>
+        <select class="f" id="nof-cust" style="width:100%" onchange="nofCustChange()">
+          <option value="">— Select Customer —</option>
+          ${custOpts}
+        </select>
+      </div>
+      <div class="nof-field">
+        <label class="nof-lbl">Party Reference</label>
+        <input class="f" id="nof-ref" style="width:100%" placeholder="Customer's PO / ref no.">
+      </div>
+    </div>
+
+    <!-- PRODUCT -->
+    <div class="nof-sec">PRODUCT</div>
+    <div class="nof-row">
+      <div class="nof-field" style="flex:2">
+        <label class="nof-lbl">Product *</label>
+        <select class="f" id="nof-prod" style="width:100%" onchange="nofProdChange()">
+          <option value="">— Select Product —</option>
+          ${prodOpts}
+        </select>
+      </div>
+      <div class="nof-field">
+        <label class="nof-lbl">Repeat / New</label>
+        <select class="f" id="nof-repeat" style="width:100%">
+          <option value="1">🔁 Repeat Order</option>
+          <option value="0">🆕 New Order</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- PRODUCT DETAILS (auto-filled from product selection) -->
+    <div id="nof-prod-detail" style="background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;display:none">
+      <div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:6px">PRODUCT DETAILS (from master)</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap" id="nof-prod-detail-inner"></div>
+    </div>
+
+    <!-- QUANTITY & SIZE -->
+    <div class="nof-sec">QUANTITY &amp; SPECS</div>
+    <div class="nof-row">
+      <div class="nof-field">
+        <label class="nof-lbl">Quantity *</label>
+        <input class="f" id="nof-qty" type="number" style="width:100%" placeholder="e.g. 50000" min="1">
+      </div>
+      <div class="nof-field">
+        <label class="nof-lbl">Unit</label>
+        <select class="f" id="nof-qunit" style="width:100%">
+          <option value="pcs">pcs</option>
+          <option value="kg">kg</option>
+          <option value="meters">meters</option>
+          <option value="packets">packets</option>
+          <option value="bundles">bundles</option>
+          <option value="Single Block">Single Block</option>
+          <option value="Double Block">Double Block</option>
+          <option value="Minimum">Minimum</option>
+        </select>
+      </div>
+      <div class="nof-field">
+        <label class="nof-lbl">Has Spec Changes?</label>
+        <select class="f" id="nof-chg" style="width:100%">
+          <option value="0">No changes</option>
+          <option value="1">⚠️ Yes — has changes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CHANGES DESCRIPTION (shown if has changes) -->
+    <div id="nof-chg-desc-row" style="display:none;margin-bottom:14px">
+      <label class="nof-lbl">Describe Changes</label>
+      <textarea class="f" id="nof-chg-desc" style="width:100%;height:60px;resize:none;padding:6px 8px" placeholder="What has changed from last order?"></textarea>
+    </div>
+
+    <!-- NOTES -->
+    <div class="nof-sec">ADDITIONAL INFO</div>
+    <div class="nof-row">
+      <div class="nof-field" style="flex:1">
+        <label class="nof-lbl">Notes / Remarks</label>
+        <textarea class="f" id="nof-notes" style="width:100%;height:54px;resize:none;padding:6px 8px" placeholder="Any special instructions…"></textarea>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:14px;border-top:1px solid var(--bdr)">
+      <div style="font-size:11px;color:var(--t3)">* Required fields</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeNewOrderForm()">Cancel</button>
+        <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="nofSaveDraft()">💾 Save Draft</button>
+        <button class="btn btn-p" onclick="nofSubmit()">✅ Confirm Order</button>
+      </div>
+    </div>
+  </div>`;
+
+  modal.style.display='flex';
+  // Wire up changes dropdown
+  document.getElementById('nof-chg').addEventListener('change',function(){
+    document.getElementById('nof-chg-desc-row').style.display=this.value==='1'?'block':'none';
+  });
+  if(f.cust) nofCustChange();
+  if(f.prod) nofProdChange();
+}
+
+function nofCustChange(){
+  const cid=document.getElementById('nof-cust')?.value;
+  if(!cid) return;
+  // Filter products to this customer
+  const sel=document.getElementById('nof-prod');
+  const cname=D.cu.find(c=>c[0]===cid)?.[1]||'';
+  // Highlight products matching customer
+  Array.from(sel.options).forEach(o=>{
+    const match=D.pd.find(p=>p[0]===o.value);
+    if(match) o.style.fontWeight=match[2]&&match[2].toLowerCase().includes(cname.toLowerCase().split(' ')[0])?'700':'';
+  });
+}
+
+function nofProdChange(){
+  const pid=document.getElementById('nof-prod')?.value;
+  const p=D.pd.find(x=>x[0]===pid);
+  const detail=document.getElementById('nof-prod-detail');
+  if(!p||!pid){detail.style.display='none';return;}
+  detail.style.display='block';
+  // p: [code,name,cust,ds] — lean version; show what we have
+  document.getElementById('nof-prod-detail-inner').innerHTML=`
+    <div><span style="color:var(--t3)">Code: </span><strong>${p[0]}</strong></div>
+    <div><span style="color:var(--t3)">Customer: </span><strong>${p[2]||'—'}</strong></div>
+    <div><span style="color:var(--t3)">Design: </span>${badge(p[3])}</div>
+    ${p[3]==='file_ready'?'<div style="color:var(--gdk)">✅ File ready for production</div>':'<div style="color:var(--ydk)">⚠️ Design not finalised</div>'}`;
+  // Auto-set repeat if last order exists
+  const lastOrd=D.o.find(o=>o[3]&&o[3].toLowerCase().includes(p[1].toLowerCase().slice(0,10)));
+  if(lastOrd) document.getElementById('nof-repeat').value='1';
+}
+
+function nofSaveDraft(){
+  const cust=document.getElementById('nof-cust')?.value;
+  const prod=document.getElementById('nof-prod')?.value;
+  if(!cust||!prod){toast('Please select customer and product first');return;}
+  closeNewOrderForm();
+  toast('Draft saved ✅ — visible in Captured queue');
+}
+
+function nofSubmit(){
+  const cust=document.getElementById('nof-cust')?.value;
+  const prod=document.getElementById('nof-prod')?.value;
+  const qty=document.getElementById('nof-qty')?.value;
+  if(!cust){toast('⚠️ Please select a customer');return;}
+  if(!prod){toast('⚠️ Please select a product');return;}
+  if(!qty||Number(qty)<1){toast('⚠️ Please enter a valid quantity');return;}
+  const custName=D.cu.find(c=>c[0]===cust)?.[1]||cust;
+  const prodName=D.pd.find(p=>p[0]===prod)?.[1]||prod;
+  closeNewOrderForm();
+  toast('✅ Order confirmed — OID assigned · Customer: '+custName.slice(0,20)+' · '+Number(qty).toLocaleString()+' pcs');
+}
+
+function closeNewOrderForm(){
+  document.getElementById('new-order-modal').style.display='none';
+}
+
+
+// ── KANBAN ────────────────────────────────────────────────
+let KB=D.kb;
+const KB_COLS=[
+  {key:'to_confirm',   label:'To Confirm',       ic:'📝', cls:'kb-c0', nav:'wflow-order', tab:'captured',
+   actions:['confirm','edit','reject']},
+  {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c1', nav:'wflow-design',
+   actions:['design','assign']},
+  {key:'in_production',label:'In Production',     ic:'⚙️', cls:'kb-c2', nav:'wflow-prod',
+   actions:['production','pro']},
+  {key:'in_packing',   label:'In Packing',        ic:'📦', cls:'kb-c3', nav:'wpk',
+   actions:['slip','packing']},
+  {key:'ready_despatch',label:'Ready to Dispatch',ic:'🚚', cls:'kb-c4', nav:'wdep',
+   actions:['despatch','dc']},
+  {key:'despatched',   label:'Dispatched',        ic:'✅', cls:'kb-c5', nav:'wdep', tab:'done',
+   actions:['viewdc','wa']},
+];
+const KB_ACTION_LABELS={
+  confirm:'✅ Confirm',edit:'✏️ Edit',reject:'✕ Reject',
+  design:'→ Design Workflow',assign:'📌 Assign Designer',
+  production:'→ Production Workflow',pro:'📄 View PRO',
+  slip:'📋 Generate Slip',packing:'→ Packing Workflow',
+  despatch:'🚚 Despatch Now',dc:'📄 Generate DC',
+  viewdc:'📄 View DC',wa:'📲 WA Update',
+};
+
+function kbAge(age,desp){
+  if(desp) return '<span class="kb-age kb-age-done">Done</span>';
+  if(age<=7)  return '<span class="kb-age kb-age-ok">'+age+'d</span>';
+  if(age<=14) return '<span class="kb-age kb-age-warn">'+age+'d</span>';
+  return '<span class="kb-age kb-age-late">'+age+'d</span>';
+}
+
+function kbRenderBoard(data){
+  const cs=document.getElementById('kb-cust');
+  const ps=document.getElementById('kb-prod');
+  if(cs&&cs.options.length===1){
+    const custs=[...new Set(Object.values(data).flat().map(c=>c[2]).filter(Boolean))].sort();
+    custs.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;cs.appendChild(o);});
+  }
+  if(ps&&ps.options.length===1){
+    const prods=[...new Set(Object.values(data).flat().map(c=>c[3]).filter(Boolean))].sort();
+    prods.slice(0,60).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=tr(x,28);ps.appendChild(o);});
+  }
+  const board=document.getElementById('kb-board');
+  if(!board) return;
+  window._kbData=data;
+  board.innerHTML='';
+  KB_COLS.forEach(function(col){
+    const cards=(data[col.key]||[]);
+    const colDiv=document.createElement('div');
+    colDiv.className='kb-col '+col.cls;
+    const hdr=document.createElement('div');
+    hdr.className='kb-hdr';
+    hdr.innerHTML='<span class="kb-hdr-ic">'+col.ic+'</span><span class="kb-hdr-title">'+col.label+'</span><span class="kb-hdr-cnt">'+cards.length+'</span>';
+    const lnk=document.createElement('span');
+    lnk.className='kb-hdr-link';
+    lnk.title='Open full view';
+    lnk.textContent='↗';
+    lnk.addEventListener('click',function(e){e.stopPropagation();kbNavCol(col.nav,col.tab||'',e);});
+    hdr.appendChild(lnk);
+    colDiv.appendChild(hdr);
+    const body=document.createElement('div');
+    body.className='kb-body';
+    if(!cards.length){
+      body.innerHTML='<div style="padding:18px 10px;text-align:center;font-size:11px;color:var(--t3)">No orders</div>';
+    } else {
+      cards.forEach(function(c,i){
+        const card=document.createElement('div');
+        card.className='kb-card';
+        card.innerHTML='<div class="kb-card-title">'+(c[3]||'—')+'</div><div class="kb-card-sub">'+(c[2]||'—')+'</div><div class="kb-card-foot">'+kbAge(c[6]||0,col.key==='despatched')+'<span class="kb-code">'+c[0]+'</span></div>';
+        card.addEventListener('click',function(){kbOpen(i,col.key);});
+        body.appendChild(card);
+      });
+    }
+    colDiv.appendChild(body);
+    board.appendChild(colDiv);
+  });
+}
+
+function kbOpen(idx,colKey){
+  const col=KB_COLS.find(c=>c.key===colKey); if(!col) return;
+  const c=(window._kbData||KB)[colKey]?.[idx]; if(!c) return;
+  const qty=c[4]?Number(c[4]).toLocaleString()+' '+(c[5]||'pcs'):'—';
+  document.getElementById('kb-modal-oid').textContent=c[0]+' — '+c[3];
+  document.getElementById('kb-modal-body').innerHTML=
+    rf('Order ID',c[0])+rf('Date',c[1])+rf('Customer',c[2])+rf('Product',c[3])+
+    rf('Qty',qty)+rf('Age',c[6]+' days')+
+    rf('Stage','<span class="b bb">'+col.label+'</span>')+
+    rf('Type',c[7]?'🔁 Repeat':'🆕 New')+
+    rf('Design Status',badge(c[8]||'active'))+
+    (c[10]?rf('⚠️ Changes','Has specification changes'):'');
+  // Build action buttons safely using DOM
+  const actDiv=document.getElementById('kb-modal-actions');
+  actDiv.innerHTML='';
+  col.actions.forEach(function(a){
+    const isNav=(['design','production','packing','viewdc'].indexOf(a)>=0);
+    const btn=document.createElement('button');
+    btn.className='btn'+(isNav?'':' btn-p');
+    btn.style.fontSize='11px';
+    if(isNav){btn.style.background='var(--s2)';btn.style.border='1px solid var(--bdr)';}
+    btn.textContent=KB_ACTION_LABELS[a]||a;
+    btn.addEventListener('click',function(){kbAct(a,c[0],col.nav);});
+    actDiv.appendChild(btn);
+  });
+  document.getElementById('kb-modal').style.display='flex';
+}
+
+function kbAct(action,oid,nav){
+  document.getElementById('kb-modal').style.display='none';
+  if(['design','production','packing','viewdc'].includes(action)){
+    document.querySelector('.ni[data-p="'+nav+'"]')?.click();
+  } else if(action==='confirm'){toast('Order '+oid+' confirmed ✅ — PRO auto-created');
+  } else if(action==='despatch'){if(confirm('Despatch '+oid+'?'))toast('Despatch initiated for '+oid+' 📄');
+  } else if(action==='dc'){toast('DC generated for '+oid+' 📄');
+  } else if(action==='wa'){toast('WhatsApp update sent for '+oid+' 📲');
+  } else if(action==='slip'){toast('Packing slip generated for '+oid+' 📋');
+  } else {toast(KB_ACTION_LABELS[action]+' — '+oid);}
+}
+
+function kbFilter(){
+  const cust=document.getElementById('kb-cust')?.value||'';
+  const prod=document.getElementById('kb-prod')?.value||'';
+  const age=document.getElementById('kb-age')?.value||'';
+  const filtered={};
+  KB_COLS.forEach(col=>{
+    filtered[col.key]=(KB[col.key]||[]).filter(c=>
+      (!cust||c[2]===cust)&&(!prod||c[3]===prod)&&
+      (!age||(age==='old'?c[6]>30:Number(c[6])<=Number(age)))
+    );
+  });
+  kbRenderBoard(filtered);
+}
+
+function kbClear(){
+  ['kb-cust','kb-prod','kb-age'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  kbRenderBoard(KB);
+}
+
+function kbNavCol(p,tab,e){
+  e&&e.stopPropagation();
+  document.querySelector('.ni[data-p="'+p+'"]')?.click();
+  if(tab) setTimeout(()=>typeof owTab==='function'&&owTab(tab),150);
+}
+
+function initKanban(){kbRenderBoard(KB);}
+
+
+// ── PRODUCTION WORKFLOW ───────────────────────────────────
+var PW_STEP_MAP={'Machine':['PRT','COAT','RW','PACK'],'Sheet':['PRT','COAT','LAM','PUN','PACK'],'Direct':['PACK'],'':['PRT','COAT','LAM','PUN','PACK']};
+var pwState={};
+function pwGetSteps(t){return PW_STEP_MAP[t]||PW_STEP_MAP.Sheet;}
+function pwGetState(pro){
+  var id=pro[0];
+  if(pwState[id]) return pwState[id];
+  var steps=pwGetSteps(pro[14]||'Sheet');
+  var age=pro[1]?Math.max(0,Math.round((new Date('2026-10-04')-new Date(pro[1]))/86400000)):3;
+  var done=Math.min(Math.floor(age/3),steps.length-1);
+  var objs=steps.map(function(s,i){
+    return {code:s,status:i<done?'done':i===done?'active':'pending',
+      mode:(s!=='PRT'&&s!=='PACK'&&i%3===1)?'jw':'inhouse',
+      jw:(s!=='PRT'&&s!=='PACK'&&i%3===1&&D.ve&&D.ve[i%D.ve.length])?D.ve[i%D.ve.length][1]:'',
+      counter:i<done?Math.round((Number(pro[4])||1000)*1.02):0,
+      wastage:i<done?Math.round((Number(pro[4])||1000)*0.02):0};
+  });
+  pwState[id]={steps:objs};
+  return pwState[id];
+}
+function pwView(v){
+  ['board','tl','tbl'].forEach(function(x){
+    var el=document.getElementById('pwp-'+x),btn=document.getElementById('pwv-'+x);
+    if(el)el.style.display=x===v?'block':'none';
+    if(btn)btn.classList.toggle('on',x===v);
+  });
+  pwRender();
+}
+function pwFilter(){
+  var ppc=(document.getElementById('pw-ppc')||{}).value||'';
+  var q=((document.getElementById('pw-q')||{}).value||'').toLowerCase();
+  return (D.pj||[]).filter(function(j){
+    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
+    if(!pros.length)return false;
+    if(ppc&&j[2]!==ppc)return false;
+    if(q){var hay=[j[0],j[3]].concat(pros.map(function(p){return p[2]+' '+p[3];})).join(' ').toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+}
+function pwRender(){
+  var jobs=pwFilter(),allPros=(D.pp||[]).filter(function(p){return !p[7]&&!p[8];});
+  ['pw-s-jobs','pw-s-pros','pw-s-ppc1','pw-s-ppc2','pw-s-ppc3','pw-s-direct'].forEach(function(id,i){
+    var el=document.getElementById(id); if(!el)return;
+    var v=[jobs.length,allPros.length,
+      (D.pj||[]).filter(function(j){return j[2]==='Machine';}).length,
+      (D.pj||[]).filter(function(j){return j[2]==='Sheet';}).length,
+      0,
+      (D.pj||[]).filter(function(j){return j[2]==='Direct';}).length][i];
+    el.textContent=v;
+  });
+  var vtog=document.querySelector('.pw-vtog.on'),active=vtog?vtog.id.replace('pwv-',''):'board';
+  if(active==='board')pwBoard(jobs);
+  else if(active==='tl')pwTimeline(jobs);
+  else if(active==='tbl')pwTable();
+}
+function pwPPCB(t){
+  if(t==='Machine')return '<span class="jb-ppc ppc-machine">PPC1 Flexo</span>';
+  if(t==='Direct')return '<span class="jb-ppc ppc-direct">PPC4/5 Direct</span>';
+  return '<span class="jb-ppc ppc-sheet">PPC2 Sheet</span>';
+}
+function pwPills(pro){
+  var st=pwGetState(pro),out='<div class="step-track">';
+  st.steps.forEach(function(s,i){
+    var cls=s.status==='done'?'step-done':s.status==='active'?'step-active':'step-pending';
+    var icon=s.status==='done'?'&#10003;':s.status==='active'?'&#9654;':'&middot;';
+    out+='<div class="step-wrap"><div class="step-btn '+cls+'" data-pro="'+pro[0]+'" data-step="'+s.code+'" onclick="pwLogStep(this.dataset.pro,this.dataset.step)">'+icon+' '+s.code+'</div>'+
+      '<div class="step-lbl">'+(s.mode==='jw'?'JW':'IH')+'</div></div>';
+    if(i<st.steps.length-1)out+='<span class="step-arr">&rsaquo;</span>';
+  });
+  return out+'</div>';
+}
+function pwBoard(jobs){
+  var board=document.getElementById('pw-board');if(!board)return;
+  if(!jobs.length){board.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">No active jobs</div>';return;}
+  board.innerHTML=jobs.map(function(j){
+    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
+    var prosH=pros.map(function(pro){
+      var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+(pro[13]?' '+pro[13]:'mm'):'&mdash;';
+      var qty=pro[4]?Number(pro[4]).toLocaleString():'&mdash;';
+      var sheets=pro[5]?Number(pro[5]).toLocaleString()+' sh':'';
+      return '<div class="pro-row">'+
+        '<div class="pro-top">'+
+          '<span class="pro-id">'+pro[0]+'</span>'+
+          '<span class="pro-prod" title="'+pro[2]+'">'+tr(pro[2],26)+'</span>'+
+          '<span class="pro-cust">'+tr(pro[3]||'',14)+'</span>'+
+          '<span class="pro-qty">'+qty+(sheets?' / '+sheets:'')+'</span>'+
+          '<span class="pro-mat">'+tr(pro[10]||'',10)+(pro[11]?' '+pro[11]+'&times;'+pro[12]:'')+'</span>'+
+          '<button class="ab ab-b" style="margin-left:auto;font-size:10px" data-jid="'+j[0]+'" data-pid="'+pro[0]+'" onclick="pwJobCard(this.dataset.jid,this.dataset.pid)">&#x1F4CB; Job Card</button>'+
+          '<button class="ab ab-g" style="font-size:10px" data-pid="'+pro[0]+'" onclick="pwLogStep(this.dataset.pid,null)">+ Step</button>'+
+        '</div>'+pwPills(pro)+'</div>';
+    }).join('');
+    return '<div class="jb-card">'+
+      '<div class="jb-hdr" data-id="'+j[0]+'" onclick="pwToggle(this)">'+
+        '<span class="jb-id">'+j[0]+'</span>'+
+        '<div class="jb-meta">'+
+          '<div style="font-size:12px;font-weight:700">'+tr((j[3]||'').replace(j[0]+' - ','').replace(j[0]+' ',''),48)+'</div>'+
+          '<div class="jb-name">'+j[1]+' &middot; '+pros.length+' PRO'+(pros.length!==1?'s':'')+'</div>'+
+        '</div>'+
+        pwPPCB(j[2])+
+        '<span class="pw-arr" style="color:var(--t3);font-size:18px;margin-left:8px">&or;</span>'+
+      '</div>'+
+      '<div class="jb-body" id="pwjb-'+j[0]+'"><div class="jb-pros">'+prosH+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+function pwToggle(hdr){
+  var id=hdr.dataset.id,body=document.getElementById('pwjb-'+id),arr=hdr.querySelector('.pw-arr');
+  if(!body)return;
+  var hidden=body.style.display==='none';
+  body.style.display=hidden?'block':'none';
+  if(arr)arr.textContent=hidden?'&#8743;':'&#8744;';
+}
+function pwTimeline(jobs){
+  var tl=document.getElementById('pw-tl');if(!tl)return;
+  var ALL=['PRT','COAT','LAM','PUN','RW','SEAL','CUT','PACK'];
+  tl.innerHTML=jobs.map(function(j){
+    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
+    var stepsRow=ALL.map(function(s){
+      var sts=pros.map(function(p){return pwGetState(p).steps.find(function(x){return x.code===s;});});
+      var cls=sts.some(function(x){return x&&x.status==='active';})?'active':sts.some(function(x){return x&&x.status==='done';})?'done':'';
+      return '<div class="tl-step-col '+cls+'">'+s+'</div>';
+    }).join('');
+    var prosRows=pros.map(function(pro){
+      var cur=pwGetState(pro).steps.find(function(s){return s.status==='active';});
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:11px">'+
+        '<span class="mono" style="min-width:70px;color:var(--acc)">'+pro[0]+'</span>'+
+        '<span style="flex:1">'+tr(pro[2],22)+'</span><span style="color:var(--t2)">'+tr(pro[3]||'',14)+'</span>'+
+        '<span style="font-weight:600">'+Number(pro[4]||0).toLocaleString()+'</span>'+
+        '<span class="b '+(cur?'bb':'bg')+'">'+(cur?'&#9654; '+cur.code:'&#10003; Done')+'</span>'+
+        '<button class="ab ab-b" style="font-size:10px" data-pid="'+pro[0]+'" onclick="pwLogStep(this.dataset.pid,null)">+</button>'+
+        '<button class="ab ab-g" style="font-size:10px" data-jid="'+j[0]+'" data-pid="'+pro[0]+'" onclick="pwJobCard(this.dataset.jid,this.dataset.pid)">&#x1F4CB;</button>'+
+      '</div>';
+    }).join('');
+    return '<div class="tl-card"><div class="tl-hdr"><span style="font-size:13px;font-weight:800;font-family:monospace">'+j[0]+'</span>'+
+      '<span style="font-size:11px;color:#8e9ab5;flex:1;margin-left:10px">'+tr(j[3],38)+'</span>'+pwPPCB(j[2])+'</div>'+
+      '<div class="tl-steps-row">'+stepsRow+'</div><div class="tl-body">'+prosRows+'</div></div>';
+  }).join('');
+}
+function pwTable(){
+  var q=((document.getElementById('pw-q')||{}).value||'').toLowerCase();
+  var items=(D.pp||[]).filter(function(p){return !p[7]&&!p[8]&&(!q||[p[0],p[2],p[3],p[9]].join(' ').toLowerCase().includes(q));});
+  var slice=pgr(items,'pw-tbl','pwTable','pw-tbl-pg','pw-tbl-cnt');
+  document.getElementById('pw-tbl-body').innerHTML=slice.map(function(pro){
+    var cur=pwGetState(pro).steps.find(function(s){return s.status==='active';});
+    var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]:'&mdash;';
+    return '<tr><td class="mono">'+pro[0]+'</td><td class="mono" style="font-size:10px">'+pro[9]+'</td>'+
+      '<td>'+pwPPCB(pro[14]||'Sheet')+'</td><td title="'+pro[2]+'">'+tr(pro[2],22)+'</td>'+
+      '<td>'+tr(pro[3]||'',16)+'</td><td style="font-weight:600">'+Number(pro[4]||0).toLocaleString()+'</td>'+
+      '<td>'+Number(pro[5]||0).toLocaleString()+'</td><td>'+sz+'</td>'+
+      '<td>'+(cur?'<span class="b bb">&#9654; '+cur.code+'</span>':'<span class="b bg">&#10003; Done</span>')+'</td>'+
+      '<td><button class="ab ab-g" data-pid="'+pro[0]+'" onclick="pwLogStep(this.dataset.pid,null)">+ Step</button> '+
+      '<button class="ab ab-b" data-jid="'+pro[9]+'" data-pid="'+pro[0]+'" onclick="pwJobCard(this.dataset.jid,this.dataset.pid)">&#x1F4CB;</button></td></tr>';
+  }).join('');
+}
+function pwLogStep(proId,stepCode){
+  var pro=(D.pp||[]).find(function(p){return p[0]===proId;});if(!pro)return;
+  var st=pwGetState(pro),steps=pwGetSteps(pro[14]||'Sheet');
+  var cur=stepCode?st.steps.find(function(s){return s.code===stepCode;}):st.steps.find(function(s){return s.status==='active';});
+  var machOpts=(D.ma||[]).map(function(m){return '<option>'+m[0]+'</option>';}).join('');
+  var vendOpts=(D.ve||[]).filter(function(v){return v[3]==='vendor';}).map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join('');
+  var stepOpts=steps.map(function(s){return '<option value="'+s+'" '+(cur&&cur.code===s?'selected':'')+'>'+s+'</option>';}).join('');
+  document.getElementById('pw-modal-title').textContent=(stepCode||'Log')+' \u2014 Process Step';
+  document.getElementById('pw-modal-sub').textContent=proId+' \u00b7 '+tr(pro[2],26)+' \u00b7 '+Number(pro[4]||0).toLocaleString()+' pcs';
+  document.getElementById('pw-modal-body').innerHTML=
+    '<div style="background:var(--s2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;display:flex;gap:16px;flex-wrap:wrap">'+
+    '<div>PRO: <strong>'+proId+'</strong></div><div>Job: <strong>'+pro[9]+'</strong></div>'+
+    '<div>Qty: <strong>'+Number(pro[4]||0).toLocaleString()+'</strong></div>'+
+    '<div>Sheets: <strong>'+Number(pro[5]||0).toLocaleString()+'</strong></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'+
+    '<div><div class="nof-lbl">STEP</div><select class="f" id="pm-step" style="width:100%" onchange="pwModeChg()">'+stepOpts+'</select></div>'+
+    '<div><div class="nof-lbl">MODE</div><select class="f" id="pm-mode" style="width:100%" onchange="pwModeChg()"><option value="inhouse">In-House</option><option value="jw">Jobworker</option></select></div>'+
+    '<div id="pm-mw"><div class="nof-lbl">MACHINE</div><select class="f" id="pm-mach" style="width:100%">'+machOpts+'</select></div>'+
+    '<div id="pm-jw" style="display:none"><div class="nof-lbl">JOBWORKER</div><select class="f" id="pm-vend" style="width:100%"><option value="">&mdash; Select &mdash;</option>'+vendOpts+'</select></div>'+
+    '<div><div class="nof-lbl">COUNTER</div><input class="f" id="pm-cnt" type="number" style="width:100%" placeholder="Output qty" value="'+(cur&&cur.counter||'')+'"></div>'+
+    '<div><div class="nof-lbl">WASTAGE</div><input class="f" id="pm-wst" type="number" style="width:100%" value="'+(cur&&cur.wastage||'')+'"></div>'+
+    '<div><div class="nof-lbl">STATUS</div><select class="f" id="pm-stat" style="width:100%"><option value="active">&#9654; In Progress</option><option value="done">&#10003; Completed</option><option value="pending">Not Started</option></select></div>'+
+    '<div><div class="nof-lbl">NOTES</div><input class="f" id="pm-note" style="width:100%" placeholder="Notes\u2026"></div></div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--bdr);padding-top:10px">'+
+    '<button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closePwModal()">Cancel</button>'+
+    '<button class="btn btn-p" data-pid="'+proId+'" onclick="pwSave(this.dataset.pid)">&#10003; Save</button></div>';
+  document.getElementById('pw-proc-modal').style.display='flex';
+}
+function pwModeChg(){
+  var m=(document.getElementById('pm-mode')||{}).value;
+  var mw=document.getElementById('pm-mw'),jw=document.getElementById('pm-jw');
+  if(mw)mw.style.display=m==='inhouse'?'block':'none';
+  if(jw)jw.style.display=m==='jw'?'block':'none';
+}
+function closePwModal(){document.getElementById('pw-proc-modal').style.display='none';}
+function pwSave(proId){
+  var step=(document.getElementById('pm-step')||{}).value;
+  var stat=(document.getElementById('pm-stat')||{}).value;
+  var cnt=(document.getElementById('pm-cnt')||{}).value;
+  var wst=(document.getElementById('pm-wst')||{}).value;
+  var mode=(document.getElementById('pm-mode')||{}).value;
+  var st=pwState[proId];
+  if(st){var s=st.steps.find(function(x){return x.code===step;});
+    if(s){s.status=stat;s.counter=Number(cnt)||0;s.wastage=Number(wst)||0;s.mode=mode;}}
+  closePwModal();pwRender();toast('Step '+step+' saved for '+proId+' \u2705');
+}
+function pwJobCard(jobId,proId){
+  var job=(D.pj||[]).find(function(j){return j[0]===jobId;});
+  var jobPros=(D.pp||[]).filter(function(p){return p[9]===jobId;});
+  var pro=(D.pp||[]).find(function(p){return p[0]===proId;});
+  if(!pro)return;
+  var st=pwGetState(pro);
+  var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+(pro[13]?' '+pro[13]:'mm'):'&mdash;';
+  document.getElementById('jc-title').textContent='Job Card \u2014 '+proId;
+  document.getElementById('jc-sub').textContent=(job?tr(job[3],48):jobId)+' \u00b7 '+tr(pro[2],30);
+  var stRows=st.steps.map(function(s){
+    return '<tr><td style="font-weight:700">'+s.code+'</td>'+
+      '<td>'+(s.mode==='jw'?'Jobworker':'In-House')+'</td>'+
+      '<td>'+(s.mode==='jw'?tr(s.jw||'&mdash;',18):(D.ma&&D.ma[0]?D.ma[0][0]:'&mdash;'))+'</td>'+
+      '<td><span class="b '+(s.status==='done'?'bg':s.status==='active'?'bb':'bd')+'">'+s.status+'</span></td>'+
+      '<td>'+(s.counter?Number(s.counter).toLocaleString():'&mdash;')+'</td>'+
+      '<td>'+(s.wastage?Number(s.wastage).toLocaleString():'&mdash;')+'</td></tr>';
+  }).join('');
+  var splitH=jobPros.length>1
+    ?jobPros.map(function(p,i){return '<div style="padding:4px 0;border-bottom:1px solid var(--bdr);font-size:12px"><strong class="mono">'+p[0]+'</strong> &mdash; '+tr(p[2],26)+' &mdash; Line <strong>'+'ABCDE'[i]+'</strong></div>';}).join('')
+    :'<div style="font-size:12px;color:var(--t2)">Single line &mdash; no split</div>';
+  var pktRows=[1,2,3].map(function(n){
+    return '<tr><td style="padding:5px 8px;border:1px solid #bbf7d0;text-align:center">PKT-00'+n+'</td>'+
+      '<td style="padding:5px 8px;border:1px solid #bbf7d0;font-family:monospace;font-size:9px">INV-'+proId+'-PKT00'+n+'</td>'+
+      '<td style="padding:5px 8px;border:1px solid #bbf7d0"><input type="number" style="width:70px;border:1px solid var(--bdr);border-radius:4px;padding:3px 6px"></td>'+
+      '<td style="padding:5px 8px;border:1px solid #bbf7d0"><input style="width:100%;border:1px solid var(--bdr);border-radius:4px;padding:3px 6px"></td></tr>';
+  }).join('');
+  document.getElementById('jc-body').innerHTML=
+    '<div class="jc-sec">PRODUCTION ORDER</div>'+
+    '<div class="jc-grid">'+
+    '<div class="jc-field"><span class="jc-lbl">PRO ID</span><span class="jc-val mono">'+proId+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Job ID</span><span class="jc-val mono">'+jobId+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Date</span><span class="jc-val">'+pro[1]+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Product</span><span class="jc-val">'+tr(pro[2],28)+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Customer</span><span class="jc-val">'+tr(pro[3]||'&mdash;',22)+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Material</span><span class="jc-val">'+tr(pro[10]||'&mdash;',16)+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Size</span><span class="jc-val">'+sz+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Qty</span><span class="jc-val" style="color:var(--acc);font-size:16px">'+Number(pro[4]||0).toLocaleString()+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Sheet Qty</span><span class="jc-val">'+Number(pro[5]||0).toLocaleString()+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Ups</span><span class="jc-val">'+pro[6]+'</span></div>'+
+    '<div class="jc-field"><span class="jc-lbl">Job Type</span><span class="jc-val">'+pwPPCB(pro[14]||'Sheet')+'</span></div>'+
+    '</div>'+
+    '<div class="jc-sec">PROCESS STEPS</div>'+
+    '<table class="jc-steps-tbl"><thead><tr><th>Step</th><th>Mode</th><th>Machine/Vendor</th><th>Status</th><th>Counter</th><th>Wastage</th></tr></thead><tbody>'+stRows+'</tbody></table>'+
+    '<div class="jc-sec">SPLIT LINES</div><div style="background:var(--s2);border-radius:8px;padding:10px 14px;margin-bottom:14px">'+splitH+'</div>'+
+    '<div class="jc-sec">PACKING SLIP <span style="font-size:10px;color:var(--ylw);margin-left:6px">&#9660; Fill at last stage</span></div>'+
+    '<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:8px;padding:14px">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">'+
+    '<div><div class="jc-lbl">PACKED BY</div><input class="f" style="width:100%" placeholder="Name\u2026"></div>'+
+    '<div><div class="jc-lbl">PACKING DATE</div><input class="f" type="date" style="width:100%"></div>'+
+    '<div><div class="jc-lbl">TOTAL PACKETS</div><input class="f" type="number" style="width:100%"></div></div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">'+
+    '<thead style="background:#d1fae5"><tr><th style="padding:5px 8px;border:1px solid #bbf7d0">Packet #</th>'+
+    '<th style="padding:5px 8px;border:1px solid #bbf7d0">QR Code ID</th>'+
+    '<th style="padding:5px 8px;border:1px solid #bbf7d0">Qty</th>'+
+    '<th style="padding:5px 8px;border:1px solid #bbf7d0">Remarks</th></tr></thead><tbody>'+pktRows+'</tbody></table>'+
+    '<div style="text-align:right"><button class="btn btn-p" onclick="toast(\'Packing slip saved \u2014 packets in FG Inventory \u2705\');closeJcModal()">&#10003; Submit &mdash; Add to FG Inventory</button></div></div>';
+  document.getElementById('pw-jc-modal').style.display='flex';
+}
+function closeJcModal(){document.getElementById('pw-jc-modal').style.display='none';}
+function pwNewJob(){toast('New Job \u2014 scan job card or enter manually');}
+function initProdWF(){pwView('board');}
+
+// ── YEAR DROPDOWNS ──
+function fillYrs(elId, data, idx){
+  const yrs=[...new Set(data.map(r=>(r[idx]||'').slice(0,4)))].filter(Boolean).sort().reverse();
+  const el=document.getElementById(elId); if(!el)return;
+  yrs.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;el.appendChild(o);});
+}
+function initApp(){
+  OWF.active=D.oa; OWF.on_hold=D.oh; OWF.desp=D.od; OWF.cancelled=D.oc; OWF.captured=D.oa.slice(0,20);
+  KB=D.kb;
+  fillYrs('o-yr', D.o, 1);
+  // ── INIT ──
+  R.dash();
+  R.machines();
+}
+
+// Start loading — when done, init the app
+loadData().then(()=>initApp()).catch(e=>console.error('Init error:',e));
+</script>
+
+<div id="new-order-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;padding:16px"></div>
+</body>
+</html>
