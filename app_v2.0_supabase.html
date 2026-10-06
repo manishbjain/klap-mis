@@ -1246,7 +1246,9 @@ function rf(l,v){return v!=null&&v!==''?`<div class="rf"><div class="rl">${l}</d
 // HELPERS
 const bmap={active:'bg',complete:'bg',cancelled:'br',on_hold:'by',
   file_ready:'bg',in_process:'by',internal_approval:'bp',to_begin:'bo',
-  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp'};
+  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp',
+  planned:'bb',in_production:'bo',packing:'bp',despatched:'bg',
+  legacy:'bd',pending:'by',done:'bg',skipped:'bd'};
 const badge=s=>s?`<span class="b ${bmap[s]||'bd'}">${s.replace(/_/g,' ')}</span>`:'-';
 const tr=(s,n=26)=>s?(s.length>n?s.slice(0,n)+'…':s):'—';
 
@@ -1309,7 +1311,7 @@ R.dash=function(){
   const ro=D.o.filter(o=>o[5]==='active').slice(0,8);
   document.getElementById('d-ords').innerHTML=`<table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Status</th></tr></thead><tbody>${ro.map(o=>`<tr><td class="mono">${o[0]}</td><td>${tr(o[2],18)}</td><td>${tr(o[3],22)}</td><td>${badge(o[5])}</td></tr>`).join('')}</tbody></table>`;
   const rp=D.pr.slice(0,8);
-  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${p[6]==='1'||p[9]==='cancelled'?badge('cancelled'):p[7]==='1'?badge('on_hold'):p[9]==='complete'?badge('complete'):badge('active')}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${badge(p[6]==='1'?'cancelled':p[9]||'active')}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('d-dq-cnt').textContent=D.dq.length+' items';
   document.getElementById('d-dq').innerHTML=D.dq.length?`<table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Stage</th></tr></thead><tbody>${D.dq.map(p=>`<tr><td class="mono">${p[0]||'—'}</td><td>${tr(p[1],26)}</td><td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:24px;text-align:center;color:var(--t3)">✅ No items in design queue</div>';
   const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -1377,10 +1379,10 @@ R.pros=function(p){
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td>${p[6]==='1'||p[9]==='cancelled'?badge('cancelled'):p[7]==='1'?badge('on_hold'):p[9]==='complete'?badge('complete'):badge('active')}</td>
+    <td>${badge(p[6]==='1'?'cancelled':p[9]||'active')}</td>
   </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
 };
-function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',p[6]==='1'||p[9]==='cancelled'?badge('cancelled'):p[7]==='1'?badge('on_hold'):p[9]==='complete'?badge('complete'):badge('active')),p[0]);}
+function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',badge(p[6]==='1'?'cancelled':p[9]||'active')),p[0]);}
 
 R.jobs=function(p){
   if(p)pp.jobs=p;
