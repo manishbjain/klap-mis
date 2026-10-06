@@ -430,7 +430,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="cancelled">Cancelled</option><option value="on_hold">On Hold</option></select>
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="complete">Complete</option><option value="cancelled">Cancelled</option><option value="on_hold">On Hold</option></select>
         <input class="f" id="pr-q" placeholder="Search…" oninput="R.pros(1)">
       </div>
     </div>
@@ -1069,15 +1069,16 @@ async function loadData(){
 
     // D.pr: [id, date, product_name, customer_name, '', qty, is_cancelled, is_on_hold, order_id]
     D.pr=pros.map(p=>[
-      p.id,
-      p.date,
-      prodMap[p.product_id]?.product_name||p.product_id||'—',
-      prodMap[p.product_id]?.customer_name||'—',
-      '',
-      p.qty||'',
-      p.is_cancelled?'1':'0',
-      p.is_on_hold?'1':'0',
-      p.order_id||''
+      p.id,           // [0] PRO ID
+      p.date,         // [1] date
+      prodMap[p.product_id]?.product_name||p.product_id||'—', // [2] product name
+      prodMap[p.product_id]?.customer_name||'—', // [3] customer name
+      '',             // [4] legacy empty
+      p.qty||'',      // [5] qty
+      p.is_cancelled?'1':'0',  // [6] is_cancelled
+      p.is_on_hold?'1':'0',    // [7] is_on_hold
+      p.order_id||'', // [8] order_id
+      p.pro_status||'legacy'   // [9] pro_status
     ]);
     D.PT=pros.length;
 
@@ -1285,7 +1286,7 @@ function wt(prefix,el,show){
 const R={};
 
 R.dash=function(){
-  const ao=D.OA, ap=D.pr.filter(p=>p[6]!=='1'&&p[7]!=='1').length;
+  const ao=D.OA, ap=D.pr.filter(p=>p[6]!=='1'&&p[9]!=='complete'&&p[9]!=='cancelled').length;
   const dql=D.dq.length, fr=D.pd.filter(p=>p[3]==='file_ready').length;
   const comp=D.o.filter(o=>o[5]==='complete').length;
   document.getElementById('d-stats').innerHTML=`
@@ -1308,7 +1309,7 @@ R.dash=function(){
   const ro=D.o.filter(o=>o[5]==='active').slice(0,8);
   document.getElementById('d-ords').innerHTML=`<table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Status</th></tr></thead><tbody>${ro.map(o=>`<tr><td class="mono">${o[0]}</td><td>${tr(o[2],18)}</td><td>${tr(o[3],22)}</td><td>${badge(o[5])}</td></tr>`).join('')}</tbody></table>`;
   const rp=D.pr.slice(0,8);
-  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${p[6]==='1'?badge('cancelled'):p[7]==='1'?badge('on_hold'):badge('active')}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${p[6]==='1'||p[9]==='cancelled'?badge('cancelled'):p[7]==='1'?badge('on_hold'):p[9]==='complete'?badge('complete'):badge('active')}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('d-dq-cnt').textContent=D.dq.length+' items';
   document.getElementById('d-dq').innerHTML=D.dq.length?`<table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Stage</th></tr></thead><tbody>${D.dq.map(p=>`<tr><td class="mono">${p[0]||'—'}</td><td>${tr(p[1],26)}</td><td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:24px;text-align:center;color:var(--t3)">✅ No items in design queue</div>';
   const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -1371,15 +1372,15 @@ R.pros=function(p){
   if(p)pp.pros=p;
   const st=document.getElementById('pr-st')?.value||'';
   const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[6]==='1':st==='on_hold'?x[7]==='1':x[6]!=='1'&&x[7]!=='1'))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[6]==='1'||x[9]==='cancelled':st==='on_hold'?x[7]==='1':st==='complete'?x[9]==='complete':x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td>${p[6]==='1'?badge('cancelled'):p[7]==='1'?badge('on_hold'):badge('active')}</td>
+    <td>${p[6]==='1'||p[9]==='cancelled'?badge('cancelled'):p[7]==='1'?badge('on_hold'):p[9]==='complete'?badge('complete'):badge('active')}</td>
   </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
 };
-function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',p[6]==='1'?badge('cancelled'):p[7]==='1'?badge('on_hold'):badge('active')),p[0]);}
+function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',p[6]==='1'||p[9]==='cancelled'?badge('cancelled'):p[7]==='1'?badge('on_hold'):p[9]==='complete'?badge('complete'):badge('active')),p[0]);}
 
 R.jobs=function(p){
   if(p)pp.jobs=p;
@@ -1483,7 +1484,7 @@ function rcDel(i){const el=document.getElementById('rc-'+i);if(el)el.remove();if
 R.packing=function(p){
   if(p)pp.packing=p;
   const q=(document.getElementById('wpk-sq')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[6]!=='1'&&x[7]!=='1'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('wpk-a').textContent=items.length;
   document.getElementById('wpk-d').textContent=Math.round(items.length*0.15);
   document.getElementById('wpk-s').textContent=items.length;
@@ -1501,7 +1502,7 @@ R.packing=function(p){
 R.inventory=function(p){
   if(p)pp.inventory=p;
   const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[6]!=='1'&&x[7]!=='1'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('winv-s').textContent=items.length;
   document.getElementById('winv-r').textContent=Math.round(items.length*0.3);
   document.getElementById('winv-d').textContent=D.o.filter(o=>o[5]==='complete').length;
