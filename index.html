@@ -1286,7 +1286,7 @@ function wt(prefix,el,show){
 const R={};
 
 R.dash=function(){
-  const ao=D.OA, ap=D.pr.filter(p=>p[6]!=='1'&&p[9]!=='complete'&&p[9]!=='cancelled').length;
+  const ao=D.OA, ap=D.pr.filter(p=>p[9]==='planned'||p[9]==='in_production').length;
   const dql=D.dq.length, fr=D.pd.filter(p=>p[3]==='file_ready').length;
   const comp=D.o.filter(o=>o[5]==='complete').length;
   document.getElementById('d-stats').innerHTML=`
@@ -1372,7 +1372,7 @@ R.pros=function(p){
   if(p)pp.pros=p;
   const st=document.getElementById('pr-st')?.value||'';
   const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[6]==='1'||x[9]==='cancelled':st==='on_hold'?x[7]==='1':st==='complete'?x[9]==='complete':x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[6]==='1'||x[9]==='cancelled':st==='on_hold'?x[7]==='1':st==='complete'?x[9]==='complete':x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'&&x[9]!=='legacy'))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
@@ -1484,7 +1484,7 @@ function rcDel(i){const el=document.getElementById('rc-'+i);if(el)el.remove();if
 R.packing=function(p){
   if(p)pp.packing=p;
   const q=(document.getElementById('wpk-sq')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>x[9]==='packing'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('wpk-a').textContent=items.length;
   document.getElementById('wpk-d').textContent=Math.round(items.length*0.15);
   document.getElementById('wpk-s').textContent=items.length;
@@ -1502,7 +1502,7 @@ R.packing=function(p){
 R.inventory=function(p){
   if(p)pp.inventory=p;
   const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>x[9]==='packing'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('winv-s').textContent=items.length;
   document.getElementById('winv-r').textContent=Math.round(items.length*0.3);
   document.getElementById('winv-d').textContent=D.o.filter(o=>o[5]==='complete').length;
