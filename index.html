@@ -389,7 +389,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Products</h3><span class="tc-cnt" id="pd-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="file_ready">File Ready</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="to_begin">To Begin</option></select>
+        <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option><option value="file_ready">File Ready</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pd-q" placeholder="Search…" oninput="R.products(1)">
       </div>
     </div>
@@ -516,7 +516,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 
 <div id="pg-wflow-design" class="pg">
   <div class="tc"><div class="th"><h3>Design Workflow</h3><span style="font-size:11px;color:var(--t2);margin-left:6px">Design queue is live — full workflow Phase 2</span></div>
-  <div style="padding:40px;text-align:center;color:var(--t3)"><div style="font-size:40px;margin-bottom:12px">✏️</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Design Workflow</div><div style="font-size:12px">Manage artwork from to_begin → in_process → internal_approval → file_ready. See Design Queue under Orders for current data.</div>
+  <div style="padding:40px;text-align:center;color:var(--t3)"><div style="font-size:40px;margin-bottom:12px">✏️</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Design Workflow</div><div style="font-size:12px">Manage artwork: To Process → In Process → Internal Approval → On Approval → Approved → File Ready. See Design Queue under Orders for current data.</div>
   <button class="btn btn-p" style="margin-top:14px" onclick="document.querySelector('.ni[data-p=dq]')?.click()">→ Go to Design Queue</button></div></div>
 </div>
 
@@ -906,32 +906,41 @@ async function loadData(){
     D.OA=D.oa.length;
 
     // D.kb (kanban): group active orders by derived workflow stage
-    // Stage logic:
-    //   in_design      → product design_status NOT file_ready
-    //   to_create_pro  → product file_ready, no active PRO linked
-    //   in_production  → PRO exists with pro_status=in_production
-    //   in_packing     → PRO pro_status=packing
-    //   to_despatch    → PRO pro_status=complete (order still active)
+    // Stage logic (per user spec):
+    //   in_design        → product design_status NOT file_ready/approved
+    //   to_create_pro    → design ready, product NOT in FG stock, no active PRO linked
+    //   to_despatch      → design ready AND product IS in FG stock (available), OR PRO complete
+    //   in_production    → active PRO with pro_status=in_production
+    //   in_packing       → active PRO with pro_status=packing (all processes complete)
     const kbGroups={in_design:[],to_create_pro:[],in_production:[],in_packing:[],to_despatch:[]};
     // Map order_id → highest PRO stage (ignore cancelled PROs)
     const orderProStatus={};
-    pros.filter(p=>!p.is_cancelled).forEach(p=>{
+    pros.filter(p=>!p.is_cancelled&&!p.is_on_hold).forEach(p=>{
       if(!p.order_id) return;
       const rank={in_production:1,packing:2,complete:3};
       const cur=orderProStatus[p.order_id];
       const newR=rank[p.pro_status]||0;
       if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status};
     });
+    // FG stock: set of product_ids with available stock
+    const fgStockProducts=new Set();
+    fg_inv.forEach(r=>{
+      if(r.status==='available'||r.status==='in_stock'||(!r.status)){
+        const pro=pros.find(p=>p.id===r.prod_order_id);
+        if(pro?.product_id) fgStockProducts.add(pro.product_id);
+      }
+    });
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
       const oid=o[0];
-      const prod=prodMap[orders.find(x=>x.id===oid)?.product_id];
-      const dsReady=!prod||prod.design_status==='file_ready'||prod.design_status==='File Ready';
+      const orderRow=orders.find(x=>x.id===oid);
+      const prod=prodMap[orderRow?.product_id];
+      const dsReady=!prod||prod.design_status==='file_ready'||prod.design_status==='File Ready'||prod.design_status==='approved';
+      const inStock=orderRow?.product_id&&fgStockProducts.has(orderRow.product_id);
       const proStage=orderProStatus[oid]?.ps;
       if(!dsReady) kbGroups.in_design.push(o);
-      else if(!proStage) kbGroups.to_create_pro.push(o);
       else if(proStage==='in_production') kbGroups.in_production.push(o);
       else if(proStage==='packing') kbGroups.in_packing.push(o);
-      else if(proStage==='complete') kbGroups.to_despatch.push(o);
+      else if(proStage==='complete'||inStock) kbGroups.to_despatch.push(o);
       else kbGroups.to_create_pro.push(o);
     });
     D.kb={...kbGroups,despatched:D.od.slice(0,10)};
@@ -2070,7 +2079,7 @@ let KB=D.kb;
 const KB_COLS=[
   {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c0', nav:'wflow-design',
    actions:['design','assign']},
-  {key:'to_create_pro',label:'To Create PRO',     ic:'📋', cls:'kb-c1', nav:'wflow-prod',
+  {key:'to_create_pro',label:'To Create Production Order', ic:'📋', cls:'kb-c1', nav:'wflow-prod',
    actions:['pro','production']},
   {key:'in_production',label:'In Production',     ic:'⚙️', cls:'kb-c2', nav:'wflow-prod',
    actions:['production','pro']},
