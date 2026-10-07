@@ -375,7 +375,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Design Queue</h3><span class="tc-cnt" id="dq-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="dq-st" onchange="R.dq(1)"><option value="">All Stages</option><option value="to_begin">To Begin</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option></select>
+        <select class="f" id="dq-st" onchange="R.dq(1)"><option value="">All Stages</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option></select>
         <input class="f" id="dq-q" placeholder="Search…" oninput="R.dq(1)">
       </div>
     </div>
@@ -414,7 +414,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="cancelled">Cancelled</option><option value="on_hold">On Hold</option></select>
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="in_packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pr-q" placeholder="Search…" oninput="R.pros(1)">
       </div>
     </div>
@@ -625,7 +625,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option></select>
+        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="To Send">To Send</option><option value="Job Order Sent">Job Order Sent</option><option value="Job Approved">Job Approved</option><option value="Part Processed">Part Processed</option><option value="Complete">Complete</option><option value="Moved">Moved</option><option value="Cancelled">Cancelled</option></select>
         <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)">
       </div>
     </div>
@@ -905,39 +905,50 @@ async function loadData(){
     D.oc=ordersExt.filter(o=>o[5]==='cancelled').map(o=>o.slice(0,7));
     D.OA=D.oa.length;
 
-    // D.kb (kanban): group active orders by PRO status
-    // Build a map: order_id -> highest PRO stage
-    // pro_status values: in_production, packing, complete
-    const kbGroups={to_confirm:[],in_production:[],in_packing:[],ready_despatch:[]};
+    // D.kb (kanban): group active orders by derived workflow stage
+    // Stage logic:
+    //   in_design      → product design_status NOT file_ready
+    //   to_create_pro  → product file_ready, no active PRO linked
+    //   in_production  → PRO exists with pro_status=in_production
+    //   in_packing     → PRO pro_status=packing
+    //   to_despatch    → PRO pro_status=complete (order still active)
+    const kbGroups={in_design:[],to_create_pro:[],in_production:[],in_packing:[],to_despatch:[]};
+    // Map order_id → highest PRO stage (ignore cancelled PROs)
     const orderProStatus={};
     pros.filter(p=>!p.is_cancelled).forEach(p=>{
       if(!p.order_id) return;
-      const cur=orderProStatus[p.order_id];
       const rank={in_production:1,packing:2,complete:3};
+      const cur=orderProStatus[p.order_id];
       const newR=rank[p.pro_status]||0;
-      if(!cur||newR>(rank[cur]||0)) orderProStatus[p.order_id]=p.pro_status;
+      if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status};
     });
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
-      const ps=orderProStatus[o[0]];
-      if(!ps||ps==='pending')kbGroups.to_confirm.push(o);
-      else if(ps==='in_production')kbGroups.in_production.push(o);
-      else if(ps==='packing')kbGroups.in_packing.push(o);
-      else if(ps==='complete')kbGroups.ready_despatch.push(o);
-      else kbGroups.to_confirm.push(o);
+      const oid=o[0];
+      const prod=prodMap[orders.find(x=>x.id===oid)?.product_id];
+      const dsReady=!prod||prod.design_status==='file_ready'||prod.design_status==='File Ready';
+      const proStage=orderProStatus[oid]?.ps;
+      if(!dsReady) kbGroups.in_design.push(o);
+      else if(!proStage) kbGroups.to_create_pro.push(o);
+      else if(proStage==='in_production') kbGroups.in_production.push(o);
+      else if(proStage==='packing') kbGroups.in_packing.push(o);
+      else if(proStage==='complete') kbGroups.to_despatch.push(o);
+      else kbGroups.to_create_pro.push(o);
     });
     D.kb={...kbGroups,despatched:D.od.slice(0,10)};
 
-    // D.pr: [id, date, product_name, customer_name, '', qty, is_cancelled, is_on_hold, order_id]
-    // D.pr: [id, date, product_name, customer_name, qty, is_cancelled(bool), is_on_hold(bool), order_id]
+    // D.pr: [id, date, product_name, customer_name, qty, is_cancelled(bool), is_on_hold(bool), order_id, pro_status, job_id]
+    // Active sub-status: to_process (no job_id), in_production, in_packing (packing), complete
     D.pr=pros.map(p=>[
-      p.id,
-      p.date,
-      prodMap[p.product_id]?.product_name||p.product_id||'—',
-      prodMap[p.product_id]?.customer_name||'—',
-      p.qty||'',
-      !!p.is_cancelled,
-      !!p.is_on_hold,
-      p.order_id||''
+      p.id,           // 0
+      p.date,         // 1
+      prodMap[p.product_id]?.product_name||p.job_name||p.product_id||'—', // 2
+      prodMap[p.product_id]?.customer_name||'—', // 3
+      p.qty||'',      // 4
+      !!p.is_cancelled, // 5
+      !!p.is_on_hold,   // 6
+      p.order_id||'', // 7
+      p.pro_status||'', // 8
+      p.job_id||''    // 9
     ]);
     D.PT=pros.length;
 
@@ -946,7 +957,7 @@ async function loadData(){
     D.PDT=products.length;
 
     // D.dq: products in design queue (not file_ready, not cancelled)
-    const dqStatuses=['to_begin','in_process','internal_approval','customer_approval'];
+    const dqStatuses=['to_process','in_process','internal_approval','on_approval','approved'];
     D.dq=products.filter(p=>dqStatuses.includes(p.design_status)).map(p=>[p.id,p.product_name||'',p.customer_name||'',p.design_status||'']);
 
     // D.cu: customers [id, name, brand, alias]
@@ -1101,7 +1112,15 @@ function rf(l,v){return v!=null&&v!==''?`<div class="rf"><div class="rl">${l}</d
 // HELPERS
 const bmap={active:'bg',complete:'bg',cancelled:'br',on_hold:'by',
   file_ready:'bg',in_process:'by',internal_approval:'bp',to_begin:'bo',
-  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp'};
+  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp',
+  // PRO sub-statuses
+  to_process:'bo',in_production:'bp',in_packing:'by',
+  // design statuses
+  to_process:'bo',on_approval:'bp',approved:'bg',
+  // kanban stages
+  to_create_pro:'bo',to_despatch:'bp',
+  // process statuses
+  'To Send':'bo','Job Order Sent':'by','Job Approved':'bp','Part Processed':'by','Complete':'bg','Moved':'bg','Cancelled':'br'};
 const badge=s=>s?`<span class="b ${bmap[s]||'bd'}">${s.replace(/_/g,' ')}</span>`:'-';
 const tr=(s,n=26)=>s?(s.length>n?s.slice(0,n)+'…':s):'—';
 
@@ -1223,19 +1242,39 @@ R.customers=function(p){
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
 };
 
+function proSubStatus(p){
+  // p[5]=is_cancelled, p[6]=is_on_hold, p[8]=pro_status, p[9]=job_id
+  if(p[5]) return badge('cancelled');
+  if(p[6]) return badge('on_hold');
+  const ps=p[8];
+  if(ps==='packing') return badge('in_packing');
+  if(ps==='in_production') return badge('in_production');
+  if(ps==='complete') return badge('complete');
+  // no pro_status → to_process (no job assigned yet)
+  return p[9]?badge('in_production'):badge('to_process');
+}
 R.pros=function(p){
   if(p)pp.pros=p;
   const st=document.getElementById('pr-st')?.value||'';
   const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[5]:st==='on_hold'?x[6]:!x[5]&&!x[6]))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>{
+    if(st==='cancelled') return x[5];
+    if(st==='on_hold')   return x[6];
+    if(st==='active')    return !x[5]&&!x[6]&&(x[8]!=='complete');
+    if(st==='complete')  return x[8]==='complete';
+    if(st==='to_process')   return !x[5]&&!x[6]&&!x[9]&&x[8]!=='packing'&&x[8]!=='complete';
+    if(st==='in_production') return !x[5]&&!x[6]&&x[8]==='in_production';
+    if(st==='in_packing')    return !x[5]&&!x[6]&&x[8]==='packing';
+    return true;
+  }).filter(x=>(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td>${p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')}</td>
+    <td>${proSubStatus(p)}</td>
   </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
 };
-function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')),p[0]);}
+function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',proSubStatus(p)),p[0]);}
 
 R.jobs=function(p){
   if(p)pp.jobs=p;
@@ -2029,15 +2068,15 @@ function closeNewOrderForm(){
 // ── KANBAN ────────────────────────────────────────────────
 let KB=D.kb;
 const KB_COLS=[
-  {key:'to_confirm',   label:'To Confirm',       ic:'📝', cls:'kb-c0', nav:'wflow-order', tab:'captured',
-   actions:['confirm','edit','reject']},
-  {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c1', nav:'wflow-design',
+  {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c0', nav:'wflow-design',
    actions:['design','assign']},
+  {key:'to_create_pro',label:'To Create PRO',     ic:'📋', cls:'kb-c1', nav:'wflow-prod',
+   actions:['pro','production']},
   {key:'in_production',label:'In Production',     ic:'⚙️', cls:'kb-c2', nav:'wflow-prod',
    actions:['production','pro']},
   {key:'in_packing',   label:'In Packing',        ic:'📦', cls:'kb-c3', nav:'wpk',
    actions:['slip','packing']},
-  {key:'ready_despatch',label:'Ready to Dispatch',ic:'🚚', cls:'kb-c4', nav:'wdep',
+  {key:'to_despatch',  label:'To Despatch',       ic:'🚚', cls:'kb-c4', nav:'wdep',
    actions:['despatch','dc']},
   {key:'despatched',   label:'Dispatched',        ic:'✅', cls:'kb-c5', nav:'wdep', tab:'done',
    actions:['viewdc','wa']},
