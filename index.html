@@ -431,10 +431,15 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option></select>
         <input class="f" id="o-q" placeholder="Search OID / customer / product…" oninput="R.orders(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-orders" onclick="openFD('orders')">⚙ Filters</button>
+        <div style="display:flex;gap:2px;margin-left:auto;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:2px">
+          <button id="o-view-list" onclick="oSetView('list')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;cursor:pointer;background:var(--acc);color:#fff;font-weight:700">☰ List</button>
+          <button id="o-view-card" onclick="oSetView('card')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;cursor:pointer;background:transparent;color:var(--t2)">⊞ Cards</button>
+        </div>
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-orders"><span id="fd-bar-orders-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('orders')">Clear all</button></div>
-    <div style="overflow-x:auto"><table><thead id="o-thead"><tr><th onclick="thSort('orders',0,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">OID<span id="o-arr-0" style="font-size:9px;margin-left:3px">▼</span></th><th onclick="thSort('orders',1,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Date<span id="o-arr-1" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',2,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Customer<span id="o-arr-2" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',3,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Product<span id="o-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',4,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Qty<span id="o-arr-4" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th>Status</th><th>Type</th><th onclick="thSort('orders',8,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Age<span id="o-arr-8" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th></tr></thead><tbody id="o-body"></tbody></table></div>
+    <div id="o-list-view" style="overflow-x:auto"><table><thead id="o-thead"><tr><th onclick="thSort('orders',0,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">OID<span id="o-arr-0" style="font-size:9px;margin-left:3px">▼</span></th><th onclick="thSort('orders',1,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Date<span id="o-arr-1" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',2,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Customer<span id="o-arr-2" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',3,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Product<span id="o-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',4,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Qty<span id="o-arr-4" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th>Status</th><th>Type</th><th onclick="thSort('orders',8,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Age<span id="o-arr-8" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th></tr></thead><tbody id="o-body"></tbody></table></div>
+    <div id="o-card-view" style="display:none;padding:12px;display:none"><div id="o-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px"></div></div>
     <div class="pg-bar" id="o-pg"></div>
   </div>
 </div>
@@ -463,10 +468,15 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option><option value="file_ready">File Ready</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pd-q" placeholder="Search code / product / customer…" oninput="R.products(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-products" onclick="openFD('products')">⚙ Filters</button>
+        <div style="display:flex;gap:2px;margin-left:auto;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:2px">
+          <button id="pd-view-list" onclick="pdSetView('list')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;cursor:pointer;background:var(--acc);color:#fff;font-weight:700">☰ List</button>
+          <button id="pd-view-card" onclick="pdSetView('card')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;cursor:pointer;background:transparent;color:var(--t2)">⊞ Cards</button>
+        </div>
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-products"><span id="fd-bar-products-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('products')">Clear all</button></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Design Status</th></tr></thead><tbody id="pd-body"></tbody></table></div>
+    <div id="pd-list-view" style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Design Status</th></tr></thead><tbody id="pd-body"></tbody></table></div>
+    <div id="pd-card-view" style="display:none;padding:12px"><div id="pd-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div></div>
     <div class="pg-bar" id="pd-pg"></div>
   </div>
 </div>
@@ -657,47 +667,37 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <!-- VIEW TOGGLE + FILTERS -->
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
   <div style="display:flex;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
-    <div class="pw-vtog on" id="pwv-board" onclick="pwView('board')">📋 Job Board</div>
-    <div class="pw-vtog" id="pwv-timeline" onclick="pwView('timeline')">⏱ Process View</div>
-    <div class="pw-vtog" id="pwv-table" onclick="pwView('table')">📊 Table</div>
+    <div class="pw-vtog on" id="pwv-board" onclick="pwView('board')" style="padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;border-right:1px solid var(--bdr)">📋 Job View</div>
+    <div class="pw-vtog" id="pwv-timeline" onclick="pwView('timeline')" style="padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;border-right:1px solid var(--bdr)">⚙️ Process View</div>
+    <div class="pw-vtog" id="pwv-table" onclick="pwView('table')" style="padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600">📄 PRO View</div>
   </div>
   <select class="f" id="pw-ppc" onchange="pwRender()">
     <option value="">All Types</option>
-    <option value="Machine">PPC1 — Flexo Machine</option>
+    <option value="Machine">PPC1 — Flexo</option>
     <option value="Sheet">PPC2/3 — Sheet/Hybrid</option>
     <option value="Direct">PPC4/5 — Direct</option>
   </select>
-  <select class="f" id="pw-step" onchange="pwRender()">
-    <option value="">All Steps</option>
-    <option value="PRT">PRT — Print</option>
-    <option value="COAT">COAT — Coating</option>
-    <option value="LAM">LAM — Lamination</option>
-    <option value="PUN">PUN — Punching</option>
-    <option value="RW">RW — Rewinding</option>
-    <option value="SEAL">SEAL</option>
-    <option value="CUT">CUT — Cutting</option>
-    <option value="PACK">PACK — Packing</option>
-  </select>
-  <input class="f" id="pw-q" placeholder="Search job, product, customer…" oninput="pwRender()" style="width:200px">
+  <select class="f" id="pw-vendor" onchange="pwRender()"><option value="">All Vendors</option></select>
+  <input class="f" id="pw-q" placeholder="Search job / product / customer…" oninput="pwRender()" style="width:200px">
   <button class="btn btn-p" style="margin-left:auto;font-size:12px" onclick="pwNewJob()">+ New Job</button>
 </div>
 
-<!-- JOB BOARD VIEW -->
+<!-- JOB VIEW (per-job flowchart) -->
 <div id="pwv-board-panel">
   <div id="pw-board" style="display:flex;flex-direction:column;gap:10px"></div>
 </div>
 
-<!-- PROCESS VIEW (timeline per job) -->
+<!-- PROCESS VIEW — kanban by process status, vendor filter -->
 <div id="pwv-timeline-panel" style="display:none">
-  <div id="pw-timeline"></div>
+  <div id="pw-timeline" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;min-height:300px"></div>
 </div>
 
-<!-- TABLE VIEW -->
+<!-- PRO VIEW — clean table of all active PROs -->
 <div id="pwv-table-panel" style="display:none">
   <div class="tc">
-    <div class="th"><h3>All Active PROs</h3><span class="tc-cnt" id="pw-tbl-cnt"></span></div>
+    <div class="th"><h3>Active Production Orders</h3><span class="tc-cnt" id="pw-tbl-cnt"></span></div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>PRO ID</th><th>Date</th><th>Job</th><th>Type</th><th>Product</th><th>Customer</th><th>Qty</th><th>Sheets</th><th>Material</th><th>Current Step</th><th>Actions</th></tr></thead>
+      <thead><tr><th>PRO ID</th><th>Date</th><th>Job</th><th>Type</th><th>Product</th><th>Customer</th><th>Qty</th><th>Sheets</th><th>Material / Size</th><th>Current Step</th><th>Actions</th></tr></thead>
       <tbody id="pw-tbl-body"></tbody>
     </table></div>
     <div class="pg-bar" id="pw-tbl-pg"></div>
@@ -1796,21 +1796,63 @@ R.orders=function(p){
   // Sync header arrows
   const arrs=[0,1,2,3,4,8];arrs.forEach(i=>{const el=document.getElementById('o-arr-'+i);if(el){const s=_SORT['orders'];el.textContent=s&&s.col===i?(s.dir==='asc'?'▲':'▼'):'⇅';el.style.color=s&&s.col===i?'inherit':'var(--t3)';}});
   const slice=pgr(items,'orders','R.orders','o-pg','o-cnt');
-  document.getElementById('o-body').innerHTML=slice.map(o=>{
-    const age=o[8]??0;
-    const ageCol=age>30?'color:var(--red)':age>14?'color:var(--ylw)':'color:var(--t2)';
-    return `<tr onclick="selO(event,${JSON.stringify(o[0])})">
-      <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
-      <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
-      <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
-      <td style="font-size:11px;font-weight:600;${ageCol}">${age}d</td>
-    </tr>`;
-  }).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
+  const cardMode=(document.getElementById('o-view-card')||{}).dataset.active==='1';
+  if(cardMode){
+    document.getElementById('o-list-view').style.display='none';
+    document.getElementById('o-card-view').style.display='block';
+    document.getElementById('o-card-grid').innerHTML=slice.map(o=>{
+      const age=o[8]??0;
+      const ageCol=age>30?'#fee2e2':age>14?'#fef3c7':'#d1fae5';
+      const ageTxt=age>30?'#991b1b':age>14?'#854d0e':'#166534';
+      return `<div onclick="selO(event,${JSON.stringify(o[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
+        <div style="background:var(--s2);height:100px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
+          <span style="font-size:40px;opacity:.4">📦</span>
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o[3]}">${o[3]||'—'}</div>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o[2]||'—'}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+            ${badge(o[5])}
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${ageCol};color:${ageTxt}">${age}d</span>
+          </div>
+          <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">
+            <span class="mono">${o[0]}</span>
+            <span>${o[4]?'🔢 '+Number(o[4]).toLocaleString():''}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')||'<div style="padding:24px;color:var(--t3)">No orders match</div>';
+  } else {
+    document.getElementById('o-list-view').style.display='';
+    document.getElementById('o-card-view').style.display='none';
+    document.getElementById('o-body').innerHTML=slice.map(o=>{
+      const age=o[8]??0;
+      const ageCol=age>30?'color:var(--red)':age>14?'color:var(--ylw)':'color:var(--t2)';
+      return `<tr onclick="selO(event,${JSON.stringify(o[0])})">
+        <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
+        <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+        <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
+        <td style="font-size:11px;font-weight:600;${ageCol}">${age}d</td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
+  }
 };
+function oSetView(v){
+  var listBtn=document.getElementById('o-view-list'),cardBtn=document.getElementById('o-view-card');
+  if(!listBtn||!cardBtn)return;
+  if(v==='card'){
+    cardBtn.style.background='var(--acc)';cardBtn.style.color='#fff';cardBtn.style.fontWeight='700';cardBtn.dataset.active='1';
+    listBtn.style.background='transparent';listBtn.style.color='var(--t2)';listBtn.style.fontWeight='400';delete listBtn.dataset.active;
+  } else {
+    listBtn.style.background='var(--acc)';listBtn.style.color='#fff';listBtn.style.fontWeight='700';listBtn.dataset.active='1';
+    cardBtn.style.background='transparent';cardBtn.style.color='var(--t2)';cardBtn.style.fontWeight='400';delete cardBtn.dataset.active;
+  }
+  R.orders(1);
+}
 function selO(e,oid){
-  const tr2=e.currentTarget;
+  const tr2=e.target.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
-  tr2.classList.add('sel');
+  if(tr2)tr2.classList.add('sel');
   const o=D.o.find(x=>x[0]===oid);
   if(!o)return;
   // Find linked PROs
@@ -1884,15 +1926,52 @@ R.products=function(p){
   let items=D.pd.filter(x=>(!ds||x[3]===ds)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('products',items);
   const slice=pgr(items,'products','R.products','pd-pg','pd-cnt');
-  document.getElementById('pd-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
-    <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
-    <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
-  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
+  const cardMode=(document.getElementById('pd-view-card')||{}).dataset.active==='1';
+  if(cardMode){
+    document.getElementById('pd-list-view').style.display='none';
+    document.getElementById('pd-card-view').style.display='block';
+    document.getElementById('pd-card-grid').innerHTML=slice.map(p=>{
+      const stClr={'approved':'#d1fae5','file_ready':'#dbeafe','in_process':'#ede9fe','on_approval':'#fef3c7','to_process':'var(--s2)','on_hold':'#fef9c3','cancelled':'#fee2e2'}[p[3]]||'var(--s2)';
+      const stIcon={'approved':'✅','file_ready':'📁','in_process':'✏️','on_approval':'📤','to_process':'📥','on_hold':'⏸','cancelled':'✕'}[p[3]]||'📦';
+      return `<div onclick="selPD(event,${JSON.stringify(p[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
+        <div style="background:${stClr};height:90px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
+          <span style="font-size:36px;opacity:.55">${stIcon}</span>
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p[1]}">${p[1]||'—'}</div>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p[2]||'—'}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            ${badge(p[3])}
+            <span class="mono" style="font-size:10px;color:var(--t3)">${p[0]||''}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')||'<div style="padding:24px;color:var(--t3)">No products match</div>';
+  } else {
+    document.getElementById('pd-list-view').style.display='';
+    document.getElementById('pd-card-view').style.display='none';
+    document.getElementById('pd-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+      <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
+      <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
+    </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
+  }
 };
+function pdSetView(v){
+  var listBtn=document.getElementById('pd-view-list'),cardBtn=document.getElementById('pd-view-card');
+  if(!listBtn||!cardBtn)return;
+  if(v==='card'){
+    cardBtn.style.background='var(--acc)';cardBtn.style.color='#fff';cardBtn.style.fontWeight='700';cardBtn.dataset.active='1';
+    listBtn.style.background='transparent';listBtn.style.color='var(--t2)';listBtn.style.fontWeight='400';delete listBtn.dataset.active;
+  } else {
+    listBtn.style.background='var(--acc)';listBtn.style.color='#fff';listBtn.style.fontWeight='700';listBtn.dataset.active='1';
+    cardBtn.style.background='transparent';cardBtn.style.color='var(--t2)';cardBtn.style.fontWeight='400';delete cardBtn.dataset.active;
+  }
+  R.products(1);
+}
 function selPD(e,code){
-  const tr2=e.currentTarget;
+  const tr2=e.target.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
-  tr2.classList.add('sel');
+  if(tr2)tr2.classList.add('sel');
   const p=D.pd.find(x=>x[0]===code)||D.dq.find(x=>x[0]===code);
   if(!p)return;
   // Related orders
@@ -2002,9 +2081,9 @@ R.pros=function(p){
   </tr>`).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
 };
 function selPR(e,pid){
-  const tr2=e.currentTarget;
+  const tr2=e.target.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
-  tr2.classList.add('sel');
+  if(tr2)tr2.classList.add('sel');
   const p=D.pr.find(x=>x[0]===pid);
   if(!p)return;
   // Related data
@@ -2094,9 +2173,9 @@ R.jobs=function(p){
   }).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
 };
 function selJob(e,jid){
-  const tr2=e.currentTarget;
+  const tr2=e.target.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
-  tr2.classList.add('sel');
+  if(tr2)tr2.classList.add('sel');
   const j=D.jo.find(x=>x[0]===jid);
   if(!j)return;
   const pros=D.pr.filter(p=>p[9]===jid);
@@ -2352,9 +2431,9 @@ R.processes=function(p){
 };
 
 function selProc(e,pid){
-  const tr2=e.currentTarget;
+  const tr2=e.target.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
-  tr2.classList.add('sel');
+  if(tr2)tr2.classList.add('sel');
   const r=D.procs_raw.find(x=>(x.id||x[0])===pid);
   if(!r)return;
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
@@ -3195,8 +3274,10 @@ function pwGetState(pro){
   return pwState[id];
 }
 function pwView(v){
-  ['board','tl','tbl'].forEach(function(x){
-    var el=document.getElementById('pwp-'+x),btn=document.getElementById('pwv-'+x);
+  // Map shorthand to panel suffix
+  var map={'board':'board','timeline':'timeline','table':'table'};
+  ['board','timeline','table'].forEach(function(x){
+    var el=document.getElementById('pwv-'+x+'-panel'),btn=document.getElementById('pwv-'+x);
     if(el)el.style.display=x===v?'block':'none';
     if(btn)btn.classList.toggle('on',x===v);
   });
@@ -3216,6 +3297,13 @@ function pwFilter(){
   });
 }
 function pwRender(){
+  // Populate vendor dropdown from D.ve
+  var vendSel=document.getElementById('pw-vendor');
+  if(vendSel&&vendSel.options.length<=1){
+    (D.ve||[]).filter(function(v){return v[3]==='vendor'||v[3]==='Vendor'||!v[3];}).forEach(function(v){
+      var o=document.createElement('option');o.value=v[1];o.textContent=v[1];vendSel.appendChild(o);
+    });
+  }
   var jobs=pwFilter(),allPros=(D.pp||[]).filter(function(p){return !p[7]&&!p[8];});
   ['pw-s-jobs','pw-s-pros','pw-s-ppc1','pw-s-ppc2','pw-s-ppc3','pw-s-direct'].forEach(function(id,i){
     var el=document.getElementById(id); if(!el)return;
@@ -3228,8 +3316,8 @@ function pwRender(){
   });
   var vtog=document.querySelector('.pw-vtog.on'),active=vtog?vtog.id.replace('pwv-',''):'board';
   if(active==='board')pwBoard(jobs);
-  else if(active==='tl')pwTimeline(jobs);
-  else if(active==='tbl')pwTable();
+  else if(active==='timeline')pwTimeline(jobs);
+  else if(active==='table')pwTable();
 }
 function pwPPCB(t){
   if(t==='Machine')return '<span class="jb-ppc ppc-machine">PPC1 Flexo</span>';
@@ -3289,29 +3377,58 @@ function pwToggle(hdr){
   if(arr)arr.textContent=hidden?'&#8743;':'&#8744;';
 }
 function pwTimeline(jobs){
-  var tl=document.getElementById('pw-tl');if(!tl)return;
-  var ALL=['PRT','COAT','LAM','PUN','RW','SEAL','CUT','PACK'];
-  tl.innerHTML=jobs.map(function(j){
-    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
-    var stepsRow=ALL.map(function(s){
-      var sts=pros.map(function(p){return pwGetState(p).steps.find(function(x){return x.code===s;});});
-      var cls=sts.some(function(x){return x&&x.status==='active';})?'active':sts.some(function(x){return x&&x.status==='done';})?'done':'';
-      return '<div class="tl-step-col '+cls+'">'+s+'</div>';
-    }).join('');
-    var prosRows=pros.map(function(pro){
-      var cur=pwGetState(pro).steps.find(function(s){return s.status==='active';});
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:11px">'+
-        '<span class="mono" style="min-width:70px;color:var(--acc)">'+pro[0]+'</span>'+
-        '<span style="flex:1">'+tr(pro[2],22)+'</span><span style="color:var(--t2)">'+tr(pro[3]||'',14)+'</span>'+
-        '<span style="font-weight:600">'+Number(pro[4]||0).toLocaleString()+'</span>'+
-        '<span class="b '+(cur?'bb':'bg')+'">'+(cur?'&#9654; '+cur.code:'&#10003; Done')+'</span>'+
-        '<button class="ab ab-b" style="font-size:10px" data-pid="'+pro[0]+'" onclick="pwLogStep(this.dataset.pid,null)">+</button>'+
-        '<button class="ab ab-g" style="font-size:10px" data-jid="'+j[0]+'" data-pid="'+pro[0]+'" onclick="pwJobCard(this.dataset.jid,this.dataset.pid)">&#x1F4CB;</button>'+
-      '</div>';
-    }).join('');
-    return '<div class="tl-card"><div class="tl-hdr"><span style="font-size:13px;font-weight:800;font-family:monospace">'+j[0]+'</span>'+
-      '<span style="font-size:11px;color:#8e9ab5;flex:1;margin-left:10px">'+tr(j[3],38)+'</span>'+pwPPCB(j[2])+'</div>'+
-      '<div class="tl-steps-row">'+stepsRow+'</div><div class="tl-body">'+prosRows+'</div></div>';
+  // Process View: kanban by process_status with vendor filter
+  var tl=document.getElementById('pw-timeline');if(!tl)return;
+  var vendF=(document.getElementById('pw-vendor')||{}).value||'';
+  var veMap={};(D.ve||[]).forEach(function(v){veMap[v[0]]=v[1];});
+  // Collect all processes for active PROs under filtered jobs
+  var jobIds=jobs.map(function(j){return j[0];});
+  var allProcs=(D.procs_raw||[]).filter(function(r){
+    if(!r.prod_order_id)return false;
+    var pro=(D.pp||[]).find(function(p){return p[0]===r.prod_order_id;});
+    if(!pro)return false;
+    if(jobIds.length&&pro[9]&&!jobIds.includes(pro[9]))return false;
+    if(vendF&&veMap[r.vendor_id]!==vendF&&r.vendor_id!==vendF)return false;
+    return true;
+  });
+  var PROC_STAGES=[
+    {key:'To Send',      label:'To Send',        clr:'var(--t2)',  bg:'var(--s2)'},
+    {key:'Job Order Sent',label:'Sent',          clr:'var(--blu)', bg:'#dbeafe'},
+    {key:'Job Approved', label:'Approved',       clr:'var(--pur)', bg:'#ede9fe'},
+    {key:'Part Processed',label:'Part Done',     clr:'var(--ylw)', bg:'#fef3c7'},
+    {key:'Complete',     label:'Complete',       clr:'var(--grn)', bg:'#d1fae5'},
+  ];
+  tl.innerHTML=PROC_STAGES.map(function(st){
+    var cards=allProcs.filter(function(r){return (r.process_status||'To Send')===st.key;});
+    var cardsHtml=cards.map(function(r){
+      var pro=(D.pp||[]).find(function(p){return p[0]===r.prod_order_id;})||(D.pr||[]).find(function(p){return p[0]===r.prod_order_id;});
+      var prodName=pro?pro[2]||'—':'—';
+      var custName=pro?pro[3]||'—':'—';
+      var vname=veMap[r.vendor_id]||r.machine||'In-house';
+      var qty=r.counter?Number(r.counter).toLocaleString():'—';
+      var rmOut=(D.rm_out||[]).filter(function(x){return x[3]===r.id;});
+      var matLine=rmOut.length?rmOut.slice(0,2).map(function(x){var ri=(D.rm_in||[]).find(function(ri){return ri[0]===x[2];});return ri?ri[2]:'RM-'+x[2];}).join(', '):'No material';
+      return '<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="selProc(event,'+JSON.stringify(r.id||r.process_name)+')" onmouseenter="this.style.borderColor=\'var(--acc)\'" onmouseleave="this.style.borderColor=\'var(--bdr)\'">'
+        +'<div style="font-weight:700;font-size:12px;color:var(--acc);margin-bottom:4px">'+( r.process_name||'Process')+'</div>'
+        +'<div style="font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+prodName+'">'+prodName+'</div>'
+        +'<div style="color:var(--t2);margin-bottom:6px">'+custName+'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'
+          +'<span style="background:'+st.bg+';color:'+st.clr+';padding:1px 6px;border-radius:10px;font-weight:700;font-size:10px">'+st.label+'</span>'
+          +'<span style="background:var(--s2);padding:1px 6px;border-radius:10px;font-size:10px">'+vname+'</span>'
+        +'</div>'
+        +'<div style="display:flex;justify-content:space-between;color:var(--t3);font-size:10px">'
+          +'<span>'+matLine+'</span>'
+          +'<span class="mono">'+r.prod_order_id+'</span>'
+        +'</div>'
+      +'</div>';
+    }).join('')||'<div style="padding:20px 10px;text-align:center;color:var(--t3);font-size:11px">None</div>';
+    return '<div style="min-width:200px;flex:1;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden">'
+      +'<div style="padding:10px 12px;border-bottom:1px solid var(--bdr);background:'+st.bg+';display:flex;align-items:center;gap:6px">'
+        +'<span style="font-weight:700;color:'+st.clr+';font-size:12px">'+st.label+'</span>'
+        +'<span style="margin-left:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700">'+cards.length+'</span>'
+      +'</div>'
+      +'<div style="padding:8px;overflow-y:auto;max-height:calc(100vh - 340px)">'+cardsHtml+'</div>'
+    +'</div>';
   }).join('');
 }
 function pwTable(){
@@ -3595,7 +3712,7 @@ function initDesignWF(){
       const age=ord&&ord[1]?Math.floor((new Date()-new Date(ord[1]))/86400000):null;
       const agePill=age!==null?`<span style="font-size:9px;padding:1px 5px;border-radius:10px;font-weight:700;background:${age>14?'#fee2e2':age>7?'#fef9c3':'#dcfce7'};color:${age>14?'#991b1b':age>7?'#854d0e':'#166534'}">${age}d</span>`:'';
       const rptBadge=ord&&ord[6]?'<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:#ede9fe;color:#6d28d9;font-weight:700">🔁 Repeat</span>':'';
-      return `<div class="kb-card" onclick="dwOpenCard('${code}')">
+      return `<div class="kb-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${code}');this.style.opacity='.5'" ondragend="this.style.opacity='1'" onclick="dwOpenCard('${code}')">
         <div class="kb-card-title">${tr(name,28)}</div>
         <div class="kb-card-sub">${cust}</div>
         <div class="kb-card-tags">${agePill}${rptBadge}</div>
@@ -3605,42 +3722,27 @@ function initDesignWF(){
         </div>
       </div>`;
     }).join('');
-    return `<div class="kb-col ${s.cls}" style="min-width:200px">
+    return `<div class="kb-col ${s.cls}" style="min-width:280px;flex:1"
+      ondragover="event.preventDefault();this.style.background='rgba(79,99,240,.08)'"
+      ondragleave="this.style.background=''"
+      ondrop="dwDrop(event,'${s.key}');this.style.background=''">
       <div class="kb-hdr">
         <span class="kb-hdr-ic">${s.ic}</span>
         <span class="kb-hdr-title">${s.label}</span>
         <span class="kb-hdr-cnt">${col.length}</span>
       </div>
-      <div class="kb-cards">${cards||'<div style="padding:20px 12px;text-align:center;color:var(--t3);font-size:11px">No items</div>'}</div>
+      <div class="kb-cards">${cards||'<div style="padding:20px 12px;text-align:center;color:var(--t3);font-size:11px">Drop cards here</div>'}</div>
     </div>`;
   }).join('');
-
-  // On-hold / cancelled section below board
-  const heldItems=allItems.filter(d=>{
-    const st=_dwOverride[d[0]]||d[3]||'';
-    if(!DW_DONE.includes(st))return false;
-    if(custF&&d[2]!==custF)return false;
-    if(q&&![d[0],d[1],d[2]].join(' ').toLowerCase().includes(q))return false;
-    return true;
-  });
   const heldEl=document.getElementById('dw-held-section');
-  if(heldEl) heldEl.innerHTML=heldItems.length?`
-    <div style="margin-top:20px">
-      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px">
-        ⏸ On Hold / Cancelled
-        <span style="background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:1px 7px;font-size:11px">${heldItems.length}</span>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${heldItems.map(d=>{
-          const st=_dwOverride[d[0]]||d[3];
-          return `<div class="kb-card" style="width:200px;cursor:pointer;opacity:0.75" onclick="dwOpenCard('${d[0]}')">
-            <div class="kb-card-title">${tr(d[1],26)}</div>
-            <div class="kb-card-sub">${d[2]||'—'}</div>
-            <div class="kb-card-foot">${badge(st)}<span class="kb-code mono">${d[0]}</span></div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`:'';
+  if(heldEl)heldEl.innerHTML='';
+}
+function dwDrop(e,newStage){
+  e.preventDefault();
+  var code=e.dataTransfer.getData('text/plain');
+  if(!code)return;
+  var src=(D.pd||[]).find(d=>d[0]===code)||(D.dq||[]).find(d=>d[0]===code);
+  if(src)dwMove(src,newStage);
 }
 
 // ── YEAR DROPDOWNS ──
