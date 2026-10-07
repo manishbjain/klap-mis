@@ -204,6 +204,8 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 .kb-c3 .kb-hdr{background:#fdf4ff}.kb-c3 .kb-card{border-left-color:#c084fc}
 .kb-c4 .kb-hdr{background:#f0fdf4}.kb-c4 .kb-card{border-left-color:#4ade80}
 .kb-c5 .kb-hdr{background:#f8fafc}.kb-c5 .kb-card{border-left-color:#94a3b8;opacity:.8}
+.kb-cards{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:60px}
+.kb-cnt{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:rgba(0,0,0,.08)}
 .kb-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 
@@ -619,6 +621,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 </div>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="dw-stats"></div>
 <div class="kb-wrap" id="dw-board"></div>
+<div id="dw-held-section"></div>
 <!-- Design card modal -->
 <div class="dq-modal" id="dw-modal">
   <div style="background:var(--s1);border-radius:14px;width:520px;max-width:95vw;max-height:88vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
@@ -1255,6 +1258,7 @@ document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
   closeRP();
   const fn=R[p]; if(fn)fn(1);
   if(p==='wflow-order'){initKanban();initOrderWF();}
+  if(p==='wflow-design'){initDesignWF();}
   if(p==='wflow-prod'){initProdWF();}
   if(p==='processes'){R.processes(1);}
   if(p==='rm-cat'){R.rm_cats();}
@@ -3067,6 +3071,212 @@ function pwJobCard(jobId,proId){
 function closeJcModal(){document.getElementById('pw-jc-modal').style.display='none';}
 function pwNewJob(){toast('New Job \u2014 scan job card or enter manually');}
 function initProdWF(){pwView('board');}
+
+// ── DESIGN WORKFLOW ──────────────────────────────────────────────────────────
+const DW_STAGES=[
+  {key:'to_process',      label:'To Process',        ic:'📥', cls:'kb-c5', clr:'var(--t2)'},
+  {key:'in_process',      label:'In Process',        ic:'✏️', cls:'kb-c0', clr:'var(--blu)'},
+  {key:'internal_approval',label:'Internal Approval',ic:'🔍', cls:'kb-c2', clr:'var(--org)'},
+  {key:'on_approval',     label:'Client Approval',   ic:'📤', cls:'kb-c3', clr:'var(--pur)'},
+  {key:'approved',        label:'Approved',          ic:'✅', cls:'kb-c4', clr:'var(--grn)'},
+  {key:'file_ready',      label:'File Ready',        ic:'📁', cls:'kb-c4', clr:'var(--grn)'},
+];
+const DW_DONE=['cancelled','on_hold'];
+
+const DW_ACTIONS={
+  to_process:[
+    {lbl:'▶ Start Design',cls:'ab-g',fn:(d)=>dwMove(d,'in_process')},
+    {lbl:'⏸ On Hold',cls:'ab-y',fn:(d)=>dwMove(d,'on_hold')},
+    {lbl:'✕ Cancel',cls:'ab-r',fn:(d)=>dwMove(d,'cancelled')},
+  ],
+  in_process:[
+    {lbl:'🔍 Send for Review',cls:'ab-g',fn:(d)=>dwMove(d,'internal_approval')},
+    {lbl:'◀ Back to Queue',cls:'ab-y',fn:(d)=>dwMove(d,'to_process')},
+    {lbl:'⏸ On Hold',cls:'ab-y',fn:(d)=>dwMove(d,'on_hold')},
+  ],
+  internal_approval:[
+    {lbl:'📤 Send to Client',cls:'ab-g',fn:(d)=>dwMove(d,'on_approval')},
+    {lbl:'◀ Back to Design',cls:'ab-y',fn:(d)=>dwMove(d,'in_process')},
+    {lbl:'⏸ On Hold',cls:'ab-y',fn:(d)=>dwMove(d,'on_hold')},
+  ],
+  on_approval:[
+    {lbl:'✅ Approved',cls:'ab-g',fn:(d)=>dwMove(d,'approved')},
+    {lbl:'🔄 Revision Needed',cls:'ab-y',fn:(d)=>dwMove(d,'in_process')},
+    {lbl:'⏸ On Hold',cls:'ab-y',fn:(d)=>dwMove(d,'on_hold')},
+  ],
+  approved:[
+    {lbl:'📁 Mark File Ready',cls:'ab-g',fn:(d)=>dwMove(d,'file_ready')},
+    {lbl:'🔄 Needs Revision',cls:'ab-y',fn:(d)=>dwMove(d,'in_process')},
+  ],
+  file_ready:[
+    {lbl:'🔄 Reopen',cls:'ab-y',fn:(d)=>dwMove(d,'in_process')},
+    {lbl:'📋 Create PRO',cls:'ab-g',fn:(d)=>dwCreatePRO(d)},
+  ],
+  on_hold:[
+    {lbl:'▶ Resume',cls:'ab-g',fn:(d)=>dwMove(d,'to_process')},
+    {lbl:'✕ Cancel',cls:'ab-r',fn:(d)=>dwMove(d,'cancelled')},
+  ],
+  cancelled:[
+    {lbl:'↩ Reopen',cls:'ab-y',fn:(d)=>dwMove(d,'to_process')},
+  ],
+};
+
+// Local override map so moves persist within session without a server round-trip
+const _dwOverride={};
+
+function dwGetStatus(code){return _dwOverride[code]||null;}
+
+function dwMove(d,newSt){
+  _dwOverride[d[0]]=newSt;
+  document.getElementById('dw-modal').classList.remove('open');
+  toast(d[1]+' → '+newSt.replace(/_/g,' '));
+  initDesignWF();
+}
+
+function dwCreatePRO(d){
+  document.getElementById('dw-modal').classList.remove('open');
+  toast('📋 PRO creation form for '+d[1]+' — coming soon');
+}
+
+function dwOpenCard(code){
+  const d=D.dq.find(x=>x[0]===code)||D.pd.find(x=>x[0]===code);
+  if(!d)return;
+  const st=_dwOverride[d[0]]||d[3];
+  document.getElementById('dw-modal-title').textContent=d[1]||d[0];
+  // Find linked order info
+  const ord=D.o.find(o=>o[3]===d[1]);
+  const pro=D.pr.find(p=>p[2]===d[1]);
+  document.getElementById('dw-modal-body').innerHTML=`
+    <table class="dtl" style="width:100%">
+      <tr><td>Code</td><td class="mono">${d[0]}</td></tr>
+      <tr><td>Product</td><td><strong>${d[1]||'—'}</strong></td></tr>
+      <tr><td>Customer</td><td>${d[2]||'—'}</td></tr>
+      <tr><td>Current Stage</td><td>${badge(st)}</td></tr>
+      ${ord?`<tr><td>Order</td><td class="mono">${ord[0]} &nbsp; <span style="color:var(--t2);font-size:10px">${ord[1]||''}</span></td></tr>`:''}
+      ${ord?`<tr><td>Qty</td><td>${ord[4]?Number(ord[4]).toLocaleString():'—'}</td></tr>`:''}
+      ${pro?`<tr><td>PRO</td><td class="mono">${pro[0]}</td></tr>`:''}
+    </table>
+    <div style="margin-top:14px;padding:10px 12px;background:var(--s2);border-radius:8px;font-size:11px;color:var(--t2)">
+      <strong style="color:var(--txt)">Stage history not available in demo</strong><br>
+      Full audit trail with timestamps and designer attribution will appear here.
+    </div>`;
+  const acts=DW_ACTIONS[st]||DW_ACTIONS['to_process'];
+  document.getElementById('dw-modal-actions').innerHTML=acts.map((a,i)=>`<button class="ab ${a.cls}" onclick="DW_ACTIONS[document.getElementById('dw-modal-title').dataset.st][${i}].fn(window.__dwcard)">${a.lbl}</button>`).join('');
+  document.getElementById('dw-modal-title').dataset.st=st;
+  window.__dwcard=d;
+  document.getElementById('dw-modal').classList.add('open');
+}
+
+function initDesignWF(){
+  const q=(document.getElementById('dw-q')?.value||'').toLowerCase();
+  const custF=document.getElementById('dw-cust')?.value||'';
+
+  // Merge D.dq (design queue) with D.pd (products with design status)
+  // Prefer D.dq as source of truth; supplement with D.pd items not in dq
+  const dqCodes=new Set(D.dq.map(x=>x[0]));
+  const allItems=[...D.dq, ...D.pd.filter(x=>!dqCodes.has(x[0]))];
+
+  // Apply status override, filter
+  let items=allItems.map(d=>{
+    const ov=_dwOverride[d[0]];
+    return ov?[d[0],d[1],d[2],ov]:d;
+  }).filter(d=>{
+    const st=d[3]||'';
+    if(DW_DONE.includes(st))return false; // separate section, skip for main board
+    if(custF&&d[2]!==custF)return false;
+    if(q&&![d[0],d[1],d[2]].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+
+  // Populate customer dropdown (once)
+  const dc=document.getElementById('dw-cust');
+  if(dc&&dc.options.length===1){
+    [...new Set(allItems.map(x=>x[2]).filter(Boolean))].sort().forEach(c=>{
+      const o=document.createElement('option');o.value=c;o.textContent=c;dc.appendChild(o);
+    });
+  }
+
+  // Stats bar
+  const stCounts={};
+  allItems.forEach(d=>{const s=_dwOverride[d[0]]||d[3]||'to_process';stCounts[s]=(stCounts[s]||0)+1;});
+  const statsEl=document.getElementById('dw-stats');
+  if(statsEl) statsEl.innerHTML=DW_STAGES.map(s=>`
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px" onclick="">
+      <span style="font-size:15px">${s.ic}</span>
+      <div>
+        <div style="font-weight:700;color:${s.clr};font-size:16px">${stCounts[s.key]||0}</div>
+        <div style="color:var(--t2);font-size:10px">${s.label}</div>
+      </div>
+    </div>`).join('')+`
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:11px">
+      <span style="font-size:15px">⏸</span>
+      <div>
+        <div style="font-weight:700;color:var(--ylw);font-size:16px">${(stCounts['on_hold']||0)+(stCounts['cancelled']||0)}</div>
+        <div style="color:var(--t2);font-size:10px">Held / Cancelled</div>
+      </div>
+    </div>`;
+
+  // Build board
+  const board=document.getElementById('dw-board');
+  if(!board)return;
+  board.innerHTML=DW_STAGES.map(s=>{
+    const col=items.filter(d=>(d[3]||'to_process')===s.key);
+    const cards=col.map(d=>{
+      const code=d[0];
+      const name=d[1]||'—';
+      const cust=d[2]||'—';
+      const ord=D.o.find(o=>o[3]===name);
+      const qty=ord?Number(ord[4]).toLocaleString():'—';
+      const age=ord&&ord[1]?Math.floor((new Date()-new Date(ord[1]))/86400000):null;
+      const agePill=age!==null?`<span style="font-size:9px;padding:1px 5px;border-radius:10px;font-weight:700;background:${age>14?'#fee2e2':age>7?'#fef9c3':'#dcfce7'};color:${age>14?'#991b1b':age>7?'#854d0e':'#166534'}">${age}d</span>`:'';
+      const rptBadge=ord&&ord[6]?'<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:#ede9fe;color:#6d28d9;font-weight:700">🔁 Repeat</span>':'';
+      return `<div class="kb-card" onclick="dwOpenCard('${code}')">
+        <div class="kb-card-title">${tr(name,28)}</div>
+        <div class="kb-card-sub">${cust}</div>
+        <div class="kb-card-tags">${agePill}${rptBadge}</div>
+        <div class="kb-card-foot">
+          <span class="kb-card-qty">${qty!=='—'?'🔢 '+qty:''}</span>
+          <span class="kb-code mono">${code}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="kb-col ${s.cls}" style="min-width:200px">
+      <div class="kb-hdr">
+        <span class="kb-hdr-ic">${s.ic}</span>
+        <span class="kb-hdr-title">${s.label}</span>
+        <span class="kb-hdr-cnt">${col.length}</span>
+      </div>
+      <div class="kb-cards">${cards||'<div style="padding:20px 12px;text-align:center;color:var(--t3);font-size:11px">No items</div>'}</div>
+    </div>`;
+  }).join('');
+
+  // On-hold / cancelled section below board
+  const heldItems=allItems.filter(d=>{
+    const st=_dwOverride[d[0]]||d[3]||'';
+    if(!DW_DONE.includes(st))return false;
+    if(custF&&d[2]!==custF)return false;
+    if(q&&![d[0],d[1],d[2]].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  const heldEl=document.getElementById('dw-held-section');
+  if(heldEl) heldEl.innerHTML=heldItems.length?`
+    <div style="margin-top:20px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        ⏸ On Hold / Cancelled
+        <span style="background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:1px 7px;font-size:11px">${heldItems.length}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${heldItems.map(d=>{
+          const st=_dwOverride[d[0]]||d[3];
+          return `<div class="kb-card" style="width:200px;cursor:pointer;opacity:0.75" onclick="dwOpenCard('${d[0]}')">
+            <div class="kb-card-title">${tr(d[1],26)}</div>
+            <div class="kb-card-sub">${d[2]||'—'}</div>
+            <div class="kb-card-foot">${badge(st)}<span class="kb-code mono">${d[0]}</span></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:'';
+}
 
 // ── YEAR DROPDOWNS ──
 function fillYrs(elId, data, idx){
