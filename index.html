@@ -922,23 +922,27 @@ async function loadData(){
       const newR=rank[p.pro_status]||0;
       if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status};
     });
-    // FG stock: set of product_ids that have any FG inventory batch (no status — just qty in hand)
-    const fgStockProducts=new Set();
+    // FG stock: map product_id → total qty in hand (no status — fg_inventory is just stock count)
+    const fgStockQty={};
     fg_inv.forEach(r=>{
       const pro=pros.find(p=>p.id===r.prod_order_id);
-      if(pro?.product_id) fgStockProducts.add(pro.product_id);
+      if(pro?.product_id){
+        fgStockQty[pro.product_id]=(fgStockQty[pro.product_id]||0)+(r.qty||0);
+      }
     });
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
       const oid=o[0];
       const orderRow=orders.find(x=>x.id===oid);
       const prod=prodMap[orderRow?.product_id];
       const dsReady=!prod||prod.design_status==='file_ready'||prod.design_status==='File Ready'||prod.design_status==='approved';
-      const inStock=orderRow?.product_id&&fgStockProducts.has(orderRow.product_id);
+      const orderQty=orderRow?.qty||0;
+      const stockQty=orderRow?.product_id?(fgStockQty[orderRow.product_id]||0):0;
+      const canFulfilFromStock=stockQty>0&&stockQty>=orderQty;
       const proStage=orderProStatus[oid]?.ps;
       if(!dsReady) kbGroups.in_design.push(o);
       else if(proStage==='in_production') kbGroups.in_production.push(o);
       else if(proStage==='packing') kbGroups.in_packing.push(o);
-      else if(proStage==='complete'||inStock) kbGroups.to_despatch.push(o);
+      else if(proStage==='complete'||canFulfilFromStock) kbGroups.to_despatch.push(o);
       else kbGroups.to_create_pro.push(o);
     });
     D.kb={...kbGroups,despatched:D.od.slice(0,10)};
