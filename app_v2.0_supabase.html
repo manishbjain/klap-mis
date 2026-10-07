@@ -264,24 +264,8 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   border-radius:9px;font-size:12px;z-index:9999;max-width:300px;opacity:0;transition:opacity .3s;
   pointer-events:none}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-
-
-<div id="login-screen" style="display:flex;position:fixed;inset:0;background:var(--bg);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:0">
-  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;padding:40px 48px;width:380px;max-width:95vw;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.08)">
-    <div style="font-size:32px;font-weight:900;letter-spacing:-2px;margin-bottom:4px">KL<em style="color:var(--acc);font-style:normal">AP</em></div>
-    <div style="font-size:12px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:32px">Krishiv Labels and Packaging</div>
-    <div id="login-status" style="font-size:13px;color:var(--t2);margin-bottom:20px;min-height:20px"></div>
-    <button id="google-login-btn" onclick="signInWithGoogle()" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--bdr);background:var(--s1);cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.34-8.16 2.34-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      Sign in with Google
-    </button>
-    <div id="login-error" style="display:none;margin-top:14px;padding:10px 14px;background:var(--rlt);color:var(--rdk);border-radius:8px;font-size:12px"></div>
-  </div>
-  <div style="margin-top:20px;font-size:11px;color:var(--t3)">Access restricted to authorised users only</div>
-</div>
 
 <div id="top">
   <div id="tog" onclick="document.getElementById('sb').classList.toggle('slim')">☰</div>
@@ -430,7 +414,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="complete">Complete</option><option value="cancelled">Cancelled</option><option value="on_hold">On Hold</option></select>
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="cancelled">Cancelled</option><option value="on_hold">On Hold</option></select>
         <input class="f" id="pr-q" placeholder="Search…" oninput="R.pros(1)">
       </div>
     </div>
@@ -832,50 +816,12 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 </div>
 
 <div id="pg-settings" class="pg">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <h2 style="font-size:18px;font-weight:800">Settings</h2>
-    <div style="font-size:12px;color:var(--t2)" id="settings-user-info"></div>
-  </div>
-  <div class="wft-row" id="settings-tabs">
-    <div class="wft on" onclick="settingsTab(this,'st-users')">👥 Users</div>
-    <div class="wft" onclick="settingsTab(this,'st-roles')">🎭 Roles</div>
-    <div class="wft" onclick="settingsTab(this,'st-perms')">🔐 Permissions</div>
-    <div class="wft" onclick="settingsTab(this,'st-audit')">📋 Audit Log</div>
-  </div>
-  <div id="st-users">
-    <div class="tc">
-      <div class="th"><h3>Users</h3><span class="tc-cnt" id="su-cnt"></span>
-        <div class="flt-row"><button class="btn btn-p" style="font-size:11px" onclick="suNew()">+ Add User</button></div>
-      </div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="su-body"></tbody></table></div>
-    </div>
-  </div>
-  <div id="st-roles" style="display:none">
-    <div class="tc">
-      <div class="th"><h3>Roles</h3><div class="flt-row"><button class="btn btn-p" style="font-size:11px" onclick="srNew()">+ New Role</button></div></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Role ID</th><th>Name</th><th>Description</th><th>Type</th><th>Actions</th></tr></thead><tbody id="sr-body"></tbody></table></div>
-    </div>
-  </div>
-  <div id="st-perms" style="display:none">
-    <div class="tc">
-      <div class="th"><h3>Permissions</h3>
-        <div class="flt-row"><select class="f" id="sp-role" onchange="loadPermissions()"><option value="">Select role…</option></select></div>
-      </div>
-      <div id="sp-grid" style="padding:14px"><div style="color:var(--t3);font-size:12px;text-align:center;padding:24px">Select a role to edit permissions</div></div>
-    </div>
-  </div>
-  <div id="st-audit" style="display:none">
-    <div class="tc">
-      <div class="th"><h3>Audit Log</h3><span class="tc-cnt" id="sa-cnt"></span>
-        <div class="flt-row">
-          <select class="f" id="sa-action" onchange="loadAudit()"><option value="">All Actions</option><option>login</option><option>insert</option><option>update</option><option>delete</option></select>
-          <input class="f" id="sa-q" placeholder="Search user / table…" oninput="filterAudit()">
-        </div>
-      </div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Table</th><th>Record</th></tr></thead><tbody id="sa-body"></tbody></table></div>
-      <div class="pg-bar" id="sa-pg"></div>
-    </div>
-  </div>
+  <div class="tc"><div class="th"><h3>⚙️ Settings</h3></div>
+  <div style="padding:40px;text-align:center;color:var(--t3)">
+    <div style="font-size:40px;margin-bottom:12px">⚙️</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Settings</div>
+    <div style="font-size:12px">User preferences, system configuration — Phase 2</div>
+  </div></div>
 </div>
 </div><!-- /ctr -->
 
@@ -894,103 +840,6 @@ let D={o:[],pr:[],dq:[],pd:[],cu:[],ve:[],jo:[],di:[],pl:[],
   rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[["Flexo Press 01","press"],["RF Punching 01","punching"],["RF Punching 02","punching"],["Rewinding 01","rewinding"],["Rewinding 02","rewinding"],["Platen 01","platen"],["Platen 02","platen"],["Tube Labelling 01","tube"],["Core Cutting 01","cutting"],["Core Cutting 02","cutting"],["Tube Seaming 01","tube"]],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
 
 const EDGE_URL=`${SB_URL}/functions/v1/klap-mis-data`;
-
-// ── AUTH ──────────────────────────────────────────────────
-const SB_CLIENT = supabase.createClient(SB_URL, SB_KEY);
-const AUTH_URL = EDGE_URL + '/auth';
-const ADMIN_URL = EDGE_URL + '/admin';
-let CURRENT_USER = null;
-let PERMISSIONS = {};   // {resource: {can_read, can_write, can_delete, hidden_fields, row_filter}}
-let USER_ROLE = null;
-
-async function signInWithGoogle(){
-  document.getElementById('login-status').textContent = 'Redirecting to Google…';
-  document.getElementById('google-login-btn').disabled = true;
-  const {error} = await SB_CLIENT.auth.signInWithOAuth({
-    provider:'google',
-    options:{redirectTo: window.location.href}
-  });
-  if(error){showLoginError(error.message);}
-}
-
-async function handleAuthCallback(){
-  const {data:{session}} = await SB_CLIENT.auth.getSession();
-  if(!session) return false;
-  const email = session.user.email;
-  document.getElementById('login-status').textContent = 'Checking access…';
-  try{
-    const r = await fetch(AUTH_URL, {
-      method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-      body: JSON.stringify({email})
-    });
-    const data = await r.json();
-    if(!r.ok || data.error){
-      showLoginError(data.error === 'not_found'
-        ? 'Your email is not authorised. Contact Manish to get access.'
-        : data.error === 'inactive'
-        ? 'Your account has been deactivated. Contact admin.'
-        : 'Access denied: ' + (data.error||'unknown error'));
-      await SB_CLIENT.auth.signOut();
-      return false;
-    }
-    CURRENT_USER = data.user;
-    USER_ROLE = data.user.role_id;
-    // Build permissions map
-    PERMISSIONS = {};
-    (data.permissions||[]).forEach(p=>{PERMISSIONS[p.resource]=p;});
-    return true;
-  } catch(e){
-    showLoginError('Server error: '+e.message);
-    return false;
-  }
-}
-
-function showLoginError(msg){
-  const el=document.getElementById('login-error');
-  el.textContent=msg; el.style.display='block';
-  const btn=document.getElementById('google-login-btn');
-  if(btn){btn.disabled=false; btn.querySelector('span') && (btn.querySelector('span').textContent='Sign in with Google');}
-  document.getElementById('login-status').textContent='';
-}
-
-function canRead(resource){return USER_ROLE==='owner'||!!PERMISSIONS[resource]?.can_read;}
-function canWrite(resource){return USER_ROLE==='owner'||!!PERMISSIONS[resource]?.can_write;}
-function canDelete(resource){return USER_ROLE==='owner'||!!PERMISSIONS[resource]?.can_delete;}
-function hiddenFields(resource){return PERMISSIONS[resource]?.hidden_fields||[];}
-function visibleFields(resource){return PERMISSIONS[resource]?.visible_fields||[];}
-
-function showApp(){
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('top').style.display='flex';
-  document.getElementById('body').style.display='flex';
-  // Update header with user name
-  const nameEl=document.querySelector('#top .tbar-r span[style*="font-weight:600"]');
-  if(nameEl&&CURRENT_USER) nameEl.textContent=CURRENT_USER.name||CURRENT_USER.email.split('@')[0];
-  // Hide nav items user can't access
-  applyNavPermissions();
-}
-
-function applyNavPermissions(){
-  // Map nav data-p values to resources
-  const navMap={
-    'orders':'orders','products':'products','customers':'accounts',
-    'vendors':'accounts','transporters':'accounts','pros':'production_orders',
-    'jobs':'jobs','processes':'pro_steps','dies':'dies','plates':'plates',
-    'wflow-order':'orders','wflow-prod':'production_orders',
-    'wpk':'fg_inventory','winv':'fg_inventory','wdep':'delivery_orders',
-    'wp':'purchase_orders','rm-inv':'rm_in','rm-cat':'rm_categories','rm-subcat':'rm_subcategories'
-  };
-  if(USER_ROLE==='owner') return; // owner sees everything
-  document.querySelectorAll('.ni[data-p],.ng2[data-p]').forEach(el=>{
-    const p=el.dataset.p;
-    const resource=navMap[p];
-    if(resource && !canRead(resource)){
-      el.style.display='none';
-    }
-  });
-}
-
 
 function showLoader(msg){
   let el=document.getElementById('sb-loader');
@@ -1069,16 +918,15 @@ async function loadData(){
 
     // D.pr: [id, date, product_name, customer_name, '', qty, is_cancelled, is_on_hold, order_id]
     D.pr=pros.map(p=>[
-      p.id,           // [0] PRO ID
-      p.date,         // [1] date
-      prodMap[p.product_id]?.product_name||p.product_id||'—', // [2] product name
-      prodMap[p.product_id]?.customer_name||'—', // [3] customer name
-      '',             // [4] legacy empty
-      p.qty||'',      // [5] qty
-      p.is_cancelled?'1':'0',  // [6] is_cancelled
-      p.is_on_hold?'1':'0',    // [7] is_on_hold
-      p.order_id||'', // [8] order_id
-      p.pro_status||'legacy'   // [9] pro_status
+      p.id,
+      p.date,
+      prodMap[p.product_id]?.product_name||p.product_id||'—',
+      prodMap[p.product_id]?.customer_name||'—',
+      '',
+      p.qty||'',
+      p.is_cancelled?'1':'0',
+      p.is_on_hold?'1':'0',
+      p.order_id||''
     ]);
     D.PT=pros.length;
 
@@ -1114,16 +962,12 @@ async function loadData(){
     // D.pl: plates [id, plate_name, status]
     D.pl=plates.map(p=>[p.id,p.plate_name||'',p.status||'']);
 
-    // D.pp: prod_processes mapped to the shape the app expects
-    // [id, date, product_name, customer_name, null, qty, process_num?, is_cancelled, is_on_hold, job_id, material, size_l, size_b, size_units, job_type]
-    // We map to the shape from the original: index 7=is_cancelled(0), 8=is_on_hold(0), 9=job_id via prod_order
-    const proIdToJob={};
-    pros.forEach(p=>{if(p.id&&p.job_id)proIdToJob[p.id]=p.job_id;});
-    const proIdToProduct={};
-    pros.forEach(p=>{if(p.id)proIdToProduct[p.id]={pname:prodMap[p.product_id]?.product_name||'',cname:prodMap[p.product_id]?.customer_name||'',qty:p.qty};});
-    D.pp=procs.map(pp=>{
-      const pro=proIdToProduct[pp.prod_order_id]||{};
-      return [pp.id,pp.date,pro.pname||'',pro.cname||'',null,pro.qty||pp.counter||0,0,0,0,proIdToJob[pp.prod_order_id]||'',pp.material_id||'',0,0,'mm',''];
+    // D.pp: active production_orders mapped to job board shape
+    // [id, date, product_name, customer_name, qty, sheet_qty, 0, is_cancelled, is_on_hold, job_id, material, size_l, size_b, size_units, job_type]
+    // index 7=is_cancelled, 8=is_on_hold, 9=job_id
+    D.pp=pros.filter(p=>!p.is_cancelled&&!p.is_on_hold&&p.job_id).map(p=>{
+      const pm=prodMap[p.product_id]||{};
+      return [p.id,p.date,pm.product_name||p.job_name||'',pm.customer_name||'',p.qty||0,p.sheet_qty||0,0,0,0,p.job_id||'',pm.material||'',pm.size_l||0,pm.size_b||0,pm.size_units||'mm',p.job_type||''];
     });
 
 
@@ -1219,7 +1063,7 @@ document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
   document.getElementById('ptitle').textContent=titles[p]||p;
   closeRP();
   const fn=R[p]; if(fn)fn(1);
-  if(p==='wflow-order'){KB=D.kb;initKanban();}
+  if(p==='wflow-order'){initKanban();initOrderWF();}
   if(p==='wflow-prod'){initProdWF();}
   if(p==='processes'){R.processes(1);}
   if(p==='rm-cat'){R.rm_cats();}
@@ -1246,9 +1090,7 @@ function rf(l,v){return v!=null&&v!==''?`<div class="rf"><div class="rl">${l}</d
 // HELPERS
 const bmap={active:'bg',complete:'bg',cancelled:'br',on_hold:'by',
   file_ready:'bg',in_process:'by',internal_approval:'bp',to_begin:'bo',
-  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp',
-  planned:'bb',in_production:'bo',packing:'bp',despatched:'bg',
-  legacy:'bd',pending:'by',done:'bg',skipped:'bd'};
+  in_stock:'bg',out:'br',Sheet:'bb',Machine:'bp',vendor:'bb',transporter:'bp'};
 const badge=s=>s?`<span class="b ${bmap[s]||'bd'}">${s.replace(/_/g,' ')}</span>`:'-';
 const tr=(s,n=26)=>s?(s.length>n?s.slice(0,n)+'…':s):'—';
 
@@ -1288,7 +1130,7 @@ function wt(prefix,el,show){
 const R={};
 
 R.dash=function(){
-  const ao=D.OA, ap=D.pr.filter(p=>p[9]==='planned'||p[9]==='in_production').length;
+  const ao=D.OA, ap=D.pr.filter(p=>!p[5]&&!p[6]).length;
   const dql=D.dq.length, fr=D.pd.filter(p=>p[3]==='file_ready').length;
   const comp=D.o.filter(o=>o[5]==='complete').length;
   document.getElementById('d-stats').innerHTML=`
@@ -1311,7 +1153,7 @@ R.dash=function(){
   const ro=D.o.filter(o=>o[5]==='active').slice(0,8);
   document.getElementById('d-ords').innerHTML=`<table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Status</th></tr></thead><tbody>${ro.map(o=>`<tr><td class="mono">${o[0]}</td><td>${tr(o[2],18)}</td><td>${tr(o[3],22)}</td><td>${badge(o[5])}</td></tr>`).join('')}</tbody></table>`;
   const rp=D.pr.slice(0,8);
-  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${badge(p[6]==='1'?'cancelled':p[9]||'active')}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('d-pros').innerHTML=`<table><thead><tr><th>PRO</th><th>Product</th><th>Date</th><th>Status</th></tr></thead><tbody>${rp.map(p=>`<tr><td class="mono">${p[0]}</td><td>${tr(p[2],22)}</td><td>${p[1]||'—'}</td><td>${p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('d-dq-cnt').textContent=D.dq.length+' items';
   document.getElementById('d-dq').innerHTML=D.dq.length?`<table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Stage</th></tr></thead><tbody>${D.dq.map(p=>`<tr><td class="mono">${p[0]||'—'}</td><td>${tr(p[1],26)}</td><td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:24px;text-align:center;color:var(--t3)">✅ No items in design queue</div>';
   const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -1374,15 +1216,15 @@ R.pros=function(p){
   if(p)pp.pros=p;
   const st=document.getElementById('pr-st')?.value||'';
   const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[6]==='1'||x[9]==='cancelled':st==='on_hold'?x[7]==='1':st==='complete'?x[9]==='complete':x[6]!=='1'&&x[9]!=='complete'&&x[9]!=='cancelled'&&x[9]!=='legacy'))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>(!st||(st==='cancelled'?x[5]:st==='on_hold'?x[6]:!x[5]&&!x[6]))&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td>${badge(p[6]==='1'?'cancelled':p[9]||'active')}</td>
+    <td>${p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')}</td>
   </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
 };
-function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',badge(p[6]==='1'?'cancelled':p[9]||'active')),p[0]);}
+function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',p[5]?badge('cancelled'):p[6]?badge('on_hold'):badge('active')),p[0]);}
 
 R.jobs=function(p){
   if(p)pp.jobs=p;
@@ -1486,7 +1328,7 @@ function rcDel(i){const el=document.getElementById('rc-'+i);if(el)el.remove();if
 R.packing=function(p){
   if(p)pp.packing=p;
   const q=(document.getElementById('wpk-sq')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[9]==='packing'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('wpk-a').textContent=items.length;
   document.getElementById('wpk-d').textContent=Math.round(items.length*0.15);
   document.getElementById('wpk-s').textContent=items.length;
@@ -1504,7 +1346,7 @@ R.packing=function(p){
 R.inventory=function(p){
   if(p)pp.inventory=p;
   const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[9]==='packing'&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('winv-s').textContent=items.length;
   document.getElementById('winv-r').textContent=Math.round(items.length*0.3);
   document.getElementById('winv-d').textContent=D.o.filter(o=>o[5]==='complete').length;
@@ -1758,7 +1600,7 @@ const CAPTURES=[
 const srcIcon={telegram:'<span class="b bp" style="font-size:9px">📨 TG</span>',whatsapp:'<span class="b bg" style="font-size:9px">💬 WA</span>',screenshot:'<span class="b bb" style="font-size:9px">📷 SS</span>',email:'<span class="b by" style="font-size:9px">📧 Mail</span>'};
 const confBadge={high:'<span class="b bg" style="font-size:9px">🟢 High</span>',medium:'<span class="b by" style="font-size:9px">🟡 Medium</span>',low:'<span class="b br" style="font-size:9px">🔴 Low</span>'};
 
-function owRenderCaptured(){const _owcb=document.getElementById('owc-body');if(!_owcb)return;
+function owRenderCaptured(){
   const q=(document.getElementById('owc-q')?.value||'').toLowerCase();
   const items=CAPTURES.filter(c=>!q||[c.cust,c.prod,c.raw].join(' ').toLowerCase().includes(q));
   document.getElementById('owc-body').innerHTML=items.length ? items.map(c=>`<tr>
@@ -1852,7 +1694,7 @@ function captureNew(type){
 function closeCaptureModal(){document.getElementById('capture-modal').style.display='none';}
 
 // ② ACTIVE
-function owRenderActive(){if(!document.getElementById('owa-body'))return;
+function owRenderActive(){
   const cat=document.getElementById('owa-cat')?.value||'';
   const srt=document.getElementById('owa-srt')?.value||'date_desc';
   const q=(document.getElementById('owa-q')?.value||'').toLowerCase();
@@ -1899,7 +1741,7 @@ function owHold(oid,e){e.stopPropagation();toast('Order '+oid+' placed on hold �
 function owCancel(oid,e){e.stopPropagation();if(confirm('Cancel order '+oid+'?'))toast('Order '+oid+' cancelled');}
 
 // ③ ON HOLD
-function owRenderHold(){if(!document.getElementById('owh-body'))return;
+function owRenderHold(){
   const srt=document.getElementById('owh-srt')?.value||'date_desc';
   const q=(document.getElementById('owh-q')?.value||'').toLowerCase();
   let items=OWF.on_hold.filter(o=>!q||[o[0],o[2],o[4]].join(' ').toLowerCase().includes(q));
@@ -1925,7 +1767,7 @@ function owRenderHold(){if(!document.getElementById('owh-body'))return;
 function owActivate(oid,e){e.stopPropagation();toast('Order '+oid+' reactivated ✅');}
 
 // ④ DESPATCHED
-function owRenderDesp(){if(!document.getElementById('owd-body'))return;
+function owRenderDesp(){
   const per=document.getElementById('owd-per')?.value||'month';
   const srt=document.getElementById('owd-srt')?.value||'date_desc';
   const q=(document.getElementById('owd-q')?.value||'').toLowerCase();
@@ -1965,7 +1807,7 @@ function owRenderDesp(){if(!document.getElementById('owd-body'))return;
 }
 
 // ⑤ CANCELLED
-function owRenderCancelled(){if(!document.getElementById('owx-body'))return;
+function owRenderCancelled(){
   const q=(document.getElementById('owx-q')?.value||'').toLowerCase();
   const items=OWF.cancelled.filter(o=>!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q));
   const slice=pgr(items,'owx','owRenderCancelled','owx-pg',null);
@@ -1986,7 +1828,7 @@ function owRender(tab){
 }
 
 // INIT
-function initOrderWF(){if(!document.getElementById('ow-s1'))return;
+function initOrderWF(){
   const _s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   _s('ow-s0',CAPTURES.length);_s('ow-s1',OWF.active.length);_s('ow-s2',OWF.on_hold.length);_s('ow-s3',OWF.desp.length);_s('ow-s4',OWF.cancelled.length);
   owRender('captured');
@@ -2328,15 +2170,28 @@ function pwGetState(pro){
   var id=pro[0];
   if(pwState[id]) return pwState[id];
   var steps=pwGetSteps(pro[14]||'Sheet');
-  var age=pro[1]?Math.max(0,Math.round((new Date('2026-10-04')-new Date(pro[1]))/86400000)):3;
-  var done=Math.min(Math.floor(age/3),steps.length-1);
-  var objs=steps.map(function(s,i){
-    return {code:s,status:i<done?'done':i===done?'active':'pending',
-      mode:(s!=='PRT'&&s!=='PACK'&&i%3===1)?'jw':'inhouse',
-      jw:(s!=='PRT'&&s!=='PACK'&&i%3===1&&D.ve&&D.ve[i%D.ve.length])?D.ve[i%D.ve.length][1]:'',
-      counter:i<done?Math.round((Number(pro[4])||1000)*1.02):0,
-      wastage:i<done?Math.round((Number(pro[4])||1000)*0.02):0};
-  });
+  // Use real pro_steps if available
+  var realSteps=(D.procs_raw||[]).filter(function(r){return r.prod_order_id===id;});
+  var objs;
+  if(realSteps.length){
+    objs=steps.map(function(s){
+      var r=realSteps.find(function(x){return x.process_name===s;});
+      return {code:s,status:r?(r.step_status||r.process_status||'pending'):'pending',
+        mode:r&&r.vendor_id?'jw':'inhouse',
+        jw:r&&r.vendor_id?(D.ve||[]).find(function(v){return v[0]===r.vendor_id;})||[null,''][1]:'',
+        counter:r?r.qty_out||0:0,wastage:r?r.wastage||0:0};
+    });
+  } else {
+    // Fallback: estimate from PRO date
+    var age=pro[1]?Math.max(0,Math.round((Date.now()-new Date(pro[1]))/86400000)):3;
+    var done=Math.min(Math.floor(age/3),steps.length-1);
+    objs=steps.map(function(s,i){
+      return {code:s,status:i<done?'done':i===done?'active':'pending',
+        mode:(s!=='PRT'&&s!=='PACK'&&i%3===1)?'jw':'inhouse',jw:'',
+        counter:i<done?Math.round((Number(pro[4])||1000)*1.02):0,
+        wastage:i<done?Math.round((Number(pro[4])||1000)*0.02):0};
+    });
+  }
   pwState[id]={steps:objs};
   return pwState[id];
 }
@@ -2352,10 +2207,12 @@ function pwFilter(){
   var ppc=(document.getElementById('pw-ppc')||{}).value||'';
   var q=((document.getElementById('pw-q')||{}).value||'').toLowerCase();
   return (D.pj||[]).filter(function(j){
-    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
-    if(!pros.length)return false;
     if(ppc&&j[2]!==ppc)return false;
-    if(q){var hay=[j[0],j[3]].concat(pros.map(function(p){return p[2]+' '+p[3];})).join(' ').toLowerCase();if(!hay.includes(q))return false;}
+    if(q){
+      var pros=(D.pp||[]).filter(function(p){return p[9]===j[0];});
+      var hay=[j[0],j[3]].concat(pros.map(function(p){return p[2]+' '+p[3];})).join(' ').toLowerCase();
+      if(!hay.includes(q))return false;
+    }
     return true;
   });
 }
@@ -2433,7 +2290,7 @@ function pwToggle(hdr){
   if(arr)arr.textContent=hidden?'&#8743;':'&#8744;';
 }
 function pwTimeline(jobs){
-  var tl=document.getElementById('pw-timeline');if(!tl)return;
+  var tl=document.getElementById('pw-tl');if(!tl)return;
   var ALL=['PRT','COAT','LAM','PUN','RW','SEAL','CUT','PACK'];
   tl.innerHTML=jobs.map(function(j){
     var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
@@ -2482,7 +2339,7 @@ function pwLogStep(proId,stepCode){
   var vendOpts=(D.ve||[]).filter(function(v){return v[3]==='vendor';}).map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join('');
   var stepOpts=steps.map(function(s){return '<option value="'+s+'" '+(cur&&cur.code===s?'selected':'')+'>'+s+'</option>';}).join('');
   document.getElementById('pw-modal-title').textContent=(stepCode||'Log')+' \u2014 Process Step';
-  document.getElementById('pw-modal-subtitle').textContent=proId+' \u00b7 '+tr(pro[2],26)+' \u00b7 '+Number(pro[4]||0).toLocaleString()+' pcs';
+  document.getElementById('pw-modal-sub').textContent=proId+' \u00b7 '+tr(pro[2],26)+' \u00b7 '+Number(pro[4]||0).toLocaleString()+' pcs';
   document.getElementById('pw-modal-body').innerHTML=
     '<div style="background:var(--s2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;display:flex;gap:16px;flex-wrap:wrap">'+
     '<div>PRO: <strong>'+proId+'</strong></div><div>Job: <strong>'+pro[9]+'</strong></div>'+
@@ -2528,7 +2385,7 @@ function pwJobCard(jobId,proId){
   var st=pwGetState(pro);
   var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+(pro[13]?' '+pro[13]:'mm'):'&mdash;';
   document.getElementById('jc-title').textContent='Job Card \u2014 '+proId;
-  document.getElementById('jc-subtitle').textContent=(job?tr(job[3],48):jobId)+' \u00b7 '+tr(pro[2],30);
+  document.getElementById('jc-sub').textContent=(job?tr(job[3],48):jobId)+' \u00b7 '+tr(pro[2],30);
   var stRows=st.steps.map(function(s){
     return '<tr><td style="font-weight:700">'+s.code+'</td>'+
       '<td>'+(s.mode==='jw'?'Jobworker':'In-House')+'</td>'+
@@ -2598,360 +2455,9 @@ function initApp(){
 }
 
 // Start loading — when done, init the app
-
-
-// ── SETTINGS ─────────────────────────────────────────────
-const RESOURCES = ['orders','production_orders','pro_steps','jobs','products','accounts',
-  'delivery_orders','delivery_order_items','purchase_orders','fg_inventory',
-  'rm_in','rm_out','rm_list','rm_categories','rm_subcategories','dies','plates',
-  'app_users','roles','role_permissions','audit_log'];
-
-function settingsTab(el, show){
-  document.querySelectorAll('#settings-tabs .wft').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  ['st-users','st-roles','st-perms','st-audit'].forEach(id=>{
-    const e=document.getElementById(id); if(e) e.style.display=id===show?'block':'none';
-  });
-  if(show==='st-users') loadUsers();
-  if(show==='st-roles') loadRoles();
-  if(show==='st-audit') loadAudit();
-}
-
-async function adminGet(type, extra=''){
-  const r = await fetch(`${ADMIN_URL}?type=${type}${extra}`, {
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
-  });
-  return r.json();
-}
-
-async function adminPost(body){
-  const r = await fetch(ADMIN_URL, {
-    method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  });
-  return r.json();
-}
-
-// USERS
-let _users = [], _roles_cache = [];
-async function loadUsers(){
-  if(USER_ROLE!=='owner'){document.getElementById('su-body').innerHTML='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">Owner access required</td></tr>';return;}
-  _users = await adminGet('users');
-  _roles_cache = await adminGet('roles');
-  const cnt = document.getElementById('su-cnt'); if(cnt) cnt.textContent = _users.length + ' users';
-  document.getElementById('su-body').innerHTML = _users.map(u => {
-    const role = _roles_cache.find(r=>r.id===u.role_id)||{};
-    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString('en-IN') : 'Never';
-    return `<tr>
-      <td><strong>${u.name||'—'}</strong></td>
-      <td class="mono" style="font-size:11px">${u.email}</td>
-      <td><span class="b bb">${role.name||u.role_id||'—'}</span></td>
-      <td>${u.is_active?'<span class="b bg">Active</span>':'<span class="b br">Inactive</span>'}</td>
-      <td style="font-size:11px;color:var(--t2)">${lastLogin}</td>
-      <td>
-        <button class="ab ab-b" onclick="suEdit('${u.id}')">✏️ Edit</button>
-        <button class="ab ab-y" onclick="suToggle('${u.id}',${!u.is_active})">${u.is_active?'⏸ Deactivate':'▶ Activate'}</button>
-      </td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No users</td></tr>';
-}
-
-function suNew(){
-  const roles = _roles_cache.length ? _roles_cache : [];
-  const roleOpts = roles.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
-  showModal('Add User', `
-    <div class="nof-row">
-      <div class="nof-field"><label class="nof-lbl">Full Name</label><input class="f" id="su-name" style="width:100%" placeholder="Name…"></div>
-      <div class="nof-field"><label class="nof-lbl">Gmail Address *</label><input class="f" id="su-email" style="width:100%" placeholder="name@gmail.com"></div>
-    </div>
-    <div class="nof-row">
-      <div class="nof-field"><label class="nof-lbl">Role *</label><select class="f" id="su-role" style="width:100%">${roleOpts}</select></div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-p" onclick="suSave()">✅ Add User</button>
-    </div>`);
-}
-
-async function suSave(){
-  const email = document.getElementById('su-email')?.value?.trim().toLowerCase();
-  const name = document.getElementById('su-name')?.value?.trim();
-  const role_id = document.getElementById('su-role')?.value;
-  if(!email){toast('⚠️ Email required');return;}
-  await adminPost({op:'upsert_user', data:{email,name,role_id,is_active:true}});
-  closeModal(); loadUsers(); toast('User added ✅');
-}
-
-async function suToggle(id, active){
-  const u = _users.find(x=>x.id===id); if(!u) return;
-  await adminPost({op:'upsert_user', data:{...u, is_active:active}});
-  loadUsers(); toast(active ? 'User activated' : 'User deactivated');
-}
-
-function suEdit(id){
-  const u = _users.find(x=>x.id===id); if(!u) return;
-  const roleOpts = _roles_cache.map(r=>`<option value="${r.id}" ${r.id===u.role_id?'selected':''}>${r.name}</option>`).join('');
-  showModal('Edit User — ' + (u.name||u.email), `
-    <div class="nof-row">
-      <div class="nof-field"><label class="nof-lbl">Full Name</label><input class="f" id="su-name" style="width:100%" value="${u.name||''}"></div>
-      <div class="nof-field"><label class="nof-lbl">Email (read-only)</label><input class="f" style="width:100%" value="${u.email}" disabled></div>
-    </div>
-    <div class="nof-row">
-      <div class="nof-field"><label class="nof-lbl">Role</label><select class="f" id="su-role" style="width:100%">${roleOpts}</select></div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-p" onclick="suSaveEdit('${u.id}','${u.email}')">✅ Save</button>
-    </div>`);
-}
-
-async function suSaveEdit(id, email){
-  const name = document.getElementById('su-name')?.value?.trim();
-  const role_id = document.getElementById('su-role')?.value;
-  await adminPost({op:'upsert_user', data:{id,email,name,role_id}});
-  closeModal(); loadUsers(); toast('User updated ✅');
-}
-
-// ROLES
-async function loadRoles(){
-  if(USER_ROLE!=='owner'){return;}
-  _roles_cache = await adminGet('roles');
-  document.getElementById('sr-body').innerHTML = _roles_cache.map(r=>`<tr>
-    <td class="mono">${r.id}</td>
-    <td><strong>${r.name}</strong></td>
-    <td style="color:var(--t2)">${r.description||'—'}</td>
-    <td>${r.is_system?'<span class="b bd">System</span>':'<span class="b bg">Custom</span>'}</td>
-    <td>
-      <button class="ab ab-b" onclick="srEdit('${r.id}')">✏️ Edit</button>
-      ${!r.is_system?`<button class="ab ab-r" onclick="srDelete('${r.id}')">🗑</button>`:''}
-    </td>
-  </tr>`).join('');
-}
-
-function srNew(){
-  showModal('New Role',`
-    <div class="nof-row">
-      <div class="nof-field"><label class="nof-lbl">Role ID (lowercase, no spaces)</label><input class="f" id="sr-id" style="width:100%" placeholder="e.g. qa_checker"></div>
-      <div class="nof-field"><label class="nof-lbl">Display Name</label><input class="f" id="sr-name" style="width:100%" placeholder="e.g. QA Checker"></div>
-    </div>
-    <div class="nof-row">
-      <div class="nof-field" style="flex:2"><label class="nof-lbl">Description</label><input class="f" id="sr-desc" style="width:100%" placeholder="What this role does…"></div>
-      <div class="nof-field"><label class="nof-lbl">Color</label><input type="color" id="sr-color" value="#6b7280" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--bdr)"></div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-p" onclick="srSave()">✅ Create Role</button>
-    </div>`);
-}
-
-async function srSave(){
-  const id = document.getElementById('sr-id')?.value?.trim().toLowerCase().replace(/\s+/g,'_');
-  const name = document.getElementById('sr-name')?.value?.trim();
-  const description = document.getElementById('sr-desc')?.value?.trim();
-  const color = document.getElementById('sr-color')?.value;
-  if(!id||!name){toast('⚠️ ID and name required');return;}
-  await adminPost({op:'upsert_role', data:{id,name,description,color,is_system:false}});
-  closeModal(); loadRoles(); toast('Role created ✅');
-}
-
-function srEdit(id){
-  const r = _roles_cache.find(x=>x.id===id); if(!r) return;
-  showModal('Edit Role — ' + r.name,`
-    <div class="nof-row">
-      <div class="nof-field"><label class="nof-lbl">Display Name</label><input class="f" id="sr-name" style="width:100%" value="${r.name}"></div>
-      <div class="nof-field"><label class="nof-lbl">Color</label><input type="color" id="sr-color" value="${r.color||'#6b7280'}" style="width:100%;height:32px;border-radius:6px;border:1px solid var(--bdr)"></div>
-    </div>
-    <div class="nof-row">
-      <div class="nof-field" style="flex:2"><label class="nof-lbl">Description</label><input class="f" id="sr-desc" style="width:100%" value="${r.description||''}"></div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-p" onclick="srSaveEdit('${id}')">✅ Save</button>
-    </div>`);
-}
-
-async function srSaveEdit(id){
-  const r = _roles_cache.find(x=>x.id===id);
-  const name = document.getElementById('sr-name')?.value?.trim();
-  const description = document.getElementById('sr-desc')?.value?.trim();
-  const color = document.getElementById('sr-color')?.value;
-  await adminPost({op:'upsert_role', data:{...r,name,description,color}});
-  closeModal(); loadRoles(); toast('Role updated ✅');
-}
-
-async function srDelete(id){
-  if(!confirm('Delete this role? Users with this role will lose access.')) return;
-  await adminPost({op:'delete_role', id});
-  loadRoles(); toast('Role deleted');
-}
-
-// PERMISSIONS
-let _all_perms = {};
-async function loadPermissions(){
-  const roleId = document.getElementById('sp-role')?.value;
-  if(!roleId){document.getElementById('sp-grid').innerHTML='<div style="color:var(--t3);font-size:12px;text-align:center;padding:24px">Select a role</div>';return;}
-  const perms = await adminGet('permissions', '&role='+roleId);
-  _all_perms = {};
-  (perms||[]).forEach(p=>{_all_perms[p.resource]=p;});
-  renderPermGrid(roleId);
-}
-
-function renderPermGrid(roleId){
-  const grid = document.getElementById('sp-grid');
-  const labels = {
-    orders:'Orders', production_orders:'Production Orders', pro_steps:'Processes / Steps',
-    jobs:'Jobs', products:'Products', accounts:'Accounts (CRM)',
-    delivery_orders:'Delivery Orders', delivery_order_items:'DO Items',
-    purchase_orders:'Purchase Orders', fg_inventory:'FG Inventory',
-    rm_in:'RM In (GRN)', rm_out:'RM Out (Issued)', rm_list:'RM Master',
-    rm_categories:'RM Categories', rm_subcategories:'RM Sub-Categories',
-    dies:'Dies', plates:'Plates',
-    app_users:'Users (Admin)', roles:'Roles (Admin)',
-    role_permissions:'Permissions (Admin)', audit_log:'Audit Log'
-  };
-  grid.innerHTML = `
-    <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:10px">
-      Editing permissions for: <span style="color:var(--txt)">${roleId}</span>
-      <button class="btn btn-p" style="font-size:11px;margin-left:12px" onclick="saveAllPerms('${roleId}')">💾 Save All</button>
-    </div>
-    <div style="overflow-x:auto"><table style="width:100%">
-      <thead><tr>
-        <th>Resource / Table</th>
-        <th style="text-align:center;width:80px">Read</th>
-        <th style="text-align:center;width:80px">Write</th>
-        <th style="text-align:center;width:80px">Delete</th>
-        <th>Row Filter</th>
-        <th>Hidden Fields</th>
-      </tr></thead>
-      <tbody>
-        ${RESOURCES.map(res=>{
-          const p = _all_perms[res]||{can_read:false,can_write:false,can_delete:false};
-          const rowFilter = p.row_filter||'';
-          const hiddenF = (p.hidden_fields||[]).join(', ');
-          return `<tr>
-            <td><strong style="font-size:12px">${labels[res]||res}</strong><div style="font-size:10px;color:var(--t3);font-family:monospace">${res}</div></td>
-            <td style="text-align:center"><input type="checkbox" class="perm-cb" data-res="${res}" data-field="can_read" ${p.can_read?'checked':''}></td>
-            <td style="text-align:center"><input type="checkbox" class="perm-cb" data-res="${res}" data-field="can_write" ${p.can_write?'checked':''}></td>
-            <td style="text-align:center"><input type="checkbox" class="perm-cb" data-res="${res}" data-field="can_delete" ${p.can_delete?'checked':''}></td>
-            <td><input class="f perm-filter" data-res="${res}" style="width:160px;font-size:11px" placeholder='e.g. created_by = "{me}"' value="${rowFilter}"></td>
-            <td><input class="f perm-hidden" data-res="${res}" style="width:160px;font-size:11px" placeholder="field1, field2…" value="${hiddenF}"></td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table></div>`;
-}
-
-async function saveAllPerms(roleId){
-  const rows = document.querySelectorAll('#sp-grid tr[class!=""]');
-  const saves = RESOURCES.map(async res=>{
-    const read = document.querySelector(`.perm-cb[data-res="${res}"][data-field="can_read"]`)?.checked||false;
-    const write = document.querySelector(`.perm-cb[data-res="${res}"][data-field="can_write"]`)?.checked||false;
-    const del = document.querySelector(`.perm-cb[data-res="${res}"][data-field="can_delete"]`)?.checked||false;
-    const rowFilter = document.querySelector(`.perm-filter[data-res="${res}"]`)?.value?.trim()||null;
-    const hiddenRaw = document.querySelector(`.perm-hidden[data-res="${res}"]`)?.value?.trim()||'';
-    const hidden = hiddenRaw ? hiddenRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
-    if(read||write||del||rowFilter||hidden.length){
-      await adminPost({op:'upsert_permission', data:{
-        role_id:roleId, resource:res,
-        can_read:read, can_write:write, can_delete:del,
-        row_filter:rowFilter, hidden_fields:hidden
-      }});
-    }
-  });
-  await Promise.all(saves);
-  toast('Permissions saved ✅');
-  loadPermissions();
-}
-
-// AUDIT LOG
-let _audit_raw = [];
-async function loadAudit(){
-  if(USER_ROLE!=='owner'&&USER_ROLE!=='manager'){document.getElementById('sa-body').innerHTML='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">Access restricted</td></tr>';return;}
-  _audit_raw = await adminGet('audit');
-  filterAudit();
-}
-
-function filterAudit(){
-  const action = document.getElementById('sa-action')?.value||'';
-  const q = (document.getElementById('sa-q')?.value||'').toLowerCase();
-  const items = (_audit_raw||[]).filter(r=>
-    (!action||r.action===action)&&
-    (!q||[r.user_email||'',r.resource||'',r.record_id||''].join(' ').toLowerCase().includes(q))
-  );
-  const cnt = document.getElementById('sa-cnt'); if(cnt) cnt.textContent = items.length + ' entries';
-  const slice = pgr(items,'audit','filterAudit','sa-pg','');
-  document.getElementById('sa-body').innerHTML = slice.map(r=>`<tr>
-    <td style="font-size:11px;white-space:nowrap">${r.created_at?new Date(r.created_at).toLocaleString('en-IN',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
-    <td><div style="font-weight:600;font-size:12px">${r.user_name||'—'}</div><div style="font-size:10px;color:var(--t2)">${r.user_email||'—'}</div></td>
-    <td><span class="b bd">${r.role_id||'—'}</span></td>
-    <td>${r.action==='login'?'<span class="b bg">login</span>':r.action==='insert'?'<span class="b bb">insert</span>':r.action==='update'?'<span class="b by">update</span>':r.action==='delete'?'<span class="b br">delete</span>':'<span class="b bd">'+r.action+'</span>'}</td>
-    <td class="mono">${r.resource||'—'}</td>
-    <td class="mono">${r.record_id||'—'}</td>
-  </tr>`).join('') || '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No entries</td></tr>';
-}
-
-// Load role dropdown in permissions tab
-R.settings = function(){
-  const info = document.getElementById('settings-user-info');
-  if(info&&CURRENT_USER) info.textContent = '👤 '+CURRENT_USER.name+' · '+USER_ROLE;
-  if(USER_ROLE!=='owner') return;
-  adminGet('roles').then(roles=>{
-    _roles_cache = roles||[];
-    const sel = document.getElementById('sp-role');
-    if(sel&&sel.options.length===1){
-      roles.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.name;sel.appendChild(o);});
-    }
-  });
-  loadUsers();
-};
-
-// MODAL HELPER
-function showModal(title, body){
-  let m = document.getElementById('generic-modal');
-  if(!m){m=document.createElement('div');m.id='generic-modal';
-    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
-    document.body.appendChild(m);}
-  m.innerHTML=`<div style="background:var(--s1);border-radius:14px;width:560px;max-width:96vw;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-    <div style="display:flex;align-items:center;margin-bottom:16px">
-      <h3 style="font-size:15px;font-weight:800;flex:1">${title}</h3>
-      <span onclick="closeModal()" style="cursor:pointer;font-size:20px;color:var(--t2)">✕</span>
-    </div>${body}</div>`;
-  m.style.display='flex';
-}
-function closeModal(){const m=document.getElementById('generic-modal');if(m)m.style.display='none';}
-
-// ── BOOT SEQUENCE ─────────────────────────────────────────
-// 1. Hide app until auth confirmed
-document.getElementById('top').style.display='none';
-document.getElementById('body').style.display='none';
-
-async function boot(){
-  // Check if returning from OAuth redirect
-  const loggedIn = await handleAuthCallback();
-  if(loggedIn){
-    showApp();
-    loadData().then(()=>initApp()).catch(e=>console.error('Init error:',e));
-  } else {
-    // Show login screen — hide loader if it appeared
-    hideLoader();
-    document.getElementById('login-screen').style.display='flex';
-  }
-}
-boot();
-
+loadData().then(()=>initApp()).catch(e=>console.error('Init error:',e));
 </script>
 
 <div id="new-order-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;padding:16px"></div>
-
-<div id="capture-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--s1);border-radius:14px;width:560px;max-width:96vw;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-    <div style="display:flex;align-items:center;margin-bottom:16px">
-      <h3 id="cap-modal-title" style="font-size:15px;font-weight:800;flex:1">Capture</h3>
-      <span onclick="closeCaptureModal()" style="cursor:pointer;font-size:20px;color:var(--t2)">✕</span>
-    </div>
-    <div id="cap-modal-body"></div>
-  </div>
-</div>
 </body>
 </html>
