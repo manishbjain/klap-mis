@@ -263,6 +263,71 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 #toast{position:fixed;bottom:20px;right:20px;background:#1a1d2e;color:#fff;padding:9px 14px;
   border-radius:9px;font-size:12px;z-index:9999;max-width:300px;opacity:0;transition:opacity .3s;
   pointer-events:none}
+
+/* ── FILTER DRAWER ── */
+#fd-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:1200}
+#fd-overlay.open{display:block}
+#fd{position:fixed;top:0;right:-420px;width:400px;max-width:94vw;height:100vh;
+  background:var(--s1);border-left:1px solid var(--bdr);z-index:1201;
+  display:flex;flex-direction:column;transition:right .22s cubic-bezier(.4,0,.2,1);
+  box-shadow:-4px 0 28px rgba(0,0,0,.13)}
+#fd.open{right:0}
+#fd-hdr{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;
+  background:var(--s2);flex-shrink:0}
+#fd-hdr h3{font-size:14px;font-weight:800;flex:1}
+#fd-hdr-close{cursor:pointer;font-size:20px;color:var(--t2);padding:2px 6px;border-radius:5px}
+#fd-hdr-close:hover{background:var(--bdr)}
+#fd-body{flex:1;overflow-y:auto;padding:16px 18px}
+#fd-foot{padding:12px 18px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-shrink:0;background:var(--s2)}
+.fd-group{margin-bottom:18px}
+.fd-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fd-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.fd-row-1{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px}
+.fd-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+select.fd-f,input.fd-f{width:100%;background:var(--s1);border:1px solid var(--bdr);
+  border-radius:7px;padding:6px 9px;font-size:12px;color:var(--txt);outline:none}
+select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
+.fd-tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.fd-tag{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;
+  background:var(--s2);border:1px solid var(--bdr);color:var(--txt);transition:all .12s}
+.fd-tag.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.fd-divider{border:none;border-top:1px solid var(--bdr);margin:14px 0}
+/* filter btn in table header */
+.fd-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;
+  background:var(--s2);border:1px solid var(--bdr);font-size:11px;font-weight:600;
+  cursor:pointer;color:var(--txt);white-space:nowrap;transition:all .12s}
+.fd-btn:hover{border-color:var(--acc);color:var(--acc)}
+.fd-btn.active{background:var(--acc-lt);border-color:var(--acc);color:var(--acc)}
+.fd-active-bar{padding:6px 14px;background:var(--acc-lt);border-bottom:1px solid var(--bdr);
+  font-size:11px;color:var(--acc);display:none}
+.fd-active-bar.show{display:flex;align-items:center;gap:8px}
+
+/* ── DESIGN WORKFLOW ── */
+.dq-col{background:var(--s2);border-radius:12px;min-width:200px;width:200px;flex-shrink:0;
+  display:flex;flex-direction:column;max-height:calc(100vh - 230px)}
+.dq-col-hdr{padding:10px 12px 8px;border-radius:12px 12px 0 0;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.dq-col-title{font-size:11px;font-weight:700;flex:1}
+.dq-col-cnt{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:rgba(0,0,0,.08)}
+.dq-col-body{padding:6px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:5px}
+.dq-card{background:var(--s1);border-radius:8px;padding:10px 11px;cursor:pointer;
+  border:1px solid var(--bdr);transition:all .15s;border-left:3px solid transparent}
+.dq-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);border-color:var(--acc)}
+.dq-card-code{font-size:9px;font-family:monospace;color:var(--t3)}
+.dq-card-name{font-size:11px;font-weight:700;color:var(--txt);margin:2px 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dq-card-cust{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dq-c0 .dq-col-hdr{background:#fff7ed}.dq-c0 .dq-card{border-left-color:#fb923c}
+.dq-c1 .dq-col-hdr{background:#f0f9ff}.dq-c1 .dq-card{border-left-color:#38bdf8}
+.dq-c2 .dq-col-hdr{background:#fdf4ff}.dq-c2 .dq-card{border-left-color:#c084fc}
+.dq-c3 .dq-col-hdr{background:#fffbeb}.dq-c3 .dq-card{border-left-color:#fbbf24}
+.dq-c4 .dq-col-hdr{background:#f0fdf4}.dq-c4 .dq-card{border-left-color:#4ade80}
+.dq-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1500;align-items:center;justify-content:center}
+.dq-modal.open{display:flex}
+
+/* enhanced KB card */
+.kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.kb-card-qty{font-size:10px;color:var(--t2);font-weight:600}
+.kb-repeat{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:#dbeafe;color:#1e40af}
 </style>
 </head>
 <body>
@@ -360,12 +425,14 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Orders</h3><span class="tc-cnt" id="o-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option>active</option><option>complete</option><option>on_hold</option><option>cancelled</option></select>
+        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option value="active">Active</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option></select>
-        <input class="f" id="o-q" placeholder="Search…" oninput="R.orders(1)">
+        <input class="f" id="o-q" placeholder="Search OID / customer / product…" oninput="R.orders(1)" style="width:200px">
+        <button class="fd-btn" id="fd-btn-orders" onclick="openFD('orders')">⚙ Filters</button>
       </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Status</th><th>Type</th></tr></thead><tbody id="o-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-orders"><span id="fd-bar-orders-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('orders')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Status</th><th>Type</th><th>Age</th></tr></thead><tbody id="o-body"></tbody></table></div>
     <div class="pg-bar" id="o-pg"></div>
   </div>
 </div>
@@ -376,9 +443,11 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
     <div class="th"><h3>Design Queue</h3><span class="tc-cnt" id="dq-cnt"></span>
       <div class="flt-row">
         <select class="f" id="dq-st" onchange="R.dq(1)"><option value="">All Stages</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option></select>
-        <input class="f" id="dq-q" placeholder="Search…" oninput="R.dq(1)">
+        <input class="f" id="dq-q" placeholder="Search code / product / customer…" oninput="R.dq(1)" style="width:200px">
+        <button class="fd-btn" id="fd-btn-dq" onclick="openFD('dq')">⚙ Filters</button>
       </div>
     </div>
+    <div class="fd-active-bar" id="fd-bar-dq"><span id="fd-bar-dq-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('dq')">Clear all</button></div>
     <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Stage</th></tr></thead><tbody id="dq-body"></tbody></table></div>
     <div class="pg-bar" id="dq-pg"></div>
   </div>
@@ -390,9 +459,11 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
     <div class="th"><h3>Products</h3><span class="tc-cnt" id="pd-cnt"></span>
       <div class="flt-row">
         <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option><option value="file_ready">File Ready</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
-        <input class="f" id="pd-q" placeholder="Search…" oninput="R.products(1)">
+        <input class="f" id="pd-q" placeholder="Search code / product / customer…" oninput="R.products(1)" style="width:200px">
+        <button class="fd-btn" id="fd-btn-products" onclick="openFD('products')">⚙ Filters</button>
       </div>
     </div>
+    <div class="fd-active-bar" id="fd-bar-products"><span id="fd-bar-products-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('products')">Clear all</button></div>
     <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Design Status</th></tr></thead><tbody id="pd-body"></tbody></table></div>
     <div class="pg-bar" id="pd-pg"></div>
   </div>
@@ -402,9 +473,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 <div id="pg-customers" class="pg">
   <div class="tc">
     <div class="th"><h3>Customers</h3><span class="tc-cnt" id="cu-cnt"></span>
-      <div class="flt-row"><input class="f" id="cu-q" placeholder="Search…" oninput="R.customers(1)"></div>
+      <div class="flt-row">
+        <input class="f" id="cu-q" placeholder="Search name / brand / alias…" oninput="R.customers(1)" style="width:200px">
+        <button class="fd-btn" id="fd-btn-customers" onclick="openFD('customers')">⚙ Filters</button>
+      </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>City</th></tr></thead><tbody id="cu-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-customers"><span id="fd-bar-customers-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('customers')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Brand</th><th>Alias</th></tr></thead><tbody id="cu-body"></tbody></table></div>
     <div class="pg-bar" id="cu-pg"></div>
   </div>
 </div>
@@ -414,11 +489,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="in_packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
-        <input class="f" id="pr-q" placeholder="Search…" oninput="R.pros(1)">
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
+        <input class="f" id="pr-q" placeholder="Search PRO / product / order…" oninput="R.pros(1)" style="width:200px">
+        <button class="fd-btn" id="fd-btn-pros" onclick="openFD('pros')">⚙ Filters</button>
       </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Qty</th><th>Status</th></tr></thead><tbody id="pr-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-pros"><span id="fd-bar-pros-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('pros')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Qty</th><th>Order</th><th>Job</th><th>Status</th></tr></thead><tbody id="pr-body"></tbody></table></div>
     <div class="pg-bar" id="pr-pg"></div>
   </div>
 </div>
@@ -428,11 +505,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Jobs</h3><span class="tc-cnt" id="jo-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All Types</option><option>Sheet</option><option>Machine</option></select>
-        <input class="f" id="jo-q" placeholder="Search…" oninput="R.jobs(1)">
+        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All Types</option><option value="Sheet">Sheet</option><option value="Machine">Machine</option><option value="Direct">Direct</option></select>
+        <input class="f" id="jo-q" placeholder="Search job ID / name…" oninput="R.jobs(1)" style="width:180px">
+        <button class="fd-btn" id="fd-btn-jobs" onclick="openFD('jobs')">⚙ Filters</button>
       </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Job ID</th><th>Date</th><th>Type</th><th>Job Name</th></tr></thead><tbody id="jo-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-jobs"><span id="fd-bar-jobs-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('jobs')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Job ID</th><th>Date</th><th>Type</th><th>Job Name</th><th>Active PROs</th></tr></thead><tbody id="jo-body"></tbody></table></div>
     <div class="pg-bar" id="jo-pg"></div>
   </div>
 </div>
@@ -443,9 +522,11 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
     <div class="th"><h3>Dies</h3><span class="tc-cnt" id="di-cnt"></span>
       <div class="flt-row">
         <select class="f" id="di-st" onchange="R.dies(1)"><option value="">All Status</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
-        <input class="f" id="di-q" placeholder="Search…" oninput="R.dies(1)">
+        <input class="f" id="di-q" placeholder="Search code / name…" oninput="R.dies(1)" style="width:180px">
+        <button class="fd-btn" id="fd-btn-dies" onclick="openFD('dies')">⚙ Filters</button>
       </div>
     </div>
+    <div class="fd-active-bar" id="fd-bar-dies"><span id="fd-bar-dies-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('dies')">Clear all</button></div>
     <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Name</th><th>Ups</th><th>Status</th></tr></thead><tbody id="di-body"></tbody></table></div>
     <div class="pg-bar" id="di-pg"></div>
   </div>
@@ -455,8 +536,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 <div id="pg-plates" class="pg">
   <div class="tc">
     <div class="th"><h3>Plates</h3><span class="tc-cnt" id="pl-cnt"></span>
-      <div class="flt-row"><input class="f" id="pl-q" placeholder="Search…" oninput="R.plates(1)"></div>
+      <div class="flt-row">
+        <select class="f" id="pl-st" onchange="R.plates(1)"><option value="">All Status</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
+        <input class="f" id="pl-q" placeholder="Search code / name…" oninput="R.plates(1)" style="width:180px">
+        <button class="fd-btn" id="fd-btn-plates" onclick="openFD('plates')">⚙ Filters</button>
+      </div>
     </div>
+    <div class="fd-active-bar" id="fd-bar-plates"><span id="fd-bar-plates-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('plates')">Clear all</button></div>
     <div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Name</th><th>Status</th></tr></thead><tbody id="pl-body"></tbody></table></div>
     <div class="pg-bar" id="pl-pg"></div>
   </div>
@@ -473,9 +559,14 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 <div id="pg-vendors" class="pg">
   <div class="tc">
     <div class="th"><h3>Vendors &amp; Transporters</h3><span class="tc-cnt" id="ve-cnt"></span>
-      <div class="flt-row"><input class="f" id="ve-q" placeholder="Search…" oninput="R.vendors(1)"></div>
+      <div class="flt-row">
+        <select class="f" id="ve-type" onchange="R.vendors(1)"><option value="">All Types</option><option value="vendor">Vendors</option><option value="transporter">Transporters</option></select>
+        <input class="f" id="ve-q" placeholder="Search name / alias…" oninput="R.vendors(1)" style="width:180px">
+        <button class="fd-btn" id="fd-btn-vendors" onclick="openFD('vendors')">⚙ Filters</button>
+      </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>Type</th></tr></thead><tbody id="ve-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-vendors"><span id="fd-bar-vendors-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('vendors')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Alias</th><th>Type</th></tr></thead><tbody id="ve-body"></tbody></table></div>
     <div class="pg-bar" id="ve-pg"></div>
   </div>
 </div>
@@ -515,9 +606,30 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 </div>
 
 <div id="pg-wflow-design" class="pg">
-  <div class="tc"><div class="th"><h3>Design Workflow</h3><span style="font-size:11px;color:var(--t2);margin-left:6px">Design queue is live — full workflow Phase 2</span></div>
-  <div style="padding:40px;text-align:center;color:var(--t3)"><div style="font-size:40px;margin-bottom:12px">✏️</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Design Workflow</div><div style="font-size:12px">Manage artwork: To Process → In Process → Internal Approval → On Approval → Approved → File Ready. See Design Queue under Orders for current data.</div>
-  <button class="btn btn-p" style="margin-top:14px" onclick="document.querySelector('.ni[data-p=dq]')?.click()">→ Go to Design Queue</button></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+  <div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:2px">✏️ Design Workflow</h2>
+    <div style="font-size:11px;color:var(--t2)">Track artwork from brief to File Ready — all stages at a glance</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <input class="f" id="dw-q" placeholder="Search product / customer / code…" oninput="initDesignWF()" style="width:210px">
+    <select class="f" id="dw-cust" onchange="initDesignWF()"><option value="">All Customers</option></select>
+    <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="document.getElementById('dw-q').value='';document.getElementById('dw-cust').value='';initDesignWF()">Clear</button>
+  </div>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="dw-stats"></div>
+<div class="kb-wrap" id="dw-board"></div>
+<!-- Design card modal -->
+<div class="dq-modal" id="dw-modal">
+  <div style="background:var(--s1);border-radius:14px;width:520px;max-width:95vw;max-height:88vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="display:flex;align-items:center;margin-bottom:16px">
+      <h3 id="dw-modal-title" style="font-size:14px;font-weight:800;flex:1"></h3>
+      <span onclick="document.getElementById('dw-modal').classList.remove('open')" style="cursor:pointer;font-size:20px;color:var(--t2);padding:2px 6px">✕</span>
+    </div>
+    <div id="dw-modal-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr);flex-wrap:wrap" id="dw-modal-actions"></div>
+  </div>
+</div>
 </div>
 
 <div id="pg-wflow-prod" class="pg">
@@ -615,9 +727,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 <div id="pg-transporters" class="pg">
   <div class="tc">
     <div class="th"><h3>Transporters</h3><span class="tc-cnt" id="tr-cnt"></span>
-      <div class="flt-row"><input class="f" id="tr-q" placeholder="Search…" oninput="R.transporters(1)"></div>
+      <div class="flt-row">
+        <input class="f" id="tr-q" placeholder="Search name / alias…" oninput="R.transporters(1)" style="width:200px">
+        <button class="fd-btn" id="fd-btn-transporters" onclick="openFD('transporters')">⚙ Filters</button>
+      </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Phone</th></tr></thead><tbody id="tr-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-transporters"><span id="fd-bar-transporters-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('transporters')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Name</th><th>Alias</th><th>Phone</th></tr></thead><tbody id="tr-body"></tbody></table></div>
     <div class="pg-bar" id="tr-pg"></div>
   </div>
 </div>
@@ -626,9 +742,11 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
     <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
       <div class="flt-row">
         <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="To Send">To Send</option><option value="Job Order Sent">Job Order Sent</option><option value="Job Approved">Job Approved</option><option value="Part Processed">Part Processed</option><option value="Complete">Complete</option><option value="Moved">Moved</option><option value="Cancelled">Cancelled</option></select>
-        <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)">
+        <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)" style="width:180px">
+        <button class="fd-btn" id="fd-btn-processes" onclick="openFD('processes')">⚙ Filters</button>
       </div>
     </div>
+    <div class="fd-active-bar" id="fd-bar-processes"><span id="fd-bar-processes-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('processes')">Clear all</button></div>
     <div style="overflow-x:auto"><table><thead><tr><th>Process</th><th>PRO</th><th>Product</th><th>Customer</th><th>Date</th><th>Material</th><th>Counter</th><th>Machine</th><th>Status</th></tr></thead><tbody id="proc-body"></tbody></table></div>
     <div class="pg-bar" id="proc-pg"></div>
   </div>
@@ -663,9 +781,11 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
       <div class="th"><h3>Raw Material Master</h3>
         <div class="flt-row">
           <select class="f" id="rmi-cat-f" onchange="R.rm_list(1)"><option value="">All Categories</option></select>
-          <input class="f" id="rmi-q" placeholder="Search…" oninput="R.rm_list(1)">
+          <input class="f" id="rmi-q" placeholder="Search name / brand / vendor…" oninput="R.rm_list(1)" style="width:180px">
+          <button class="fd-btn" id="fd-btn-rm-master" onclick="openFD('rm-master')">⚙ Filters</button>
         </div>
       </div>
+      <div class="fd-active-bar" id="fd-bar-rm-master"><span id="fd-bar-rm-master-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('rm-master')">Clear all</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Name/Alias</th><th>Brand</th><th>Category</th><th>Sub-Cat</th><th>Vendor</th></tr></thead><tbody id="rmi-body"></tbody></table></div>
       <div class="pg-bar" id="rmi-pg"></div>
     </div>
@@ -673,8 +793,12 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div id="rmi-in" class="wp" style="display:none">
     <div class="tc">
       <div class="th"><h3>GRN — Stock In</h3><span class="tc-cnt" id="rmin-cnt"></span>
-        <div class="flt-row"><input class="f" id="rmin-q" placeholder="Search material / vendor…" oninput="R.rm_in(1)"></div>
+        <div class="flt-row">
+          <input class="f" id="rmin-q" placeholder="Search material / vendor / bill…" oninput="R.rm_in(1)" style="width:200px">
+          <button class="fd-btn" id="fd-btn-rm-grn" onclick="openFD('rm-grn')">⚙ Filters</button>
+        </div>
       </div>
+      <div class="fd-active-bar" id="fd-bar-rm-grn"><span id="fd-bar-rm-grn-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('rm-grn')">Clear all</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>GRN ID</th><th>Date</th><th>Material</th><th>Brand</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Bill Ref</th></tr></thead><tbody id="rmin-body"></tbody></table></div>
       <div class="pg-bar" id="rmin-pg"></div>
     </div>
@@ -682,8 +806,12 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div id="rmi-out-list" class="wp" style="display:none">
     <div class="tc">
       <div class="th"><h3>RM Issued — Stock Out</h3><span class="tc-cnt" id="rmout-cnt"></span>
-        <div class="flt-row"><input class="f" id="rmout-q" placeholder="Search…" oninput="R.rm_out(1)"></div>
+        <div class="flt-row">
+          <input class="f" id="rmout-q" placeholder="Search GRN / PRO…" oninput="R.rm_out(1)" style="width:200px">
+          <button class="fd-btn" id="fd-btn-rm-out" onclick="openFD('rm-out')">⚙ Filters</button>
+        </div>
       </div>
+      <div class="fd-active-bar" id="fd-bar-rm-out"><span id="fd-bar-rm-out-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('rm-out')">Clear all</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Date</th><th>GRN Ref</th><th>PRO</th><th>Qty</th><th>Unit</th></tr></thead><tbody id="rmout-body"></tbody></table></div>
       <div class="pg-bar" id="rmout-pg"></div>
     </div>
@@ -708,9 +836,11 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
       <div class="th"><h3>Purchase Orders</h3><span class="tc-cnt" id="po-cnt"></span>
         <div class="flt-row">
           <select class="f" id="po-st" onchange="R.po_list(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="received">Received</option></select>
-          <input class="f" id="po-q" placeholder="Search material / vendor…" oninput="R.po_list(1)">
+          <input class="f" id="po-q" placeholder="Search material / vendor / bill…" oninput="R.po_list(1)" style="width:180px">
+          <button class="fd-btn" id="fd-btn-purchase" onclick="openFD('purchase')">⚙ Filters</button>
         </div>
       </div>
+      <div class="fd-active-bar" id="fd-bar-purchase"><span id="fd-bar-purchase-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('purchase')">Clear all</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>PO #</th><th>Date</th><th>Material</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Rate ₹</th><th>Amount ₹</th><th>Bill Ref</th><th>Status</th></tr></thead><tbody id="po-body"></tbody></table></div>
       <div class="pg-bar" id="po-pg"></div>
     </div>
@@ -777,9 +907,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   </div>
   <div class="tc">
     <div class="th"><h3>FG Stock</h3><span class="tc-cnt" id="winv-cnt"></span>
-      <div class="flt-row"><input class="f" id="winv-q" placeholder="Search…" oninput="R.fg_inventory(1)"></div>
+      <div class="flt-row">
+        <input class="f" id="winv-q" placeholder="Search product / customer / batch…" oninput="R.fg_inventory(1)" style="width:220px">
+        <button class="fd-btn" id="fd-btn-fg-inv" onclick="openFD('fg-inv')">⚙ Filters</button>
+      </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Inventory ID</th><th>Product</th><th>Customer</th><th>PRO</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead><tbody id="winv-body"></tbody></table></div>
+    <div class="fd-active-bar" id="fd-bar-fg-inv"><span id="fd-bar-fg-inv-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('fg-inv')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Inventory ID</th><th>Date</th><th>Product</th><th>Customer</th><th>PRO</th><th>Packets</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead><tbody id="winv-body"></tbody></table></div>
     <div class="pg-bar" id="winv-pg"></div>
   </div>
 </div>
@@ -798,8 +932,12 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div id="wdep-r-list" class="wp">
     <div class="tc">
       <div class="th"><h3>Ready to Despatch</h3><span class="tc-cnt" id="wdep-cnt"></span>
-        <div class="flt-row"><input class="f" id="wdep-q" placeholder="Search…" oninput="R.despatch_live(1)"></div>
+        <div class="flt-row">
+          <input class="f" id="wdep-q" placeholder="Search OID / customer / product…" oninput="R.despatch_live(1)" style="width:220px">
+          <button class="fd-btn" id="fd-btn-despatch" onclick="openFD('despatch')">⚙ Filters</button>
+        </div>
       </div>
+      <div class="fd-active-bar" id="fd-bar-despatch"><span id="fd-bar-despatch-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatch')">Clear all</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Qty</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-pg"></div>
     </div>
@@ -807,8 +945,12 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div id="wdep-done" class="wp" style="display:none">
     <div class="tc">
       <div class="th"><h3>Despatched Orders</h3><span class="tc-cnt" id="wdep-done-cnt"></span>
-        <div class="flt-row"><input class="f" id="wdep-dq" placeholder="Search…" oninput="R.despatched(1)"></div>
+        <div class="flt-row">
+          <input class="f" id="wdep-dq" placeholder="Search OID / customer / DC…" oninput="R.despatched(1)" style="width:220px">
+          <button class="fd-btn" id="fd-btn-despatched" onclick="openFD('despatched')">⚙ Filters</button>
+        </div>
       </div>
+      <div class="fd-active-bar" id="fd-bar-despatched"><span id="fd-bar-despatched-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatched')">Clear all</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>DC</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-done-pg"></div>
     </div>
@@ -831,6 +973,22 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div id="rp-b"></div>
 </div>
 </div><!-- /body -->
+
+<!-- ── FILTER DRAWER ── -->
+<div id="fd-overlay" onclick="closeFD()"></div>
+<div id="fd">
+  <div id="fd-hdr">
+    <h3 id="fd-title">Filters</h3>
+    <span id="fd-hdr-close" onclick="closeFD()">✕</span>
+  </div>
+  <div id="fd-body"></div>
+  <div id="fd-foot">
+    <button class="btn btn-p" style="flex:1" onclick="applyFD()">Apply Filters</button>
+    <button class="btn" style="background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD()">Clear All</button>
+    <button class="btn" style="background:var(--s1);border:1px solid var(--bdr)" onclick="closeFD()">Cancel</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1167,6 +1325,376 @@ function wt(prefix,el,show){
   const p=document.getElementById(show);if(p)p.style.display='block';
 }
 
+// ── FILTER DRAWER ──
+let FD_STATE={};
+let _fdTable='';
+
+// Per-table filter config: fields, labels, types, options
+const FD_CFG={
+  orders:{
+    title:'Filter Orders',
+    renderFn:()=>R.orders(1),
+    fields:[
+      {id:'fd_o_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.o.map(x=>x[2]).filter(Boolean))].sort()},
+      {id:'fd_o_prod',label:'Product',type:'select',opts:()=>[...new Set(D.o.map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_o_st',label:'Status',type:'tags',opts:()=>['active','complete','on_hold','cancelled']},
+      {id:'fd_o_type',label:'Type',type:'tags',opts:()=>['New','Repeat']},
+      {id:'fd_o_d1',label:'Date From',type:'date',pair:'fd_o_d2'},
+      {id:'fd_o_d2',label:'Date To',type:'date',pair:'fd_o_d1'},
+      {id:'fd_o_agemin',label:'Min Age (days)',type:'number',placeholder:'e.g. 7'},
+      {id:'fd_o_agemax',label:'Max Age (days)',type:'number',placeholder:'e.g. 30'},
+    ]
+  },
+  dq:{
+    title:'Filter Design Queue',
+    renderFn:()=>R.dq(1),
+    fields:[
+      {id:'fd_dq_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.dq.map(x=>x[2]).filter(Boolean))].sort()},
+      {id:'fd_dq_st',label:'Stage',type:'tags',opts:()=>['to_process','in_process','internal_approval','on_approval','approved','file_ready']},
+    ]
+  },
+  products:{
+    title:'Filter Products',
+    renderFn:()=>R.products(1),
+    fields:[
+      {id:'fd_pd_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.pd.map(x=>x[2]).filter(Boolean))].sort()},
+      {id:'fd_pd_st',label:'Design Status',type:'tags',opts:()=>['to_process','in_process','internal_approval','on_approval','approved','file_ready','on_hold','cancelled']},
+    ]
+  },
+  customers:{
+    title:'Filter Customers',
+    renderFn:()=>R.customers(1),
+    fields:[
+      {id:'fd_cu_brand',label:'Brand',type:'select',opts:()=>[...new Set(D.cu.map(x=>x[2]).filter(Boolean))].sort()},
+    ]
+  },
+  pros:{
+    title:'Filter Production Orders',
+    renderFn:()=>R.pros(1),
+    fields:[
+      {id:'fd_pr_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.pr.map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_pr_prod',label:'Product',type:'select',opts:()=>[...new Set(D.pr.map(x=>x[2]).filter(Boolean))].sort()},
+      {id:'fd_pr_st',label:'Status',type:'tags',opts:()=>['to_process','in_production','packing','complete','on_hold','cancelled']},
+      {id:'fd_pr_d1',label:'Date From',type:'date',pair:'fd_pr_d2'},
+      {id:'fd_pr_d2',label:'Date To',type:'date',pair:'fd_pr_d1'},
+      {id:'fd_pr_order',label:'Order ID',type:'text',placeholder:'e.g. ORD-001'},
+      {id:'fd_pr_job',label:'Job ID',type:'text',placeholder:'e.g. JOB-001'},
+    ]
+  },
+  jobs:{
+    title:'Filter Jobs',
+    renderFn:()=>R.jobs(1),
+    fields:[
+      {id:'fd_jo_type',label:'Job Type',type:'tags',opts:()=>['Sheet','Machine','Direct']},
+      {id:'fd_jo_d1',label:'Date From',type:'date',pair:'fd_jo_d2'},
+      {id:'fd_jo_d2',label:'Date To',type:'date',pair:'fd_jo_d1'},
+    ]
+  },
+  dies:{
+    title:'Filter Dies',
+    renderFn:()=>R.dies(1),
+    fields:[
+      {id:'fd_di_st',label:'Status',type:'tags',opts:()=>['in_stock','out']},
+    ]
+  },
+  plates:{
+    title:'Filter Plates',
+    renderFn:()=>R.plates(1),
+    fields:[
+      {id:'fd_pl_st',label:'Status',type:'tags',opts:()=>['in_stock','out']},
+    ]
+  },
+  vendors:{
+    title:'Filter Vendors',
+    renderFn:()=>R.vendors(1),
+    fields:[
+      {id:'fd_ve_type',label:'Account Type',type:'tags',opts:()=>['vendor','transporter','both']},
+    ]
+  },
+  transporters:{
+    title:'Filter Transporters',
+    renderFn:()=>R.transporters(1),
+    fields:[
+      {id:'fd_tr_name',label:'Name contains',type:'text',placeholder:'e.g. Express'},
+    ]
+  },
+  processes:{
+    title:'Filter Processes',
+    renderFn:()=>R.processes(1),
+    fields:[
+      {id:'fd_proc_st',label:'Status',type:'tags',opts:()=>['To Send','Job Order Sent','Job Approved','Part Processed','Complete','Moved','Cancelled']},
+      {id:'fd_proc_proc',label:'Process Name',type:'select',opts:()=>[...new Set(D.procs_raw.map(x=>x[1]).filter(Boolean))].sort()},
+      {id:'fd_proc_vendor',label:'Vendor',type:'select',opts:()=>[...new Set(D.procs_raw.map(x=>x[7]).filter(Boolean))].sort()},
+      {id:'fd_proc_d1',label:'Date From',type:'date',pair:'fd_proc_d2'},
+      {id:'fd_proc_d2',label:'Date To',type:'date',pair:'fd_proc_d1'},
+    ]
+  },
+  'rm-master':{
+    title:'Filter Raw Materials',
+    renderFn:()=>R.rm_list(1),
+    fields:[
+      {id:'fd_rm_cat',label:'Category',type:'select',opts:()=>[...new Set(D.rm_list.map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_rm_sub',label:'Sub-Category',type:'select',opts:()=>[...new Set(D.rm_list.map(x=>x[4]).filter(Boolean))].sort()},
+      {id:'fd_rm_vendor',label:'Vendor',type:'select',opts:()=>[...new Set(D.rm_list.map(x=>x[5]).filter(Boolean))].sort()},
+      {id:'fd_rm_brand',label:'Brand',type:'select',opts:()=>[...new Set(D.rm_list.map(x=>x[2]).filter(Boolean))].sort()},
+    ]
+  },
+  'rm-grn':{
+    title:'Filter GRN (Stock In)',
+    renderFn:()=>R.rm_in(1),
+    fields:[
+      {id:'fd_grn_brand',label:'Brand',type:'select',opts:()=>[...new Set(D.rm_in.map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_grn_vendor',label:'Vendor',type:'select',opts:()=>[...new Set(D.rm_in.map(x=>x[4]).filter(Boolean))].sort()},
+      {id:'fd_grn_unit',label:'Unit',type:'select',opts:()=>[...new Set(D.rm_in.map(x=>x[6]).filter(Boolean))].sort()},
+      {id:'fd_grn_st',label:'Status',type:'tags',opts:()=>['pending','received','partial']},
+      {id:'fd_grn_d1',label:'Date From',type:'date',pair:'fd_grn_d2'},
+      {id:'fd_grn_d2',label:'Date To',type:'date',pair:'fd_grn_d1'},
+    ]
+  },
+  'rm-out':{
+    title:'Filter RM Stock Out',
+    renderFn:()=>R.rm_out(1),
+    fields:[
+      {id:'fd_rmo_d1',label:'Date From',type:'date',pair:'fd_rmo_d2'},
+      {id:'fd_rmo_d2',label:'Date To',type:'date',pair:'fd_rmo_d1'},
+    ]
+  },
+  purchase:{
+    title:'Filter Purchase Orders',
+    renderFn:()=>R.po_list(1),
+    fields:[
+      {id:'fd_po_vendor',label:'Vendor',type:'select',opts:()=>[...new Set(D.pos.map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_po_mat',label:'Material',type:'select',opts:()=>[...new Set(D.pos.map(x=>x[2]).filter(Boolean))].sort()},
+      {id:'fd_po_st',label:'Status',type:'tags',opts:()=>['pending','approved','received']},
+      {id:'fd_po_d1',label:'Date From',type:'date',pair:'fd_po_d2'},
+      {id:'fd_po_d2',label:'Date To',type:'date',pair:'fd_po_d1'},
+      {id:'fd_po_unit',label:'Unit',type:'select',opts:()=>[...new Set(D.pos.map(x=>x[5]).filter(Boolean))].sort()},
+    ]
+  },
+  'fg-inv':{
+    title:'Filter FG Inventory',
+    renderFn:()=>R.fg_inventory(1),
+    fields:[
+      {id:'fd_fg_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.fg.map(x=>x[8]).filter(Boolean))].sort()},
+      {id:'fd_fg_prod',label:'Product',type:'select',opts:()=>[...new Set(D.fg.map(x=>x[7]).filter(Boolean))].sort()},
+      {id:'fd_fg_d1',label:'Date From',type:'date',pair:'fd_fg_d2'},
+      {id:'fd_fg_d2',label:'Date To',type:'date',pair:'fd_fg_d1'},
+    ]
+  },
+  despatch:{
+    title:'Filter Ready to Despatch',
+    renderFn:()=>R.despatch_live(1),
+    fields:[
+      {id:'fd_dep_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.dos.map(x=>x[3]).filter(Boolean))].sort()},
+    ]
+  },
+  despatched:{
+    title:'Filter Despatched Orders',
+    renderFn:()=>R.despatched(1),
+    fields:[
+      {id:'fd_done_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.dos.map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_done_d1',label:'Date From',type:'date',pair:'fd_done_d2'},
+      {id:'fd_done_d2',label:'Date To',type:'date',pair:'fd_done_d1'},
+    ]
+  },
+};
+
+function openFD(tableKey){
+  const cfg=FD_CFG[tableKey];if(!cfg)return;
+  _fdTable=tableKey;
+  document.getElementById('fd-title').textContent=cfg.title;
+  const saved=FD_STATE[tableKey]||{};
+  let html='';
+  const dateFields=[];
+  cfg.fields.forEach(f=>{
+    html+=`<div class="fd-group">`;
+    html+=`<div class="fd-label">${f.label}</div>`;
+    if(f.type==='select'){
+      const opts=f.opts?f.opts():[];
+      html+=`<div class="fd-row-1"><select class="fd-f" id="${f.id}"><option value="">All</option>${opts.map(o=>`<option value="${o}"${saved[f.id]===o?' selected':''}>${o}</option>`).join('')}</select></div>`;
+    } else if(f.type==='text'){
+      html+=`<div class="fd-row-1"><input class="fd-f" id="${f.id}" type="text" placeholder="${f.placeholder||''}" value="${saved[f.id]||''}"></div>`;
+    } else if(f.type==='number'){
+      html+=`<div class="fd-row-1"><input class="fd-f" id="${f.id}" type="number" placeholder="${f.placeholder||''}" value="${saved[f.id]||''}"></div>`;
+    } else if(f.type==='date'){
+      dateFields.push(f);
+      return; // handled in pairs below
+    } else if(f.type==='tags'){
+      const opts=f.opts?f.opts():[];
+      const sel=saved[f.id]||[];
+      html+=`<div class="fd-tag-row">${opts.map(o=>`<span class="fd-tag${sel.includes(o)?' on':''}" data-fid="${f.id}" data-val="${o}" onclick="toggleFDTag(this)">${o.replace(/_/g,' ')}</span>`).join('')}</div>`;
+    }
+    html+=`</div>`;
+  });
+  // render date pairs
+  const dPairs=[];
+  cfg.fields.filter(f=>f.type==='date').forEach(f=>{
+    if(!dPairs.find(p=>p[0].id===f.id||p[1]?.id===f.id)){
+      const partner=cfg.fields.find(x=>x.id===f.pair);
+      if(partner&&!dPairs.find(p=>p.includes(partner))){
+        dPairs.push([f,partner]);
+      } else if(!partner){
+        dPairs.push([f]);
+      }
+    }
+  });
+  dPairs.forEach(([f1,f2])=>{
+    html+=`<div class="fd-group"><div class="fd-label">${f1.label}${f2?' → '+f2.label:''}</div>`;
+    html+=`<div class="${f2?'fd-row':'fd-row-1'}">`;
+    html+=`<input class="fd-f" id="${f1.id}" type="date" value="${saved[f1.id]||''}">`;
+    if(f2) html+=`<input class="fd-f" id="${f2.id}" type="date" value="${saved[f2.id]||''}">`;
+    html+=`</div></div>`;
+  });
+  document.getElementById('fd-body').innerHTML=html;
+  document.getElementById('fd').classList.add('open');
+  document.getElementById('fd-overlay').classList.add('show');
+}
+function toggleFDTag(el){el.classList.toggle('on');}
+function closeFD(){
+  document.getElementById('fd').classList.remove('open');
+  document.getElementById('fd-overlay').classList.remove('show');
+}
+function applyFD(){
+  const cfg=FD_CFG[_fdTable];if(!cfg)return;
+  const vals={};
+  cfg.fields.forEach(f=>{
+    if(f.type==='tags'){
+      vals[f.id]=[...document.querySelectorAll(`.fd-tag[data-fid="${f.id}"].on`)].map(x=>x.dataset.val);
+    } else {
+      const el=document.getElementById(f.id);
+      if(el) vals[f.id]=el.value||'';
+    }
+  });
+  FD_STATE[_fdTable]=vals;
+  closeFD();
+  cfg.renderFn();
+  updateFDBar(_fdTable);
+}
+function clearFD(tableKey){
+  const key=tableKey||_fdTable;
+  if(!key)return;
+  FD_STATE[key]={};
+  const cfg=FD_CFG[key];
+  if(cfg)cfg.renderFn();
+  updateFDBar(key);
+  if(!tableKey)closeFD();
+}
+function updateFDBar(key){
+  const bar=document.getElementById('fd-bar-'+key);
+  const btn=document.getElementById('fd-btn-'+key);
+  const txt=document.getElementById('fd-bar-'+key+'-txt');
+  if(!bar)return;
+  const s=FD_STATE[key]||{};
+  const active=Object.values(s).filter(v=>Array.isArray(v)?v.length>0:v!=='').length;
+  if(active>0){
+    bar.classList.add('show');
+    if(btn)btn.classList.add('active');
+    if(txt)txt.textContent=active+' filter'+(active>1?'s':'')+' active';
+  } else {
+    bar.classList.remove('show');
+    if(btn)btn.classList.remove('active');
+  }
+}
+// Helper: apply FD_STATE filters to an array for a given table
+// Returns filtered array. filters applied on top of existing search/dropdowns.
+function applyFDFilters(tableKey, arr){
+  const s=FD_STATE[tableKey];
+  if(!s)return arr;
+  return arr.filter(row=>{
+    const cfg=FD_CFG[tableKey];
+    if(!cfg)return true;
+    for(const f of cfg.fields){
+      const v=s[f.id];
+      if(!v||(Array.isArray(v)&&v.length===0))continue;
+      if(f.type==='tags'){
+        // tag filter: check row field by convention
+        const val=tagFieldVal(tableKey,f.id,row);
+        if(val!==null&&!v.includes(val))return false;
+      } else if(f.type==='select'||f.type==='text'){
+        if(!v)continue;
+        const val=String(textFieldVal(tableKey,f.id,row)||'').toLowerCase();
+        if(!val.includes(String(v).toLowerCase()))return false;
+      } else if(f.type==='number'){
+        if(!v)continue;
+        const fval=numFieldVal(tableKey,f.id,row);
+        if(fval===null)continue;
+        if(f.id.includes('min')&&fval<Number(v))return false;
+        if(f.id.includes('max')&&fval>Number(v))return false;
+      } else if(f.type==='date'){
+        if(!v)continue;
+        const dval=dateFieldVal(tableKey,f.id,row);
+        if(!dval)continue;
+        if(f.id.endsWith('1')&&dval<v)return false;
+        if(f.id.endsWith('2')&&dval>v)return false;
+      }
+    }
+    return true;
+  });
+}
+function tagFieldVal(tk,fid,row){
+  // Map filter field id → row index for tag filters
+  const m={
+    'orders':{'fd_o_st':5,'fd_o_type':6},
+    'dq':{'fd_dq_st':3},
+    'products':{'fd_pd_st':3},
+    'pros':{'fd_pr_st':8},
+    'jobs':{},
+    'dies':{'fd_di_st':3},
+    'plates':{'fd_pl_st':2},
+    'vendors':{'fd_ve_type':3},
+    'processes':{'fd_proc_st':8},
+    'rm-grn':{'fd_grn_st':8},
+    'purchase':{'fd_po_st':7},
+  };
+  const idx=m[tk]?.[fid];
+  if(idx===undefined)return null;
+  // special: orders type
+  if(tk==='orders'&&fid==='fd_o_type') return row[6]?'Repeat':'New';
+  return row[idx]!=null?String(row[idx]):null;
+}
+function textFieldVal(tk,fid,row){
+  const m={
+    'orders':{'fd_o_cust':2,'fd_o_prod':3},
+    'dq':{'fd_dq_cust':2},
+    'products':{'fd_pd_cust':2},
+    'customers':{'fd_cu_brand':2},
+    'pros':{'fd_pr_cust':3,'fd_pr_prod':2,'fd_pr_order':7,'fd_pr_job':9},
+    'processes':{'fd_proc_proc':1,'fd_proc_vendor':7},
+    'rm-master':{'fd_rm_cat':3,'fd_rm_sub':4,'fd_rm_vendor':5,'fd_rm_brand':2},
+    'rm-grn':{'fd_grn_brand':3,'fd_grn_vendor':4,'fd_grn_unit':6},
+    'purchase':{'fd_po_vendor':3,'fd_po_mat':2,'fd_po_unit':5},
+    'fg-inv':{'fd_fg_cust':8,'fd_fg_prod':7},
+    'despatch':{'fd_dep_cust':3},
+    'despatched':{'fd_done_cust':3},
+    'transporters':{'fd_tr_name':1},
+  };
+  const idx=m[tk]?.[fid];
+  if(idx===undefined)return null;
+  return row[idx];
+}
+function numFieldVal(tk,fid,row){
+  if(tk==='orders'&&(fid==='fd_o_agemin'||fid==='fd_o_agemax')){
+    if(!row[1])return null;
+    const d=new Date(row[1]);const now=new Date();
+    return Math.floor((now-d)/(86400000));
+  }
+  return null;
+}
+function dateFieldVal(tk,fid,row){
+  const dateIdxMap={
+    'orders':'fd_o_d','pros':'fd_pr_d','jobs':'fd_jo_d','processes':'fd_proc_d',
+    'rm-grn':'fd_grn_d','purchase':'fd_po_d','fg-inv':'fd_fg_d','rm-out':'fd_rmo_d',
+    'despatched':'fd_done_d'
+  };
+  const pfx=dateIdxMap[tk];
+  if(!pfx||!fid.startsWith(pfx))return null;
+  const dateIdxes={'orders':1,'pros':1,'jobs':1,'processes':3,'rm-grn':1,'purchase':1,'fg-inv':1,'rm-out':1,'despatched':1};
+  const idx=dateIdxes[tk];
+  if(idx===undefined)return null;
+  const d=row[idx];
+  return d?d.slice(0,10):null;
+}
+
 // ── RENDER FUNCTIONS ──
 const R={};
 
@@ -1208,13 +1736,20 @@ R.orders=function(p){
   const st=document.getElementById('o-st')?.value||'';
   const yr=document.getElementById('o-yr')?.value||'';
   const q=(document.getElementById('o-q')?.value||'').toLowerCase();
-  const items=D.o.filter(o=>(!st||o[5]===st)&&(!yr||o[1].startsWith(yr))&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  const now=new Date();
+  let items=D.o.filter(o=>(!st||o[5]===st)&&(!yr||o[1].startsWith(yr))&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('orders',items);
   const slice=pgr(items,'orders','R.orders','o-pg','o-cnt');
-  document.getElementById('o-body').innerHTML=slice.map(o=>`<tr onclick="selO(event,${JSON.stringify(o[0])})">
-    <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
-    <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
-    <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
-  </tr>`).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
+  document.getElementById('o-body').innerHTML=slice.map(o=>{
+    const age=o[1]?Math.floor((now-new Date(o[1]))/86400000):0;
+    const ageCol=age>30?'color:var(--red)':age>14?'color:var(--ylw)':'color:var(--t2)';
+    return `<tr onclick="selO(event,${JSON.stringify(o[0])})">
+      <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
+      <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+      <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
+      <td style="font-size:11px;font-weight:600;${ageCol}">${age}d</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
 };
 function selO(e,oid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const o=D.o.find(x=>x[0]===oid);if(!o)return;openRP(rf('Order ID',o[0])+rf('Date',o[1])+rf('Customer',o[2])+rf('Product',o[3])+rf('Qty',o[4]?Number(o[4]).toLocaleString():'—')+rf('Status',badge(o[5]))+rf('Type',o[6]?'Repeat':'New'),o[0]);}
 
@@ -1222,7 +1757,8 @@ R.dq=function(p){
   if(p)pp.dq=p;
   const st=document.getElementById('dq-st')?.value||'';
   const q=(document.getElementById('dq-q')?.value||'').toLowerCase();
-  const items=D.dq.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.dq.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('dq',items);
   const slice=pgr(items,'dq','R.dq','dq-pg','dq-cnt');
   document.getElementById('dq-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
@@ -1234,7 +1770,8 @@ R.products=function(p){
   if(p)pp.products=p;
   const ds=document.getElementById('pd-ds')?.value||'';
   const q=(document.getElementById('pd-q')?.value||'').toLowerCase();
-  const items=D.pd.filter(x=>(!ds||x[3]===ds)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.pd.filter(x=>(!ds||x[3]===ds)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('products',items);
   const slice=pgr(items,'products','R.products','pd-pg','pd-cnt');
   document.getElementById('pd-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
@@ -1246,9 +1783,10 @@ function selPD(e,code){const tr2=e.currentTarget;document.querySelectorAll('tr.s
 R.customers=function(p){
   if(p)pp.customers=p;
   const q=(document.getElementById('cu-q')?.value||'').toLowerCase();
-  const items=D.cu.filter(x=>(!q||[x[0],x[1],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.cu.filter(x=>(!q||[x[0],x[1],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('customers',items);
   const slice=pgr(items,'customers','R.customers','cu-pg','cu-cnt');
-  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Phone',${JSON.stringify(a[2]||'—')})+rf('City',${JSON.stringify(a[3]||'—')}),${JSON.stringify(a[1])})">
+  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Brand',${JSON.stringify(a[2]||'—')})+rf('Alias',${JSON.stringify(a[3]||'—')}),${JSON.stringify(a[1])})">
     <td class="mono">${a[0]||'—'}</td><td title="${a[1]}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
 };
@@ -1268,7 +1806,7 @@ R.pros=function(p){
   if(p)pp.pros=p;
   const st=document.getElementById('pr-st')?.value||'';
   const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>{
+  let items=D.pr.filter(x=>{
     if(st==='cancelled') return x[5];
     if(st==='on_hold')   return x[6];
     if(st==='active')    return !x[5]&&!x[6]&&(x[8]!=='complete');
@@ -1277,13 +1815,16 @@ R.pros=function(p){
     if(st==='in_production') return !x[5]&&!x[6]&&x[8]==='in_production';
     if(st==='in_packing')    return !x[5]&&!x[6]&&x[8]==='packing';
     return true;
-  }).filter(x=>(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  }).filter(x=>(!q||[x[0],x[2],x[3],x[7],x[9]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('pros',items);
   const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td class="mono" style="font-size:11px">${p[7]?`<span onclick="event.stopPropagation();nav('orders')" style="cursor:pointer;color:var(--acc)">${p[7]}</span>`:'—'}</td>
+    <td class="mono" style="font-size:11px">${p[9]||'—'}</td>
     <td>${proSubStatus(p)}</td>
-  </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
+  </tr>`).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
 };
 function selPR(e,pid){const tr2=e.currentTarget;document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));tr2.classList.add('sel');const p=D.pr.find(x=>x[0]===pid);if(!p)return;openRP(rf('PRO ID',p[0])+rf('Date',p[1])+rf('Product',p[2])+rf('Customer',p[3])+rf('Qty',p[4]?Number(p[4]).toLocaleString():'—')+rf('Status',proSubStatus(p)),p[0]);}
 
@@ -1291,19 +1832,25 @@ R.jobs=function(p){
   if(p)pp.jobs=p;
   const t=document.getElementById('jo-t')?.value||'';
   const q=(document.getElementById('jo-q')?.value||'').toLowerCase();
-  const items=D.jo.filter(x=>(!t||x[2]===t)&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.jo.filter(x=>(!t||x[2]===t)&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('jobs',items);
   const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
-  document.getElementById('jo-body').innerHTML=slice.map(j=>`<tr onclick="openRP(rf('Job ID',${JSON.stringify(j[0])})+rf('Date',${JSON.stringify(j[1])})+rf('Type',badge(${JSON.stringify(j[2])}))+rf('Name',${JSON.stringify(j[3]||'—')}),${JSON.stringify(j[0])})">
-    <td class="mono">${j[0]}</td><td>${j[1]||'—'}</td><td>${badge(j[2])}</td>
-    <td style="max-width:380px;font-size:11px;color:var(--t2)" title="${j[3]||''}">${tr(j[3]||'—',55)}</td>
-  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
+  document.getElementById('jo-body').innerHTML=slice.map(j=>{
+    const activePros=D.pr.filter(p=>p[9]===j[0]&&!p[5]&&!p[6]&&p[8]!=='complete').length;
+    return `<tr onclick="openRP(rf('Job ID',${JSON.stringify(j[0])})+rf('Date',${JSON.stringify(j[1])})+rf('Type',badge(${JSON.stringify(j[2])}))+rf('Name',${JSON.stringify(j[3]||'—')})+rf('Active PROs','${activePros}'),${JSON.stringify(j[0])})">
+      <td class="mono">${j[0]}</td><td>${j[1]||'—'}</td><td>${badge(j[2])}</td>
+      <td style="max-width:320px;font-size:11px;color:var(--t2)" title="${j[3]||''}">${tr(j[3]||'—',50)}</td>
+      <td style="font-size:12px;font-weight:700;color:${activePros>0?'var(--org)':'var(--t3)'}">${activePros||'—'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
 };
 
 R.dies=function(p){
   if(p)pp.dies=p;
   const st=document.getElementById('di-st')?.value||'';
   const q=(document.getElementById('di-q')?.value||'').toLowerCase();
-  const items=D.di.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  let items=D.di.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('dies',items);
   const slice=pgr(items,'dies','R.dies','di-pg','di-cnt');
   document.getElementById('di-body').innerHTML=slice.map(d=>`<tr onclick="openRP(rf('Code',${JSON.stringify(d[0])})+rf('Name',${JSON.stringify(d[1]||'—')})+rf('Ups',${JSON.stringify(String(d[2]||'—'))})+rf('Status',badge(${JSON.stringify(d[3]||'active')})),${JSON.stringify(d[0])})">
     <td class="mono">${d[0]}</td><td>${tr(d[1]||'—',22)}</td><td>${d[2]||'—'}</td><td>${badge(d[3])}</td>
@@ -1312,8 +1859,10 @@ R.dies=function(p){
 
 R.plates=function(p){
   if(p)pp.plates=p;
+  const st=document.getElementById('pl-st')?.value||'';
   const q=(document.getElementById('pl-q')?.value||'').toLowerCase();
-  const items=D.pl.filter(x=>(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  let items=D.pl.filter(x=>(!st||x[2]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('plates',items);
   const slice=pgr(items,'plates','R.plates','pl-pg','pl-cnt');
   document.getElementById('pl-body').innerHTML=slice.map(p=>`<tr onclick="openRP(rf('Code',${JSON.stringify(p[0])})+rf('Name',${JSON.stringify(p[1]||'—')})+rf('Status',badge(${JSON.stringify(p[2]||'active')})),${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${tr(p[1]||'—',26)}</td><td>${badge(p[2]||'active')}</td>
@@ -1326,10 +1875,12 @@ R.machines=function(){
 
 R.vendors=function(p){
   if(p)pp.vendors=p;
+  const vtype=document.getElementById('ve-type')?.value||'';
   const q=(document.getElementById('ve-q')?.value||'').toLowerCase();
-  const items=D.ve.filter(x=>x[3]==='vendor'&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.ve.filter(x=>(!vtype||x[3]===vtype)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('vendors',items);
   const slice=pgr(items,'vendors','R.vendors','ve-pg','ve-cnt');
-  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Phone',${JSON.stringify(a[2]||'—')})+rf('Type',badge(${JSON.stringify(a[3])})),${JSON.stringify(a[1])})">
+  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Alias',${JSON.stringify(a[2]||'—')})+rf('Type',badge(${JSON.stringify(a[3])})),${JSON.stringify(a[1])})">
     <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td><td>${badge(a[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No vendors</td></tr>';
 };
@@ -1337,11 +1888,12 @@ R.vendors=function(p){
 R.transporters=function(p){
   if(p)pp.transporters=p;
   const q=(document.getElementById('tr-q')?.value||'').toLowerCase();
-  const items=D.ve.filter(x=>x[3]==='transporter'&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.ve.filter(x=>x[3]==='transporter'&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('transporters',items);
   const slice=pgr(items,'transporters','R.transporters','tr-pg','tr-cnt');
-  document.getElementById('tr-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Phone',${JSON.stringify(a[2]||'—')}),${JSON.stringify(a[1])})">
-    <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td>
-  </tr>`).join('')||'<tr><td colspan="3" style="padding:24px;text-align:center;color:var(--t3)">No transporters</td></tr>';
+  document.getElementById('tr-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Alias',${JSON.stringify(a[2]||'—')})+rf('Type',badge(${JSON.stringify(a[3])})),${JSON.stringify(a[1])})">
+    <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td><td>${badge(a[3])}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No transporters</td></tr>';
 };
 
 // ── WORKFLOW RENDERS ──
@@ -1441,7 +1993,8 @@ R.despatch=function(p){
 R.despatched=function(p){
   if(p)pp.despatched=p;
   const q=(document.getElementById('wdep-dq')?.value||'').toLowerCase();
-  const items=D.o.filter(o=>o[5]==='complete'&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.o.filter(o=>o[5]==='complete'&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  items=applyFDFilters('despatched',items);
   const slice=pgr(items,'despatched','R.despatched','wdep-done-pg','wdep-done-cnt');
   document.getElementById('wdep-done-body').innerHTML=slice.map(o=>`<tr>
     <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td>${tr(o[2],20)}</td>
@@ -1459,11 +2012,14 @@ R.processes=function(p){
   const st=document.getElementById('proc-st')?.value||'';
   const q=(document.getElementById('proc-q')?.value||'').toLowerCase();
   const proMap={};D.pr.forEach(r=>{proMap[r[0]]={pname:r[2],cname:r[3]};});
-  const items=D.procs_raw.filter(r=>{
+  // normalize procs_raw to array format for FD filters: [id,name,pro_id,date,mat,counter,machine,vendor,status]
+  const toArr=r=>[r.id,r.process_name,r.prod_order_id,r.date,r.material_id,r.counter,r.machine,r.vendor_id,r.process_status];
+  let items=D.procs_raw.filter(r=>{
     if(st&&r.process_status!==st)return false;
-    if(q&&![r.id,r.process_name,r.prod_order_id,proMap[r.prod_order_id]?.pname||''].join(' ').toLowerCase().includes(q))return false;
+    if(q&&![r.id,r.process_name,r.prod_order_id,proMap[r.prod_order_id]?.pname||'',proMap[r.prod_order_id]?.cname||''].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
+  items=applyFDFilters('processes',items.map(toArr)).map(arr=>D.procs_raw.find(r=>r.id===arr[0])||arr);
   const slice=pgr(items,'processes','R.processes','proc-pg','proc-cnt');
   document.getElementById('proc-body').innerHTML=slice.map(r=>{
     const pro=proMap[r.prod_order_id]||{};
@@ -1501,11 +2057,12 @@ R.rm_list=function(p){
   if(p)pp.rm_list=p;
   const cat=document.getElementById('rmi-cat-f')?.value||'';
   const q=(document.getElementById('rmi-q')?.value||'').toLowerCase();
-  const items=D.rm_list.filter(r=>{
+  let items=D.rm_list.filter(r=>{
     if(cat&&r[3]!==cat)return false;
     if(q&&![r[0],r[1],r[2],r[3],r[4],r[5]].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
+  items=applyFDFilters('rm-master',items);
   const slice=pgr(items,'rm_list','R.rm_list','rmi-pg','');
   const el=document.getElementById('rmi-body');if(!el)return;
   el.innerHTML=slice.map(r=>`<tr>
@@ -1521,7 +2078,8 @@ R.rm_list=function(p){
 R.rm_in=function(p){
   if(p)pp.rm_in=p;
   const q=(document.getElementById('rmin-q')?.value||'').toLowerCase();
-  const items=D.rm_in.filter(r=>!q||[r[0],r[2],r[3],r[4]].join(' ').toLowerCase().includes(q));
+  let items=D.rm_in.filter(r=>!q||[r[0],r[2],r[3],r[4]].join(' ').toLowerCase().includes(q));
+  items=applyFDFilters('rm-grn',items);
   const slice=pgr(items,'rm_in','R.rm_in','rmin-pg','rmin-cnt');
   const el=document.getElementById('rmin-body');if(!el)return;
   el.innerHTML=slice.map(r=>`<tr>
@@ -1536,7 +2094,8 @@ R.rm_in=function(p){
 R.rm_out=function(p){
   if(p)pp.rm_out=p;
   const q=(document.getElementById('rmout-q')?.value||'').toLowerCase();
-  const items=D.rm_out.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  let items=D.rm_out.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  items=applyFDFilters('rm-out',items);
   const slice=pgr(items,'rm_out','R.rm_out','rmout-pg','rmout-cnt');
   const el=document.getElementById('rmout-body');if(!el)return;
   el.innerHTML=slice.map(r=>`<tr>
@@ -1551,11 +2110,12 @@ R.po_list=function(p){
   if(p)pp.po_list=p;
   const st=document.getElementById('po-st')?.value||'';
   const q=(document.getElementById('po-q')?.value||'').toLowerCase();
-  const items=D.pos.filter(r=>{
+  let items=D.pos.filter(r=>{
     if(st&&r[7]!==st)return false;
     if(q&&![r[0],r[2],r[3],r[8]].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
+  items=applyFDFilters('purchase',items);
   const slice=pgr(items,'po_list','R.po_list','po-pg','po-cnt');
   const el=document.getElementById('po-body');if(!el)return;
   el.innerHTML=slice.map(r=>{
@@ -1573,16 +2133,23 @@ R.po_list=function(p){
 R.fg_inventory=function(p){
   if(p)pp.fg_inventory=p;
   const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
-  const items=D.fg.filter(r=>!q||[r[0],r[2],r[7],r[8]].join(' ').toLowerCase().includes(q));
+  let items=D.fg.filter(r=>!q||[r[0],r[2],r[7],r[8],r[3]].join(' ').toLowerCase().includes(q));
+  items=applyFDFilters('fg-inv',items);
   const slice=pgr(items,'fg_inventory','R.fg_inventory','winv-pg','winv-cnt');
   const el=document.getElementById('winv-body');if(!el)return;
-  el.innerHTML=slice.map(r=>`<tr>
-    <td class="mono">${r[3]||r[0]}</td><td>${tr(r[7]||'—',24)}</td><td>${tr(r[8]||'—',18)}</td>
-    <td class="mono">${r[2]||'—'}</td>
-    <td>${r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):'—'}</td>
-    <td>${r[4]||0} pkts</td>
-    <td><button class="ab ab-g" onclick="toast('FG ${r[3]||r[0]} 📦')">📦 View</button></td>
-  </tr>`).join('');
+  el.innerHTML=slice.map(r=>{
+    const isRecent=r[10]&&(new Date()-new Date(r[10]))<7*86400000;
+    const stBadge=isRecent?'<span class="b bg" style="font-size:10px">Recent</span>':'<span class="b" style="font-size:10px;background:var(--s1);color:var(--t2)">Stored</span>';
+    return `<tr>
+      <td class="mono">${r[3]||r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
+      <td title="${r[7]||''}">${tr(r[7]||'—',22)}</td>
+      <td>${tr(r[8]||'—',16)}</td><td class="mono">${r[2]||'—'}</td>
+      <td style="text-align:right">${r[4]||0} pkts</td>
+      <td style="text-align:right">${r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):'—'}</td>
+      <td>${stBadge}${r[9]?'&nbsp;<span style="color:var(--ylw);font-size:10px">⚠ '+Number(r[9]).toLocaleString()+'w</span>':''}</td>
+      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>${r[3]||r[0]}</h3><table class=dtl><tr><td>Batch</td><td>${r[3]||r[0]}</td></tr><tr><td>Date</td><td>${r[1]||'—'}</td></tr><tr><td>Product</td><td>${r[7]||'—'}</td></tr><tr><td>Customer</td><td>${r[8]||'—'}</td></tr><tr><td>PRO</td><td>${r[2]||'—'}</td></tr><tr><td>Packets</td><td>${r[4]||0}</td></tr><tr><td>Qty</td><td>${r[5]?Number(r[5]).toLocaleString():0} ${r[6]||''}</td></tr><tr><td>Wastage</td><td>${r[9]||0}</td></tr></table></div>','📦 ${r[3]||r[0]}')">📦 View</button></td>
+    </tr>`;
+  }).join('');
   const s=document.getElementById('winv-s');if(s)s.textContent=D.fg.length;
   const d=document.getElementById('winv-d');if(d)d.textContent=D.dos.length;
 };
@@ -1590,7 +2157,8 @@ R.fg_inventory=function(p){
 R.despatch_live=function(p){
   if(p)pp.despatch_live=p;
   const q=(document.getElementById('wdep-q')?.value||'').toLowerCase();
-  const items=D.dos.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  let items=D.dos.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  items=applyFDFilters('despatch',items);
   const slice=pgr(items,'despatch_live','R.despatch_live','wdep-pg','wdep-cnt');
   const el=document.getElementById('wdep-body');if(!el)return;
   el.innerHTML=slice.map(r=>`<tr>
