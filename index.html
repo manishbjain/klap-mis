@@ -928,15 +928,15 @@ async function loadData(){
     D.kb={...kbGroups,despatched:D.od.slice(0,10)};
 
     // D.pr: [id, date, product_name, customer_name, '', qty, is_cancelled, is_on_hold, order_id]
+    // D.pr: [id, date, product_name, customer_name, qty, is_cancelled(bool), is_on_hold(bool), order_id]
     D.pr=pros.map(p=>[
       p.id,
       p.date,
       prodMap[p.product_id]?.product_name||p.product_id||'—',
       prodMap[p.product_id]?.customer_name||'—',
-      '',
       p.qty||'',
-      p.is_cancelled?'1':'0',
-      p.is_on_hold?'1':'0',
+      !!p.is_cancelled,
+      !!p.is_on_hold,
       p.order_id||''
     ]);
     D.PT=pros.length;
