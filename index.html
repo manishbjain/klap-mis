@@ -360,7 +360,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Orders</h3><span class="tc-cnt" id="o-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option>active</option><option>complete</option><option>on_hold</option><option>cancelled</option></select>
+        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option selected>active</option><option>complete</option><option>on_hold</option><option>cancelled</option></select>
         <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option></select>
         <input class="f" id="o-q" placeholder="Search…" oninput="R.orders(1)">
       </div>
@@ -873,6 +873,7 @@ async function loadData(){
     const prodMap={};products.forEach(p=>{prodMap[p.id]=p;});
 
     // Build D.o: [id, date, customer_name, product_name, qty, order_status, is_repeat]
+    // Sort by numeric OID descending so newest orders appear first regardless of text sort
     D.o=orders.map(o=>[
       o.id,
       o.date,
@@ -881,7 +882,7 @@ async function loadData(){
       o.qty||'',
       o.order_status||'active',
       o.is_repeat?'1':'0'
-    ]);
+    ]).sort((a,b)=>(parseInt(b[0].replace(/\D/g,''),10)||0)-(parseInt(a[0].replace(/\D/g,''),10)||0));
     D.OT=orders.length;
 
     // Active orders with extra has_changes column (8 cols) for D.oa/oh/od/oc
