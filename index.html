@@ -360,7 +360,7 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
   <div class="tc">
     <div class="th"><h3>Orders</h3><span class="tc-cnt" id="o-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option selected>active</option><option>complete</option><option>on_hold</option><option>cancelled</option></select>
+        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option>active</option><option>complete</option><option>on_hold</option><option>cancelled</option></select>
         <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option></select>
         <input class="f" id="o-q" placeholder="Search…" oninput="R.orders(1)">
       </div>
@@ -885,7 +885,9 @@ async function loadData(){
     ]).sort((a,b)=>(parseInt(b[0].replace(/\D/g,''),10)||0)-(parseInt(a[0].replace(/\D/g,''),10)||0));
     D.OT=orders.length;
 
-    // Active orders with extra has_changes column (8 cols) for D.oa/oh/od/oc
+    // Active orders with extra fields for D.oa/oh/od/oc and kanban
+    // [0]id [1]date [2]customer [3]product [4]qty [5]status [6]age_days [7]is_repeat [8]has_changes
+    const _now=Date.now();
     const ordersExt=orders.map(o=>[
       o.id,
       o.date,
@@ -893,9 +895,9 @@ async function loadData(){
       prodMap[o.product_id]?.product_name||o.product_id||'—',
       o.qty||'',
       o.order_status||'active',
-      o.is_repeat?'1':'0',
-      o.has_changes?'1':'0',
-      o.pplan_group||'0'  // index 8 — used for kanban grouping
+      o.date?Math.max(0,Math.round((_now-new Date(o.date))/86400000)):0, // index 6: age in days
+      o.is_repeat?'1':'0',  // index 7
+      o.has_changes?'1':'0' // index 8
     ]);
     D.oa=ordersExt.filter(o=>o[5]==='active');
     D.oh=ordersExt.filter(o=>o[5]==='on_hold');
@@ -903,16 +905,24 @@ async function loadData(){
     D.oc=ordersExt.filter(o=>o[5]==='cancelled').map(o=>o.slice(0,7));
     D.OA=D.oa.length;
 
-    // D.kb (kanban): group active orders by pplan_group
-    const kbGroups={to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[]};
-    const kbMap={to_confirm:['0','to_confirm','confirm'],in_design:['1','in_design','design'],in_production:['2','in_production','production'],in_packing:['3','in_packing','packing'],ready_despatch:['4','ready_despatch','ready','ready_to_despatch']};
+    // D.kb (kanban): group active orders by PRO status
+    // Build a map: order_id -> highest PRO stage
+    // pro_status values: in_production, packing, complete
+    const kbGroups={to_confirm:[],in_production:[],in_packing:[],ready_despatch:[]};
+    const orderProStatus={};
+    pros.filter(p=>!p.is_cancelled).forEach(p=>{
+      if(!p.order_id) return;
+      const cur=orderProStatus[p.order_id];
+      const rank={in_production:1,packing:2,complete:3};
+      const newR=rank[p.pro_status]||0;
+      if(!cur||newR>(rank[cur]||0)) orderProStatus[p.order_id]=p.pro_status;
+    });
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
-      const pg=(o[8]||'').toString().toLowerCase();
-      if(!pg||pg==='0')kbGroups.to_confirm.push(o);
-      else if(pg==='1'||pg.includes('design'))kbGroups.in_design.push(o);
-      else if(pg==='2'||pg.includes('produc'))kbGroups.in_production.push(o);
-      else if(pg==='3'||pg.includes('pack'))kbGroups.in_packing.push(o);
-      else if(pg==='4'||pg.includes('ready'))kbGroups.ready_despatch.push(o);
+      const ps=orderProStatus[o[0]];
+      if(!ps||ps==='pending')kbGroups.to_confirm.push(o);
+      else if(ps==='in_production')kbGroups.in_production.push(o);
+      else if(ps==='packing')kbGroups.in_packing.push(o);
+      else if(ps==='complete')kbGroups.ready_despatch.push(o);
       else kbGroups.to_confirm.push(o);
     });
     D.kb={...kbGroups,despatched:D.od.slice(0,10)};
@@ -1580,7 +1590,7 @@ function owSortItems(items, sortKey){
   });
 }
 
-function owDetailHTML(o){const qty=o[4]?Number(o[4]).toLocaleString():'—';return rf('OID',o[0])+rf('Date',o[1])+rf('Customer',o[2])+rf('Product',o[3])+rf('Qty',qty)+rf('Type',o[6]?'🔁 Repeat':'🆕 New')+(o[7]?rf('⚠️ Changes','Has specification changes'):'');}
+function owDetailHTML(o){const qty=o[4]?Number(o[4]).toLocaleString():'—';return rf('OID',o[0])+rf('Date',o[1])+rf('Customer',o[2])+rf('Product',o[3])+rf('Qty',qty)+rf('Type',o[7]?'🔁 Repeat':'🆕 New')+(o[8]?rf('⚠️ Changes','Has specification changes'):'');}
 
 function owSelRow(e,data,oid){
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
@@ -1700,9 +1710,9 @@ function owRenderActive(){
   const srt=document.getElementById('owa-srt')?.value||'date_desc';
   const q=(document.getElementById('owa-q')?.value||'').toLowerCase();
   let items=OWF.active.filter(o=>{
-    if(cat==='new_repeat'&&!o[6]) return false;
-    if(cat==='new_order'&&o[6]) return false;
-    if(cat==='has_changes'&&!o[7]) return false;
+    if(cat==='new_repeat'&&!o[7]) return false;
+    if(cat==='new_order'&&o[7]) return false;
+    if(cat==='has_changes'&&!o[8]) return false;
     return !q||[o[0],o[2],o[4]].join(' ').toLowerCase().includes(q);
   });
   // sort
