@@ -922,13 +922,11 @@ async function loadData(){
       const newR=rank[p.pro_status]||0;
       if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status};
     });
-    // FG stock: set of product_ids with available stock
+    // FG stock: set of product_ids that have any FG inventory batch (no status — just qty in hand)
     const fgStockProducts=new Set();
     fg_inv.forEach(r=>{
-      if(r.status==='available'||r.status==='in_stock'||(!r.status)){
-        const pro=pros.find(p=>p.id===r.prod_order_id);
-        if(pro?.product_id) fgStockProducts.add(pro.product_id);
-      }
+      const pro=pros.find(p=>p.id===r.prod_order_id);
+      if(pro?.product_id) fgStockProducts.add(pro.product_id);
     });
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
       const oid=o[0];
