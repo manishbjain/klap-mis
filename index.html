@@ -1005,17 +1005,21 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 
     <!-- ROLES TAB -->
     <div id="set-pane-roles" class="set-pane" style="padding:16px;display:none">
-      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">System roles — edit descriptions via DB migration. Colors are applied automatically.</div>
-      <div id="set-roles-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:12px;color:var(--t3)">Roles control what each user can see and do. System roles cannot be deleted.</div>
+        <button class="btn btn-p" style="font-size:12px;padding:4px 12px" onclick="openRoleModal()">+ Add Role</button>
+      </div>
+      <div id="set-roles-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
         <div style="color:var(--t3);padding:24px;text-align:center">Loading…</div>
       </div>
     </div>
 
     <!-- PERMISSIONS TAB -->
     <div id="set-pane-permissions" class="set-pane" style="padding:16px;display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:12px;color:var(--t3)">Read / Write / Delete per role × resource. Changes save immediately.</div>
-        <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:12px;color:var(--t3)">Per-role access rules per resource. R/W/D = Read/Write/Delete. Hidden fields and row filters restrict data visibility.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-p" style="font-size:12px;padding:4px 12px" onclick="openAddResourceModal()">+ Add Resource</button>
           <label style="font-size:12px;color:var(--t2)">Role:</label>
           <select id="set-perm-role-sel" onchange="loadPerms(this.value)" style="font-size:12px;padding:3px 6px;background:var(--s1);border:1px solid var(--bdr);border-radius:4px;color:var(--t1)">
             <option value="">All Roles</option>
@@ -1079,7 +1083,76 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   </div>
 </div>
 
+<!-- ROLE MODAL -->
+<div id="role-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;width:440px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bdr)">
+      <h4 id="role-modal-title" style="margin:0;font-size:14px">Add Role</h4>
+      <span style="cursor:pointer;color:var(--t3);font-size:18px" onclick="closeRoleModal()">✕</span>
+    </div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+      <input type="hidden" id="rm-orig-id">
+      <div>
+        <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Role ID * <span style="color:var(--t3)">(slug, e.g. "supervisor" — cannot change after creation)</span></label>
+        <input id="rm-id" type="text" placeholder="role_slug" style="width:100%;box-sizing:border-box;padding:7px 10px;background:var(--bg);border:1px solid var(--bdr);border-radius:4px;color:var(--t1);font-size:13px">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Display Name *</label>
+        <input id="rm-name" type="text" placeholder="e.g. Supervisor" style="width:100%;box-sizing:border-box;padding:7px 10px;background:var(--bg);border:1px solid var(--bdr);border-radius:4px;color:var(--t1);font-size:13px">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Description</label>
+        <input id="rm-desc" type="text" placeholder="What this role can do" style="width:100%;box-sizing:border-box;padding:7px 10px;background:var(--bg);border:1px solid var(--bdr);border-radius:4px;color:var(--t1);font-size:13px">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:6px">Badge Color</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="color" id="rm-color" value="#6b7280" style="width:40px;height:32px;padding:2px;border:1px solid var(--bdr);border-radius:4px;background:var(--bg);cursor:pointer">
+          <div id="rm-color-swatches" style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="color-swatch" style="background:#ef4444" onclick="setRoleColor('#ef4444')"></span>
+            <span class="color-swatch" style="background:#f97316" onclick="setRoleColor('#f97316')"></span>
+            <span class="color-swatch" style="background:#f59e0b" onclick="setRoleColor('#f59e0b')"></span>
+            <span class="color-swatch" style="background:#10b981" onclick="setRoleColor('#10b981')"></span>
+            <span class="color-swatch" style="background:#3b82f6" onclick="setRoleColor('#3b82f6')"></span>
+            <span class="color-swatch" style="background:#8b5cf6" onclick="setRoleColor('#8b5cf6')"></span>
+            <span class="color-swatch" style="background:#ec4899" onclick="setRoleColor('#ec4899')"></span>
+            <span class="color-swatch" style="background:#6b7280" onclick="setRoleColor('#6b7280')"></span>
+          </div>
+          <span id="rm-preview-badge" style="padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;background:#6b7280">Preview</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--bdr);justify-content:flex-end">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:12px" onclick="closeRoleModal()">Cancel</button>
+      <button class="btn btn-p" style="font-size:12px" onclick="saveRole()">Save Role</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD RESOURCE MODAL -->
+<div id="res-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;width:460px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bdr)">
+      <h4 style="margin:0;font-size:14px">Add Resource to All Roles</h4>
+      <span style="cursor:pointer;color:var(--t3);font-size:18px" onclick="closeAddResourceModal()">✕</span>
+    </div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Resource Name * <span style="color:var(--t3)">(e.g. "reports", "purchase_orders")</span></label>
+        <input id="res-name" type="text" placeholder="resource_name" style="width:100%;box-sizing:border-box;padding:7px 10px;background:var(--bg);border:1px solid var(--bdr);border-radius:4px;color:var(--t1);font-size:13px">
+      </div>
+      <div style="font-size:11px;color:var(--t3)">This will create a permission row for every existing role with all permissions OFF. You can then enable them in the Permissions grid.</div>
+    </div>
+    <div style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--bdr);justify-content:flex-end">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:12px" onclick="closeAddResourceModal()">Cancel</button>
+      <button class="btn btn-p" style="font-size:12px" onclick="addResource()">Add Resource</button>
+    </div>
+  </div>
+</div>
+
 <style>
+.color-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .1s;display:inline-block}
+.color-swatch:hover{border-color:var(--t1)}
 .set-tab{background:var(--s2);border:1px solid var(--bdr);border-radius:4px;padding:5px 14px;font-size:12px;cursor:pointer;color:var(--t2);transition:all .15s}
 .set-tab.active{background:var(--acc);color:#fff;border-color:var(--acc)}
 .set-tab:hover:not(.active){background:var(--s3,var(--bdr));color:var(--t1)}
@@ -1158,26 +1231,26 @@ async function loadSettingsRoles(){
     const roles=await adminFetch({type:'roles'});
     SET.roles=roles||[];SET.roles.forEach(r=>{SET.rolesMap[r.id]=r;});
     SET.loaded.roles=true;
-    // populate role select in permissions tab
+    // populate role selects
     const sel=document.getElementById('set-perm-role-sel');
     const umSel=document.getElementById('um-role');
     while(sel.options.length>1)sel.remove(1);
     umSel.innerHTML='<option value="">Select role…</option>';
-    SET.roles.forEach(r=>{
-      sel.add(new Option(r.name,r.id));
-      umSel.add(new Option(r.name,r.id));
-    });
+    SET.roles.forEach(r=>{sel.add(new Option(r.name,r.id));umSel.add(new Option(r.name,r.id));});
     grid.innerHTML='';
     SET.roles.forEach(r=>{
       const div=document.createElement('div');
       div.className='role-card';
-      div.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
-        <span style="width:12px;height:12px;border-radius:50%;background:${r.color||'#6b7280'};display:inline-block;flex-shrink:0"></span>
-        <span class="role-card-name">${esc(r.name)}</span>
-        ${r.is_system?'<span style="font-size:10px;color:var(--t3);background:var(--s1);border:1px solid var(--bdr);padding:1px 5px;border-radius:8px">system</span>':''}
+      div.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <span style="width:12px;height:12px;border-radius:50%;background:${r.color||'#6b7280'};display:inline-block;flex-shrink:0"></span>
+          <span class="role-card-name">${esc(r.name)}</span>
+          ${r.is_system?'<span style="font-size:10px;color:var(--t3);background:var(--s1);border:1px solid var(--bdr);padding:1px 5px;border-radius:8px;flex-shrink:0">system</span>':''}
+        </div>
+        <button class="btn" style="font-size:11px;padding:2px 8px;background:var(--s2);border:1px solid var(--bdr);flex-shrink:0" onclick='openRoleModal(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Edit</button>
       </div>
       <div class="role-card-desc">${esc(r.description||'—')}</div>
-      <div style="font-size:10px;color:var(--t3)">ID: ${esc(r.id)}</div>`;
+      <div style="font-size:10px;color:var(--t3)">ID: <code style="background:var(--s1);padding:1px 4px;border-radius:3px">${esc(r.id)}</code></div>`;
       grid.appendChild(div);
     });
   }catch(e){grid.innerHTML=`<div style="color:#ef4444;padding:24px;text-align:center">Error: ${e.message}</div>`;}
@@ -1197,29 +1270,83 @@ async function loadPerms(roleFilter){
     if(roleFilter)params.role=roleFilter;
     const perms=await adminFetch(params);
     SET.perms=perms||[];
-    // Group by resource, columns = roles or single role
     const resources=[...new Set(SET.perms.map(p=>p.resource))].sort();
     const showRoles=roleFilter?SET.roles.filter(r=>r.id===roleFilter):SET.roles;
-    if(!resources.length){wrap.innerHTML='<div style="color:var(--t3);padding:24px;text-align:center">No permissions found</div>';return;}
-    let html='<table class="perm-grid"><thead><tr><th style="text-align:left">Resource</th>';
-    showRoles.forEach(r=>{html+=`<th colspan="3" style="border-bottom:2px solid ${r.color||'#6b7280'}">${esc(r.name)}</th>`;});
+    if(!resources.length){wrap.innerHTML='<div style="color:var(--t3);padding:24px;text-align:center">No permissions found. Add a resource to start.</div>';return;}
+
+    // ── Build detailed table ──
+    // Layout: resource col | per-role group [R W D | Hidden Fields | Row Filter]
+    let html='<table class="perm-grid"><thead><tr>';
+    html+=`<th style="text-align:left;min-width:120px">Resource</th>`;
+    showRoles.forEach(r=>{
+      html+=`<th colspan="5" style="border-bottom:3px solid ${r.color||'#6b7280'};min-width:280px">
+        <span style="font-weight:700">${esc(r.name)}</span>
+      </th>`;
+    });
     html+='</tr><tr><th></th>';
-    showRoles.forEach(()=>{html+='<th>R</th><th>W</th><th>D</th>';});
+    showRoles.forEach(()=>{
+      html+=`<th title="Read">R</th><th title="Write">W</th><th title="Delete">D</th>`;
+      html+=`<th style="min-width:130px;text-align:left;padding-left:6px">Hidden Fields<br><span style="font-weight:400;color:var(--t3);font-size:9px">comma-separated</span></th>`;
+      html+=`<th style="min-width:130px;text-align:left;padding-left:6px">Row Filter<br><span style="font-weight:400;color:var(--t3);font-size:9px">SQL-style condition</span></th>`;
+    });
     html+='</tr></thead><tbody>';
+
     resources.forEach(res=>{
-      html+=`<tr><td style="text-align:left;font-weight:600;white-space:nowrap">${esc(res)}</td>`;
+      html+=`<tr><td style="text-align:left;font-weight:700;white-space:nowrap;vertical-align:middle">
+        ${esc(res)}
+        <button onclick="deleteResource('${res}')" title="Remove resource for all roles" style="margin-left:6px;background:none;border:none;cursor:pointer;color:var(--t3);font-size:11px;padding:0" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--t3)'">✕</button>
+      </td>`;
       showRoles.forEach(role=>{
         const p=SET.perms.find(x=>x.role_id===role.id&&x.resource===res)||{};
+        const rid=`${role.id}__${res}`;
         ['can_read','can_write','can_delete'].forEach(col=>{
           const chk=p[col]?'checked':'';
-          html+=`<td><input type="checkbox" class="perm-cb" ${chk} onchange="savePerm('${role.id}','${res}','${col}',this.checked)" title="${role.name} - ${col} on ${res}"></td>`;
+          html+=`<td style="vertical-align:middle"><input type="checkbox" class="perm-cb" ${chk} onchange="savePerm('${role.id}','${res}','${col}',this.checked)" title="${esc(role.name)} — ${col} on ${res}"></td>`;
         });
+        const hf=esc(p.hidden_fields||'');
+        const rf=esc(p.row_filter||'');
+        html+=`<td style="vertical-align:middle;padding:3px 4px">
+          <input type="text" value="${hf}" placeholder="field1, field2…"
+            style="width:100%;font-size:11px;padding:3px 5px;background:var(--bg);border:1px solid var(--bdr);border-radius:3px;color:var(--t1);box-sizing:border-box"
+            onblur="savePermField('${role.id}','${res}','hidden_fields',this.value)"
+            title="Fields to hide for ${esc(role.name)} on ${res}">
+        </td>`;
+        html+=`<td style="vertical-align:middle;padding:3px 4px">
+          <input type="text" value="${rf}" placeholder="e.g. customer_id='C001'"
+            style="width:100%;font-size:11px;padding:3px 5px;background:var(--bg);border:1px solid var(--bdr);border-radius:3px;color:var(--t1);box-sizing:border-box"
+            onblur="savePermField('${role.id}','${res}','row_filter',this.value)"
+            title="Row filter for ${esc(role.name)} on ${res}">
+        </td>`;
       });
       html+='</tr>';
     });
     html+='</tbody></table>';
     wrap.innerHTML=html;
   }catch(e){wrap.innerHTML=`<div style="color:#ef4444;padding:24px;text-align:center">Error: ${e.message}</div>`;}
+}
+
+async function savePermField(roleId,resource,field,value){
+  const existing=SET.perms.find(p=>p.role_id===roleId&&p.resource===resource)||{role_id:roleId,resource};
+  const updated={...existing,[field]:value||null};
+  try{
+    const res=await adminPost({op:'upsert_permission',data:updated});
+    if(res.error){showToast('❌ '+res.error,3000);return;}
+    const idx=SET.perms.findIndex(p=>p.role_id===roleId&&p.resource===resource);
+    if(idx>=0)SET.perms[idx]=updated;else SET.perms.push(updated);
+    showToast('✓ Saved',1200);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+
+async function deleteResource(resource){
+  if(!confirm(`Remove "${resource}" permission rows for ALL roles? This cannot be undone.`))return;
+  // delete for each role
+  const roleIds=[...new Set(SET.perms.filter(p=>p.resource===resource).map(p=>p.role_id))];
+  try{
+    await Promise.all(roleIds.map(rid=>adminPost({op:'delete_permission',data:{role_id:rid,resource}})));
+    SET.perms=SET.perms.filter(p=>p.resource!==resource);
+    showToast(`✓ Removed "${resource}" from all roles`,2000);
+    loadPerms(document.getElementById('set-perm-role-sel').value);
+  }catch(e){showToast('❌ '+e.message,3000);}
 }
 
 async function savePerm(roleId,resource,col,val){
@@ -1311,6 +1438,70 @@ async function toggleUserActive(userId,email,newState){
     showToast(`✓ User ${newState?'activated':'deactivated'}`,2000);
     SET.loaded.users=false;
     loadSettingsUsers();
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+
+// ── Role modal ──────────────────────────────────────────────
+function openRoleModal(roleObj){
+  document.getElementById('role-modal-title').textContent=roleObj?'Edit Role':'Add Role';
+  document.getElementById('rm-orig-id').value=roleObj?.id||'';
+  document.getElementById('rm-id').value=roleObj?.id||'';
+  document.getElementById('rm-id').disabled=!!roleObj; // can't change ID after creation
+  document.getElementById('rm-name').value=roleObj?.name||'';
+  document.getElementById('rm-desc').value=roleObj?.description||'';
+  const col=roleObj?.color||'#6b7280';
+  document.getElementById('rm-color').value=col;
+  updateRolePreview(col);
+  document.getElementById('role-modal-overlay').style.display='flex';
+}
+function closeRoleModal(){document.getElementById('role-modal-overlay').style.display='none';}
+function setRoleColor(hex){document.getElementById('rm-color').value=hex;updateRolePreview(hex);}
+function updateRolePreview(hex){
+  const badge=document.getElementById('rm-preview-badge');
+  badge.style.background=hex;
+  badge.textContent=document.getElementById('rm-name').value||'Preview';
+}
+document.addEventListener('input',e=>{
+  if(e.target.id==='rm-name'||e.target.id==='rm-color')updateRolePreview(document.getElementById('rm-color').value);
+});
+
+async function saveRole(){
+  const id=document.getElementById('rm-id').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const name=document.getElementById('rm-name').value.trim();
+  const description=document.getElementById('rm-desc').value.trim();
+  const color=document.getElementById('rm-color').value;
+  const origId=document.getElementById('rm-orig-id').value;
+  if(!id||!name){showToast('⚠️ Role ID and name required',3000);return;}
+  try{
+    const data={id,name,description,color,is_system:false};
+    const res=await adminPost({op:'upsert_role',data});
+    if(res.error){showToast('❌ '+res.error,3000);return;}
+    showToast('✓ Role saved',2000);
+    closeRoleModal();
+    SET.loaded.roles=false;
+    loadSettingsRoles();
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+
+// ── Add Resource modal ──────────────────────────────────────
+function openAddResourceModal(){
+  document.getElementById('res-name').value='';
+  document.getElementById('res-modal-overlay').style.display='flex';
+}
+function closeAddResourceModal(){document.getElementById('res-modal-overlay').style.display='none';}
+
+async function addResource(){
+  const resource=document.getElementById('res-name').value.trim().toLowerCase().replace(/\s+/g,'_');
+  if(!resource){showToast('⚠️ Resource name required',3000);return;}
+  const existing=SET.perms.some(p=>p.resource===resource);
+  if(existing){showToast('⚠️ Resource already exists',3000);return;}
+  if(!SET.roles.length){showToast('⚠️ Load roles first',3000);return;}
+  try{
+    await Promise.all(SET.roles.map(role=>adminPost({op:'upsert_permission',data:{role_id:role.id,resource,can_read:false,can_write:false,can_delete:false}})));
+    showToast(`✓ Added "${resource}" for all roles`,2000);
+    closeAddResourceModal();
+    SET.loaded.permissions=false;
+    loadPerms(document.getElementById('set-perm-role-sel').value);
   }catch(e){showToast('❌ '+e.message,3000);}
 }
 
