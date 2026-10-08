@@ -1167,6 +1167,11 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 .perm-grid th{padding:5px 8px;text-align:center;font-size:10px;color:var(--t3);border:1px solid var(--bdr);background:var(--s2);white-space:nowrap}
 .perm-grid td{padding:5px 8px;border:1px solid var(--bdr);text-align:center;vertical-align:middle}
 .perm-grid tr:hover td{background:var(--s2)}
+.hf-field-row{display:flex;align-items:center;gap:6px;padding:4px 10px;cursor:pointer;font-size:11px;color:var(--t1);transition:background .1s}
+.hf-field-row:hover{background:var(--s2)}
+.hf-field-row input{cursor:pointer;accent-color:#6366f1;flex-shrink:0}
+.hf-field-row span{font-family:monospace;font-size:11px}
+.hf-btn:hover{background:var(--s2)!important}
 .perm-cb{cursor:pointer;width:14px;height:14px;accent-color:var(--acc)}
 .role-card{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .role-card-name{font-size:13px;font-weight:700;color:var(--t1)}
@@ -1262,6 +1267,69 @@ async function loadSettingsPermissions(){
   loadPerms('');
 }
 
+const RESOURCE_FIELDS={
+  orders:['id','date','customer_id','is_repeat','has_changes','product_id','party_reference','order_type','order_status','pplan_group','qty','units','bt','price','ledger_id','freight','transport_id','due_ds','billing_detail','billing_approved','despatch_location_1','despatch_location_2','despatch_detail','despatch_approved','created_at'],
+  products:['id','date','product_code','first_oid','product_class','customer_id','customer_name','category','version_type','old_reference','product_name','base_product','version_no','design_status','design_assigned','has_changes','change_desc','size_l','size_b','size_h','size_units','material','gsm','lamination','coating','foil','foil_color','emboss','gumming','gumming_type','border','data_clear','specs_final','thread_link','approval_proof','created_at'],
+  production_orders:['id','date','product_id','order_id','job_id','job_id_temp','job_name','imposition_type','job_type','imp_group','sheet_portion_l','sheet_portion_b','sheet_portion_units','sheet_qty','ups','blocks','qty','qty_units','is_cancelled','is_on_hold','packing_status','sent_for_packing','created_at','pro_status'],
+  accounts:['id','account_type','name','brand','alias','city','state','country','out_id','created_at'],
+  pro_steps:['id','date','process_name','process_status','vendor_id','qty_out','wastage','machine','die_id','plate_id','material_id','varnish','foil','job_image','created_at','prod_order_id','seq','qty_in','done_by','step_status'],
+  jobs:['id','date','job_name','job_type','created_at','status'],
+  dies:['id','date','die_type','die_name','up_size_l','up_size_b','total_ups','sheet_size','blocks','image_url','punch_type','status','vendor_id','face_stock','release','rule_ht','comments','created_at'],
+  plates:['id','date','plate_name','job_size_b','cylinder','status'],
+  rm_in:['id','rm_in_id','date','entry_type','purchase_id','base_rm_in_id','category_id','subcategory_id','rm_item_id','despatch_date','recd_date','vendor_id','vendor_ref','current_inv_loc','carton_no','transfer_date','qty','qty_units','wt_per_pc','transport','total_pkgs','total_wt','freight_amt','status','comments','convert_kg_mtr','roll_width','roll_gross_wt','core_length','core_thickness','roll_sample_wt'],
+  rm_out:['id','date','rm_in_id','out_for','prod_proc_id','conversion_vendor','temp_prod_proc_id','qty','comments'],
+  rm_list:['id','date','category_id','subcategory_id','alias','brand','vendor_id','vendor_ref','color','top_or_base','top_coating','base_coating','inner_dia','outer_dia','height_mm','inner_circum','outer_circum','inner_liner'],
+  fg_inventory:['id','date','prod_order_id','inv_batch_id','d_no','ups','sheets','packets','qty','qty_units','qty_wastage','wastage_problem','last_entry','comment','old_data','fg_status'],
+  delivery_orders:['id','date','order_id','price','taxation','created_at'],
+  delivery_order_items:['id','delivery_order_id','ds_item_pl_id','inv_batch_id','packet_qty','created_at'],
+  purchase_orders:['id','date','rm_id','vendor_id','pur_unit','pur_qty','rate','rate_units','bill_ref','status','comments','created_at'],
+  rm_categories:['id','name'],
+  rm_subcategories:['id','name','category_id','description'],
+  role_permissions:['id','role_id','resource','can_read','can_write','can_delete','visible_fields','hidden_fields','row_filter'],
+  roles:['id','name','description','is_system','color','created_at'],
+  app_users:['id','email','name','role_id','is_active','created_by','last_login','created_at'],
+  audit_log:['id','user_email','user_name','role_id','action','resource','record_id','old_data','new_data','ip_address','created_at']
+};
+
+function toggleHfDropdown(btn){
+  // close any other open dropdowns first
+  document.querySelectorAll('.hf-dropdown').forEach(d=>{if(d!==btn.nextElementSibling){d.style.display='none';}});
+  const dd=btn.nextElementSibling;
+  const isOpen=dd.style.display==='block';
+  dd.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    // position: ensure it doesn't go off-screen to the right
+    const rect=btn.getBoundingClientRect();
+    const ddWidth=180;
+    const spaceRight=window.innerWidth-rect.left;
+    dd.style.left=spaceRight<ddWidth+10?'auto':'0';
+    dd.style.right=spaceRight<ddWidth+10?'0':'auto';
+  }
+}
+
+function updateHfBtn(btn,checkedArr){
+  const n=checkedArr.length;
+  btn.textContent=n===0?'None hidden':`${n} field${n===1?'':'s'} hidden`;
+  btn.style.color=n>0?'#f59e0b':'var(--t3)';
+}
+
+async function saveHiddenFields(roleId,resource,checkbox){
+  const wrap=checkbox.closest('.hf-dropdown');
+  const allBoxes=wrap.querySelectorAll('input[type=checkbox]');
+  const checked=[...allBoxes].filter(c=>c.checked).map(c=>c.value);
+  const btn=wrap.previousElementSibling;
+  updateHfBtn(btn,checked);
+  const existing=SET.perms.find(p=>p.role_id===roleId&&p.resource===resource)||{role_id:roleId,resource};
+  const updated={...existing,hidden_fields:checked.length?checked:null};
+  try{
+    const res=await adminPost({op:'upsert_permission',data:updated});
+    if(res.error){showToast('❌ '+res.error,3000);return;}
+    const idx=SET.perms.findIndex(p=>p.role_id===roleId&&p.resource===resource);
+    if(idx>=0)SET.perms[idx]=updated;else SET.perms.push(updated);
+    showToast('✓ Saved',1000);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+
 async function loadPerms(roleFilter){
   const wrap=document.getElementById('set-perms-wrap');
   wrap.innerHTML='<div style="color:var(--t3);padding:24px;text-align:center">Loading…</div>';
@@ -1286,7 +1354,7 @@ async function loadPerms(roleFilter){
     html+='</tr><tr><th></th>';
     showRoles.forEach(()=>{
       html+=`<th title="Read">R</th><th title="Write">W</th><th title="Delete">D</th>`;
-      html+=`<th style="min-width:130px;text-align:left;padding-left:6px">Hidden Fields<br><span style="font-weight:400;color:var(--t3);font-size:9px">comma-separated</span></th>`;
+      html+=`<th style="min-width:150px;text-align:left;padding-left:6px">Hidden Fields<br><span style="font-weight:400;color:var(--t3);font-size:9px">fields invisible to role</span></th>`;
       html+=`<th style="min-width:130px;text-align:left;padding-left:6px">Row Filter<br><span style="font-weight:400;color:var(--t3);font-size:9px">SQL-style condition</span></th>`;
     });
     html+='</tr></thead><tbody>';
@@ -1303,13 +1371,25 @@ async function loadPerms(roleFilter){
           const chk=p[col]?'checked':'';
           html+=`<td style="vertical-align:middle"><input type="checkbox" class="perm-cb" ${chk} onchange="savePerm('${role.id}','${res}','${col}',this.checked)" title="${esc(role.name)} — ${col} on ${res}"></td>`;
         });
-        const hf=esc(p.hidden_fields||'');
+        // hidden_fields is jsonb array — parse it
+        let hfArr=[];
+        try{if(p.hidden_fields){hfArr=Array.isArray(p.hidden_fields)?p.hidden_fields:JSON.parse(p.hidden_fields);}}catch(e){hfArr=[];}
         const rf=esc(p.row_filter||'');
-        html+=`<td style="vertical-align:middle;padding:3px 4px">
-          <input type="text" value="${hf}" placeholder="field1, field2…"
-            style="width:100%;font-size:11px;padding:3px 5px;background:var(--bg);border:1px solid var(--bdr);border-radius:3px;color:var(--t1);box-sizing:border-box"
-            onblur="savePermField('${role.id}','${res}','hidden_fields',this.value)"
-            title="Fields to hide for ${esc(role.name)} on ${res}">
+        const fields=RESOURCE_FIELDS[res]||[];
+        const hfCount=hfArr.length;
+        const hfBtnLabel=hfCount===0?'None hidden':`${hfCount} field${hfCount===1?'':'s'} hidden`;
+        const hfBtnColor=hfCount>0?'#f59e0b':'var(--t3)';
+        let checkboxesHtml='';
+        fields.forEach(f=>{
+          const chk=hfArr.includes(f)?'checked':'';
+          checkboxesHtml+=`<label class="hf-field-row"><input type="checkbox" value="${esc(f)}" ${chk} onchange="saveHiddenFields('${role.id}','${res}',this)"><span>${esc(f)}</span></label>`;
+        });
+        if(!fields.length){checkboxesHtml=`<div style="color:var(--t3);font-size:11px;padding:6px 8px">No fields mapped</div>`;}
+        html+=`<td style="vertical-align:middle;padding:3px 4px;position:relative">
+          <button class="hf-btn" onclick="toggleHfDropdown(this)" style="width:100%;text-align:left;font-size:11px;padding:3px 7px;background:var(--s1);border:1px solid var(--bdr);border-radius:3px;cursor:pointer;color:${hfBtnColor};white-space:nowrap">${hfBtnLabel}</button>
+          <div class="hf-dropdown" style="display:none;position:absolute;z-index:200;top:calc(100% + 2px);left:0;min-width:180px;max-height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);padding:4px 0">
+            ${checkboxesHtml}
+          </div>
         </td>`;
         html+=`<td style="vertical-align:middle;padding:3px 4px">
           <input type="text" value="${rf}" placeholder="e.g. customer_id='C001'"
@@ -1508,6 +1588,13 @@ async function addResource(){
 function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // Load users when settings tab is navigated to
+// Close hf-dropdowns on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.hf-btn')&&!e.target.closest('.hf-dropdown')){
+    document.querySelectorAll('.hf-dropdown').forEach(d=>d.style.display='none');
+  }
+});
+
 document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
   // small delay to let the page switch
   setTimeout(()=>{if(!SET.loaded.users)loadSettingsUsers();},100);
