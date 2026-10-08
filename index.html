@@ -1314,6 +1314,8 @@ async function toggleUserActive(userId,email,newState){
   }catch(e){showToast('❌ '+e.message,3000);}
 }
 
+function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 // Load users when settings tab is navigated to
 document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
   // small delay to let the page switch
