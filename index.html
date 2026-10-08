@@ -1291,19 +1291,19 @@ const RESOURCE_FIELDS={
   audit_log:['id','user_email','user_name','role_id','action','resource','record_id','old_data','new_data','ip_address','created_at']
 };
 
-function toggleHfDropdown(btn){
+function toggleHfDropdown(btn,event){
+  if(event)event.stopPropagation();
   // close any other open dropdowns first
-  document.querySelectorAll('.hf-dropdown').forEach(d=>{if(d!==btn.nextElementSibling){d.style.display='none';}});
+  document.querySelectorAll('.hf-dropdown').forEach(d=>{if(d!==btn.nextElementSibling)d.style.display='none';});
   const dd=btn.nextElementSibling;
   const isOpen=dd.style.display==='block';
   dd.style.display=isOpen?'none':'block';
   if(!isOpen){
     // position: ensure it doesn't go off-screen to the right
     const rect=btn.getBoundingClientRect();
-    const ddWidth=180;
     const spaceRight=window.innerWidth-rect.left;
-    dd.style.left=spaceRight<ddWidth+10?'auto':'0';
-    dd.style.right=spaceRight<ddWidth+10?'0':'auto';
+    dd.style.left=spaceRight<190?'auto':'0';
+    dd.style.right=spaceRight<190?'0':'auto';
   }
 }
 
@@ -1386,8 +1386,8 @@ async function loadPerms(roleFilter){
         });
         if(!fields.length){checkboxesHtml=`<div style="color:var(--t3);font-size:11px;padding:6px 8px">No fields mapped</div>`;}
         html+=`<td style="vertical-align:middle;padding:3px 4px;position:relative">
-          <button class="hf-btn" onclick="toggleHfDropdown(this)" style="width:100%;text-align:left;font-size:11px;padding:3px 7px;background:var(--s1);border:1px solid var(--bdr);border-radius:3px;cursor:pointer;color:${hfBtnColor};white-space:nowrap">${hfBtnLabel}</button>
-          <div class="hf-dropdown" style="display:none;position:absolute;z-index:200;top:calc(100% + 2px);left:0;min-width:180px;max-height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);padding:4px 0">
+          <button class="hf-btn" onclick="toggleHfDropdown(this,event)" style="width:100%;text-align:left;font-size:11px;padding:3px 7px;background:var(--s1);border:1px solid var(--bdr);border-radius:3px;cursor:pointer;color:${hfBtnColor};white-space:nowrap">${hfBtnLabel}</button>
+          <div class="hf-dropdown" onclick="event.stopPropagation()" style="display:none;position:absolute;z-index:200;top:calc(100% + 2px);left:0;min-width:180px;max-height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);padding:4px 0">
             ${checkboxesHtml}
           </div>
         </td>`;
