@@ -1767,6 +1767,7 @@ async function signInWithGoogle(){
 async function signOut(){
   await SB_CLIENT.auth.signOut();
   CURRENT_USER=null;USER_ROLE=null;PERMISSIONS=[];GOOGLE_TOKEN=null;
+  try{sessionStorage.removeItem('klap_gt');}catch(e){}
   window.location.reload();
 }
 
@@ -1778,7 +1779,11 @@ async function handleAuthCallback(){
     document.getElementById('login-screen').style.display='flex';
     return false;
   }
-  GOOGLE_TOKEN=session.provider_token||null;
+  // provider_token is only present right after OAuth redirect — save it so reloads still work
+  if(session.provider_token){
+    try{sessionStorage.setItem('klap_gt',session.provider_token);}catch(e){}
+  }
+  GOOGLE_TOKEN=session.provider_token||sessionStorage.getItem('klap_gt')||null;
   const email=session.user?.email;
   if(!email){
     showLoginError('Could not get your email from Google.');
