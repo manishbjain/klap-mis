@@ -1853,7 +1853,8 @@ async function getDriveFileId(productId){
 async function getProductImageUrl(productId){
   const fileId=await getDriveFileId(productId);
   if(!fileId)return null;
-  return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${encodeURIComponent(GOOGLE_TOKEN)}`;
+  // Use thumbnail URL — works without extra auth headers and avoids 403 on alt=media
+  return `https://lh3.googleusercontent.com/d/${fileId}=w400`;
 }
 
 // Render a product image element
