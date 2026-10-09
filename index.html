@@ -1826,35 +1826,10 @@ function showLoginError(msg){
   btn.disabled=false;
 }
 
-// Drive image helper — fetch product image using Google access token
-const DRIVE_FOLDER_ID='1_upxmdMWqknVRnrGKVzkUH4VBcEpyznr';
-let _driveFileCache=null; // {productId: fileId}
-
-async function getDriveFileId(productId){
-  if(!GOOGLE_TOKEN)return null;
-  if(_driveFileCache&&_driveFileCache[productId]!==undefined)return _driveFileCache[productId];
-  if(!_driveFileCache){
-    // Fetch all files in the product images folder once
-    try{
-      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q='${DRIVE_FOLDER_ID}'+in+parents+and+trashed=false&fields=files(id,name)&pageSize=1000`,{
-        headers:{Authorization:'Bearer '+GOOGLE_TOKEN}
-      });
-      const data=await r.json();
-      _driveFileCache={};
-      (data.files||[]).forEach(f=>{
-        const name=f.name.replace(/\.[^.]+$/,''); // strip extension
-        _driveFileCache[name]=f.id;
-      });
-    }catch(e){_driveFileCache={};}
-  }
-  return _driveFileCache[productId]||null;
-}
-
-async function getProductImageUrl(productId){
-  const fileId=await getDriveFileId(productId);
-  if(!fileId)return null;
-  // Use thumbnail URL — works without extra auth headers and avoids 403 on alt=media
-  return `https://lh3.googleusercontent.com/d/${fileId}=w400`;
+// Drive image helper — via edge function using service account (no user token needed)
+function getProductImageUrl(productId){
+  if(!productId)return null;
+  return `${SB_URL}/functions/v1/klap-mis-data/image/${encodeURIComponent(productId)}`;
 }
 
 // Render a product image element
@@ -2802,19 +2777,17 @@ R.products=function(p){
         </div>
       </div>`;
     }).join('')||'<div style="padding:24px;color:var(--t3)">No products match</div>';
-    // Load product images async (only if we have a Google token)
-    if(GOOGLE_TOKEN){
-      slice.forEach(async p=>{
-        const safeId='pi-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
-        const el=document.getElementById(safeId);
-        if(!el)return;
-        const url=await getProductImageUrl(p[0]);
-        if(url&&el){
-          el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:cover;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
-          el.style.background='#000';
-        }
-      });
-    }
+    // Load product images async via edge function
+    slice.forEach(p=>{
+      const safeId='pi-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
+      const el=document.getElementById(safeId);
+      if(!el)return;
+      const url=getProductImageUrl(p[0]);
+      if(url&&el){
+        el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:cover;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
+        el.style.background='#000';
+      }
+    });
   } else {
     document.getElementById('pd-list-view').style.display='';
     document.getElementById('pd-card-view').style.display='none';
@@ -2825,16 +2798,14 @@ R.products=function(p){
       <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
       <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
     </tr>`;}).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
-    // Load images for list view rows async
-    if(GOOGLE_TOKEN){
-      slice.forEach(async p=>{
-        const safeId='pli-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
-        const el=document.getElementById(safeId);
-        if(!el)return;
-        const url=await getProductImageUrl(p[0]);
-        if(url&&el)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:cover;display:block;border-radius:6px" onerror="this.closest('div').textContent='🏷'">`;
-      });
-    }
+    // Load images for list view rows via edge function
+    slice.forEach(p=>{
+      const safeId='pli-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
+      const el=document.getElementById(safeId);
+      if(!el)return;
+      const url=getProductImageUrl(p[0]);
+      if(url&&el)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:cover;display:block;border-radius:6px" onerror="this.closest('div').textContent='🏷'">`;
+    });
   }
 };
 function pdSetView(v){
