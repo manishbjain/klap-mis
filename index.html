@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KLAP MIS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f0f2f5;--s1:#fff;--s2:#f8f9fc;--bdr:#e2e6f0;--acc:#4f63f0;--acc-lt:#eef0fe;
@@ -330,9 +331,35 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 .kb-card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .kb-card-qty{font-size:10px;color:var(--t2);font-weight:600}
 .kb-repeat{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:#dbeafe;color:#1e40af}
+
+/* LOGIN SCREEN */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--s1);border:1px solid var(--bdr);border-radius:16px;padding:48px 44px;width:400px;max-width:90vw;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.10)}
+.login-logo{font-size:32px;font-weight:900;letter-spacing:-2px;margin-bottom:6px}
+.login-logo em{color:var(--acc);font-style:normal}
+.login-sub{font-size:12px;color:var(--t2);margin-bottom:36px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;background:#fff;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--txt);transition:all .15s}
+.google-btn:hover{border-color:var(--acc);box-shadow:0 2px 12px rgba(79,99,240,.15)}
+.google-btn svg{width:20px;height:20px;flex-shrink:0}
+.login-err{margin-top:18px;padding:10px 14px;background:var(--rlt);color:var(--rdk);border-radius:8px;font-size:12px;display:none}
+.login-note{margin-top:20px;font-size:11px;color:var(--t3);line-height:1.5}
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">KL<em>AP</em></div>
+    <div class="login-sub">Krishiv Labels & Packaging · MIS</div>
+    <button class="google-btn" onclick="signInWithGoogle()" id="login-btn">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-note">Only authorised KLAP team members can sign in.<br>Use your company Gmail account.</div>
+  </div>
+</div>
 
 <div id="top">
   <div id="tog" onclick="document.getElementById('sb').classList.toggle('slim')">☰</div>
@@ -355,9 +382,9 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <div style="width:34px;height:34px;border-radius:50%;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div>
       <div style="position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center">3</div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr)" onclick="toast('Profile — Phase 2')">
-      <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">MJ</div>
-      <span style="font-size:12px;font-weight:600">Manish Jain</span>
+    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr)" onclick="showUserMenu(this)" id="user-pill">
+      <div id="user-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">?</div>
+      <span id="user-name" style="font-size:12px;font-weight:600">Loading…</span>
     </div>
   </div>
 </div>
@@ -475,7 +502,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-products"><span id="fd-bar-products-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('products')">Clear all</button></div>
-    <div id="pd-list-view" style="overflow-x:auto"><table><thead><tr><th>Code</th><th>Product</th><th>Customer</th><th>Design Status</th></tr></thead><tbody id="pd-body"></tbody></table></div>
+    <div id="pd-list-view" style="overflow-x:auto"><table><thead><tr><th style="width:52px">Img</th><th>Code</th><th>Product</th><th>Customer</th><th>Design Status</th></tr></thead><tbody id="pd-body"></tbody></table></div>
     <div id="pd-card-view" style="display:none;padding:12px"><div id="pd-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div></div>
     <div class="pg-bar" id="pd-pg"></div>
   </div>
@@ -1643,6 +1670,193 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
 const SB_KEY='sb_publishable_RN89GTohdCC31adWqDZL0w_zlBuVtlk';
+
+// ── AUTH GLOBALS ──────────────────────────────────────────
+let CURRENT_USER=null;   // {id, email, name, role_id, is_active}
+let USER_ROLE=null;      // e.g. 'owner', 'manager', 'prepress'
+let PERMISSIONS=[];      // [{resource, can_read, can_write, can_delete, hidden_fields}]
+let GOOGLE_TOKEN=null;   // Google OAuth access token (for Drive images)
+
+const SB_CLIENT=supabase.createClient(SB_URL,SB_KEY);
+
+function canRead(resource){
+  if(USER_ROLE==='owner')return true;
+  const p=PERMISSIONS.find(x=>x.resource===resource);
+  return p?!!p.can_read:false;
+}
+function canWrite(resource){
+  if(USER_ROLE==='owner')return true;
+  const p=PERMISSIONS.find(x=>x.resource===resource);
+  return p?!!p.can_write:false;
+}
+function canDelete(resource){
+  if(USER_ROLE==='owner')return true;
+  const p=PERMISSIONS.find(x=>x.resource===resource);
+  return p?!!p.can_delete:false;
+}
+
+function applyNavPermissions(){
+  // Map nav data-p values to resource names
+  const navMap={
+    'customers':'accounts','vendors':'accounts','transporters':'accounts',
+    'products':'products','orders':'orders','pros':'production_orders',
+    'jobs':'jobs','processes':'pro_steps','dies':'dies','plates':'plates',
+    'wflow-order':'orders','wflow-design':'products','wflow-prod':'production_orders',
+    'wpk':'fg_inventory','winv':'rm_in','wp':'purchase_orders','wdep':'delivery_orders',
+    'settings':'app_users'
+  };
+  document.querySelectorAll('.ni[data-p],.ni-sub[data-p],.ni-sub2[data-p]').forEach(el=>{
+    const p=el.dataset.p;
+    const resource=navMap[p];
+    if(!resource)return; // dash, machines, etc — always visible
+    if(!canRead(resource)){el.style.display='none';}
+    else{el.style.display='';}
+  });
+}
+
+function updateUserPill(){
+  if(!CURRENT_USER)return;
+  const initials=(CURRENT_USER.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const av=document.getElementById('user-avatar');
+  const nm=document.getElementById('user-name');
+  if(av)av.textContent=initials;
+  if(nm)nm.textContent=CURRENT_USER.name||CURRENT_USER.email;
+}
+
+function showUserMenu(el){
+  const existing=document.getElementById('user-menu-pop');
+  if(existing){existing.remove();return;}
+  const menu=document.createElement('div');
+  menu.id='user-menu-pop';
+  const r=el.getBoundingClientRect();
+  menu.style.cssText=`position:fixed;top:${r.bottom+6}px;right:${window.innerWidth-r.right}px;background:var(--s1);border:1px solid var(--bdr);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:8px 0;z-index:9999;min-width:180px`;
+  menu.innerHTML=`
+    <div style="padding:10px 16px;border-bottom:1px solid var(--bdr)">
+      <div style="font-weight:700;font-size:13px">${CURRENT_USER?.name||''}</div>
+      <div style="font-size:11px;color:var(--t3)">${CURRENT_USER?.email||''}</div>
+      <div style="font-size:10px;font-weight:600;color:var(--acc);margin-top:2px;text-transform:capitalize">${USER_ROLE||''}</div>
+    </div>
+    <div style="padding:8px 0">
+      <div onclick="signOut()" style="padding:8px 16px;cursor:pointer;font-size:12px;color:var(--red);font-weight:600" onmouseover="this.style.background='var(--rlt)'" onmouseout="this.style.background=''">Sign Out</div>
+    </div>`;
+  menu.addEventListener('click',e=>e.stopPropagation());
+  document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click',()=>menu.remove(),{once:true}),0);
+}
+
+async function signInWithGoogle(){
+  const btn=document.getElementById('login-btn');
+  const errEl=document.getElementById('login-err');
+  btn.textContent='Signing in…';btn.disabled=true;
+  errEl.style.display='none';
+  const{error}=await SB_CLIENT.auth.signInWithOAuth({
+    provider:'google',
+    options:{
+      redirectTo:window.location.href.split('?')[0].split('#')[0],
+      scopes:'https://www.googleapis.com/auth/drive.readonly'
+    }
+  });
+  if(error){
+    errEl.textContent='Sign in failed: '+error.message;
+    errEl.style.display='block';
+    btn.textContent='Sign in with Google';btn.disabled=false;
+  }
+  // Browser will redirect — no more JS runs
+}
+
+async function signOut(){
+  await SB_CLIENT.auth.signOut();
+  CURRENT_USER=null;USER_ROLE=null;PERMISSIONS=[];GOOGLE_TOKEN=null;
+  window.location.reload();
+}
+
+async function handleAuthCallback(){
+  // Check for active session (after OAuth redirect, or page reload)
+  const{data:{session}}=await SB_CLIENT.auth.getSession();
+  if(!session){
+    // No session — show login screen
+    document.getElementById('login-screen').style.display='flex';
+    return false;
+  }
+  GOOGLE_TOKEN=session.provider_token||null;
+  const email=session.user?.email;
+  if(!email){
+    showLoginError('Could not get your email from Google.');
+    return false;
+  }
+  // Call edge function to verify email is in app_users
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/klap-mis-data/auth`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+      body:JSON.stringify({email})
+    });
+    const data=await r.json();
+    if(!r.ok||data.error){
+      const msg=data.error==='not_found'?'Your email ('+email+') is not authorised to access KLAP MIS. Please contact Manish.':
+                data.error==='inactive'?'Your account has been deactivated. Please contact Manish.':
+                'Auth error: '+(data.error||r.status);
+      showLoginError(msg);
+      await SB_CLIENT.auth.signOut();
+      return false;
+    }
+    CURRENT_USER=data.user;
+    USER_ROLE=data.user.role_id;
+    PERMISSIONS=data.permissions||[];
+    updateUserPill();
+    document.getElementById('login-screen').style.display='none';
+    return true;
+  }catch(e){
+    showLoginError('Connection error: '+e.message);
+    return false;
+  }
+}
+
+function showLoginError(msg){
+  document.getElementById('login-screen').style.display='flex';
+  const errEl=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  errEl.textContent=msg;errEl.style.display='block';
+  btn.innerHTML=`<svg viewBox="0 0 48 48" width="20" height="20"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg> Sign in with Google`;
+  btn.disabled=false;
+}
+
+// Drive image helper — fetch product image using Google access token
+const DRIVE_FOLDER_ID='1_upxmdMWqknVRnrGKVzkUH4VBcEpyznr';
+let _driveFileCache=null; // {productId: fileId}
+
+async function getDriveFileId(productId){
+  if(!GOOGLE_TOKEN)return null;
+  if(_driveFileCache&&_driveFileCache[productId]!==undefined)return _driveFileCache[productId];
+  if(!_driveFileCache){
+    // Fetch all files in the product images folder once
+    try{
+      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q='${DRIVE_FOLDER_ID}'+in+parents+and+trashed=false&fields=files(id,name)&pageSize=1000`,{
+        headers:{Authorization:'Bearer '+GOOGLE_TOKEN}
+      });
+      const data=await r.json();
+      _driveFileCache={};
+      (data.files||[]).forEach(f=>{
+        const name=f.name.replace(/\.[^.]+$/,''); // strip extension
+        _driveFileCache[name]=f.id;
+      });
+    }catch(e){_driveFileCache={};}
+  }
+  return _driveFileCache[productId]||null;
+}
+
+async function getProductImageUrl(productId){
+  const fileId=await getDriveFileId(productId);
+  if(!fileId)return null;
+  return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${encodeURIComponent(GOOGLE_TOKEN)}`;
+}
+
+// Render a product image element
+async function renderProductImage(productId,size=40){
+  const url=await getProductImageUrl(productId);
+  if(!url)return `<div style="width:${size}px;height:${size}px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size/2.5)}px">🏷</div>`;
+  return `<img src="${url}" style="width:${size}px;height:${size}px;border-radius:6px;object-fit:cover;border:1px solid var(--bdr)" onerror="this.outerHTML='<div style=\\'width:${size}px;height:${size}px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size/2.5)}px\\'>🏷</div>'">`;
+}
 let D={o:[],pr:[],dq:[],pd:[],cu:[],ve:[],jo:[],di:[],pl:[],
   rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[["Flexo Press 01","press"],["RF Punching 01","punching"],["RF Punching 02","punching"],["Rewinding 01","rewinding"],["Rewinding 02","rewinding"],["Platen 01","platen"],["Platen 02","platen"],["Tube Labelling 01","tube"],["Core Cutting 01","cutting"],["Core Cutting 02","cutting"],["Tube Seaming 01","tube"]],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
 
@@ -2561,11 +2775,15 @@ R.products=function(p){
   if(cardMode){
     document.getElementById('pd-list-view').style.display='none';
     document.getElementById('pd-card-view').style.display='block';
-    document.getElementById('pd-card-grid').innerHTML=slice.map(p=>{
-      const stClr={'approved':'#d1fae5','file_ready':'#dbeafe','in_process':'#ede9fe','on_approval':'#fef3c7','to_process':'var(--s2)','on_hold':'#fef9c3','cancelled':'#fee2e2'}[p[3]]||'var(--s2)';
-      const stIcon={'approved':'✅','file_ready':'📁','in_process':'✏️','on_approval':'📤','to_process':'📥','on_hold':'⏸','cancelled':'✕'}[p[3]]||'📦';
+    const pdId='pd-card-grid';
+    const stClrMap={'approved':'#d1fae5','file_ready':'#dbeafe','in_process':'#ede9fe','on_approval':'#fef3c7','to_process':'var(--s2)','on_hold':'#fef9c3','cancelled':'#fee2e2'};
+    const stIconMap={'approved':'✅','file_ready':'📁','in_process':'✏️','on_approval':'📤','to_process':'📥','on_hold':'⏸','cancelled':'✕'};
+    document.getElementById(pdId).innerHTML=slice.map(p=>{
+      const stClr=stClrMap[p[3]]||'var(--s2)';
+      const stIcon=stIconMap[p[3]]||'📦';
+      const safeId='pi-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
       return `<div onclick="selPD(event,${JSON.stringify(p[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
-        <div style="background:${stClr};height:90px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
+        <div id="${safeId}" style="background:${stClr};height:90px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
           <span style="font-size:36px;opacity:.55">${stIcon}</span>
         </div>
         <div style="padding:10px 12px">
@@ -2578,13 +2796,39 @@ R.products=function(p){
         </div>
       </div>`;
     }).join('')||'<div style="padding:24px;color:var(--t3)">No products match</div>';
+    // Load product images async (only if we have a Google token)
+    if(GOOGLE_TOKEN){
+      slice.forEach(async p=>{
+        const safeId='pi-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
+        const el=document.getElementById(safeId);
+        if(!el)return;
+        const url=await getProductImageUrl(p[0]);
+        if(url&&el){
+          el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:cover;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
+          el.style.background='#000';
+        }
+      });
+    }
   } else {
     document.getElementById('pd-list-view').style.display='';
     document.getElementById('pd-card-view').style.display='none';
-    document.getElementById('pd-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+    document.getElementById('pd-body').innerHTML=slice.map(p=>{
+      const safeId='pli-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
+      return `<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+      <td><div id="${safeId}" style="width:40px;height:40px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden">🏷</div></td>
       <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
       <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
-    </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
+    </tr>`;}).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
+    // Load images for list view rows async
+    if(GOOGLE_TOKEN){
+      slice.forEach(async p=>{
+        const safeId='pli-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
+        const el=document.getElementById(safeId);
+        if(!el)return;
+        const url=await getProductImageUrl(p[0]);
+        if(url&&el)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:cover;display:block;border-radius:6px" onerror="this.closest('div').textContent='🏷'">`;
+      });
+    }
   }
 };
 function pdSetView(v){
@@ -4391,8 +4635,22 @@ function initApp(){
   R.machines();
 }
 
-// Start loading — when done, init the app
-loadData().then(()=>initApp()).catch(e=>console.error('Init error:',e));
+// ── STARTUP ─────────────────────────────────────────────
+// 1. Check auth session → 2. Load data → 3. Init app
+(async()=>{
+  // Hide login screen initially (flicker prevention — show only if not authed)
+  document.getElementById('login-screen').style.display='none';
+  const authed=await handleAuthCallback();
+  if(!authed)return; // login screen is showing, wait for user
+  try{
+    await loadData();
+    applyNavPermissions();
+    initApp();
+  }catch(e){
+    console.error('Init error:',e);
+    toast('Error loading data: '+e.message);
+  }
+})();
 </script>
 
 <div id="new-order-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;padding:16px"></div>
