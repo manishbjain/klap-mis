@@ -1291,21 +1291,52 @@ const RESOURCE_FIELDS={
   audit_log:['id','user_email','user_name','role_id','action','resource','record_id','old_data','new_data','ip_address','created_at']
 };
 
+// Singleton floating dropdown for hidden-fields picker
+let _hfPanel=null;
+let _hfActiveBtn=null;
+function _ensureHfPanel(){
+  if(_hfPanel)return;
+  _hfPanel=document.createElement('div');
+  _hfPanel.id='hf-panel';
+  _hfPanel.style.cssText='display:none;position:fixed;z-index:9999;min-width:190px;max-height:240px;overflow-y:auto;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.22);padding:4px 0';
+  _hfPanel.addEventListener('click',e=>e.stopPropagation());
+  document.body.appendChild(_hfPanel);
+}
 function toggleHfDropdown(btn,event){
   if(event)event.stopPropagation();
-  // close any other open dropdowns first
-  document.querySelectorAll('.hf-dropdown').forEach(d=>{if(d!==btn.nextElementSibling)d.style.display='none';});
-  const dd=btn.nextElementSibling;
-  const isOpen=dd.style.display==='block';
-  dd.style.display=isOpen?'none':'block';
-  if(!isOpen){
-    // position: ensure it doesn't go off-screen to the right
-    const rect=btn.getBoundingClientRect();
-    const spaceRight=window.innerWidth-rect.left;
-    dd.style.left=spaceRight<190?'auto':'0';
-    dd.style.right=spaceRight<190?'0':'auto';
+  _ensureHfPanel();
+  if(_hfActiveBtn===btn&&_hfPanel.style.display==='block'){
+    _hfPanel.style.display='none';_hfActiveBtn=null;return;
   }
+  // load content from the button's data attributes
+  const roleId=btn.dataset.role;
+  const res=btn.dataset.res;
+  const fields=(RESOURCE_FIELDS[res]||[]);
+  let hfArr=[];
+  try{const p=SET.perms.find(x=>x.role_id===roleId&&x.resource===res)||{};
+    if(p.hidden_fields)hfArr=Array.isArray(p.hidden_fields)?p.hidden_fields:JSON.parse(p.hidden_fields);
+  }catch(e){}
+  let inner='';
+  if(!fields.length){inner='<div style="color:var(--t3);font-size:11px;padding:8px 12px">No fields mapped</div>';}
+  else{fields.forEach(f=>{
+    const chk=hfArr.includes(f)?'checked':'';
+    inner+=`<label class="hf-field-row"><input type="checkbox" value="${esc(f)}" ${chk} onchange="saveHiddenFields('${roleId}','${res}',this)"><span>${esc(f)}</span></label>`;
+  });}
+  _hfPanel.innerHTML=inner;
+  // position below button
+  const r=btn.getBoundingClientRect();
+  const panelW=190;
+  let left=r.left;
+  if(left+panelW>window.innerWidth-8)left=window.innerWidth-panelW-8;
+  _hfPanel.style.top=(r.bottom+4)+'px';
+  _hfPanel.style.left=left+'px';
+  _hfPanel.style.display='block';
+  _hfActiveBtn=btn;
 }
+document.addEventListener('click',()=>{
+  if(_hfPanel)_hfPanel.style.display='none';
+  _hfActiveBtn=null;
+});
 
 function updateHfBtn(btn,checkedArr){
   const n=checkedArr.length;
@@ -1314,11 +1345,9 @@ function updateHfBtn(btn,checkedArr){
 }
 
 async function saveHiddenFields(roleId,resource,checkbox){
-  const wrap=checkbox.closest('.hf-dropdown');
-  const allBoxes=wrap.querySelectorAll('input[type=checkbox]');
+  const allBoxes=_hfPanel.querySelectorAll('input[type=checkbox]');
   const checked=[...allBoxes].filter(c=>c.checked).map(c=>c.value);
-  const btn=wrap.previousElementSibling;
-  updateHfBtn(btn,checked);
+  if(_hfActiveBtn)updateHfBtn(_hfActiveBtn,checked);
   const existing=SET.perms.find(p=>p.role_id===roleId&&p.resource===resource)||{role_id:roleId,resource};
   const updated={...existing,hidden_fields:checked.length?checked:null};
   try{
@@ -1379,17 +1408,8 @@ async function loadPerms(roleFilter){
         const hfCount=hfArr.length;
         const hfBtnLabel=hfCount===0?'None hidden':`${hfCount} field${hfCount===1?'':'s'} hidden`;
         const hfBtnColor=hfCount>0?'#f59e0b':'var(--t3)';
-        let checkboxesHtml='';
-        fields.forEach(f=>{
-          const chk=hfArr.includes(f)?'checked':'';
-          checkboxesHtml+=`<label class="hf-field-row"><input type="checkbox" value="${esc(f)}" ${chk} onchange="saveHiddenFields('${role.id}','${res}',this)"><span>${esc(f)}</span></label>`;
-        });
-        if(!fields.length){checkboxesHtml=`<div style="color:var(--t3);font-size:11px;padding:6px 8px">No fields mapped</div>`;}
-        html+=`<td style="vertical-align:middle;padding:3px 4px;position:relative">
-          <button class="hf-btn" onclick="toggleHfDropdown(this,event)" style="width:100%;text-align:left;font-size:11px;padding:3px 7px;background:var(--s1);border:1px solid var(--bdr);border-radius:3px;cursor:pointer;color:${hfBtnColor};white-space:nowrap">${hfBtnLabel}</button>
-          <div class="hf-dropdown" onclick="event.stopPropagation()" style="display:none;position:absolute;z-index:200;top:calc(100% + 2px);left:0;min-width:180px;max-height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);padding:4px 0">
-            ${checkboxesHtml}
-          </div>
+        html+=`<td style="vertical-align:middle;padding:3px 4px">
+          <button class="hf-btn" data-role="${role.id}" data-res="${esc(res)}" onclick="toggleHfDropdown(this,event)" style="width:100%;text-align:left;font-size:11px;padding:3px 7px;background:var(--s1);border:1px solid var(--bdr);border-radius:3px;cursor:pointer;color:${hfBtnColor};white-space:nowrap">${hfBtnLabel}</button>
         </td>`;
         html+=`<td style="vertical-align:middle;padding:3px 4px">
           <input type="text" value="${rf}" placeholder="e.g. customer_id='C001'"
@@ -1588,12 +1608,6 @@ async function addResource(){
 function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // Load users when settings tab is navigated to
-// Close hf-dropdowns on outside click
-document.addEventListener('click',e=>{
-  if(!e.target.closest('.hf-btn')&&!e.target.closest('.hf-dropdown')){
-    document.querySelectorAll('.hf-dropdown').forEach(d=>d.style.display='none');
-  }
-});
 
 document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
   // small delay to let the page switch
