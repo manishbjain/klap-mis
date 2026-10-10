@@ -2663,7 +2663,7 @@ R.orders=function(p){
           <span style="font-size:40px;opacity:.4">📦</span>
         </div>
         <div style="padding:10px 12px">
-          <div style="font-size:12px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o[3]}">${o[3]||'—'}</div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(o[3]||'').replace(/"/g,'&quot;')}">${o[3]||'—'}</div>
           <div style="font-size:11px;color:var(--t2);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o[2]||'—'}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
             ${badge(o[5])}
@@ -2685,9 +2685,9 @@ R.orders=function(p){
       const liImgId='oli-'+o[0].replace(/[^a-zA-Z0-9]/g,'_');
       return `<tr onclick="selO(event,${JSON.stringify(o[0])})">
         <td><div id="${liImgId}" style="width:40px;height:40px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden">📦</div></td>
-        <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
-        <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
-        <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
+        <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${(o[2]||'').replace(/"/g,'&quot;')}">${tr(o[2],22)}</td>
+        <td title="${(o[3]||'').replace(/"/g,'&quot;')}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+        <td>${badge(o[5])}</td><td>${o[6]==='1'?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
         <td style="font-size:11px;font-weight:600;${ageCol}">${age}d</td>
       </tr>`;
     }).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
@@ -2724,7 +2724,7 @@ function oSetView(v){
   }
   R.orders(1);
 }
-function selO(e,oid){
+function selO(e,oid){try{
   const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
@@ -2832,6 +2832,7 @@ function selO(e,oid){
     <tbody>${doRows}</tbody>
   </table>`;
   openRP(html,'Order: '+o[0]);
+}catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selO ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
 }
 
 R.dq=function(p){
@@ -2842,7 +2843,7 @@ R.dq=function(p){
   items=applyFDFilters('dq',items);
   const slice=pgr(items,'dq','R.dq','dq-pg','dq-cnt');
   document.getElementById('dq-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
-    <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
+    <td class="mono">${p[0]||'—'}</td><td title="${(p[1]||'').replace(/"/g,'&quot;')}">${tr(p[1],28)}</td>
     <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No items</td></tr>';
 };
@@ -2870,7 +2871,7 @@ R.products=function(p){
           <span style="font-size:36px;opacity:.55">${stIcon}</span>
         </div>
         <div style="padding:10px 12px">
-          <div style="font-size:12px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p[1]}">${p[1]||'—'}</div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(p[1]||'').replace(/"/g,'&quot;')}">${p[1]||'—'}</div>
           <div style="font-size:11px;color:var(--t2);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p[2]||'—'}</div>
           <div style="display:flex;align-items:center;justify-content:space-between">
             ${badge(p[3])}
@@ -2896,7 +2897,7 @@ R.products=function(p){
       const safeId='pli-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
       return `<tr onclick="selPD(event,${JSON.stringify(p[0])})">
       <td><div id="${safeId}" style="width:40px;height:40px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden">🏷</div></td>
-      <td class="mono">${p[0]||'—'}</td><td title="${p[1]}">${tr(p[1],28)}</td>
+      <td class="mono">${p[0]||'—'}</td><td title="${(p[1]||'').replace(/"/g,'&quot;')}">${tr(p[1],28)}</td>
       <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
     </tr>`;}).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No products</td></tr>';
     // Load images for list view rows via edge function
@@ -2921,7 +2922,7 @@ function pdSetView(v){
   }
   R.products(1);
 }
-function selPD(e,code){
+function selPD(e,code){try{
   const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
@@ -3056,6 +3057,7 @@ function selPD(e,code){
     <tbody>${fgRows}</tbody>
   </table>`;
   openRP(html,(raw.product_name||p[1])+(p[2]?' · '+p[2]:''));
+}catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selPD ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
 }
 
 R.customers=function(p){
@@ -3065,7 +3067,7 @@ R.customers=function(p){
   items=applyFDFilters('customers',items);
   const slice=pgr(items,'customers','R.customers','cu-pg','cu-cnt');
   document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(dpGrid(dpSec('Customer'),dpRow('Ref',${JSON.stringify(a[0])}),dpRow('Name',${JSON.stringify(a[1])}),dpRow('Brand',${JSON.stringify(a[2]||'—')}),dpRow('Alias',${JSON.stringify(a[3]||'—')})),${JSON.stringify(a[1])})">
-    <td class="mono">${a[0]||'—'}</td><td title="${a[1]}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
+    <td class="mono">${a[0]||'—'}</td><td title="${(a[1]||'').replace(/"/g,'&quot;')}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
 };
 
@@ -3114,7 +3116,7 @@ R.pros=function(p){
     if(url)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:contain;background:#fff;display:block;border-radius:6px" onload="this.closest('div').style.background='#fff'" onerror="this.closest('div').textContent='📦';this.closest('div').style.background='var(--s1)'">`;
   });
 };
-function selPR(e,pid){
+function selPR(e,pid){try{
   const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
@@ -3222,6 +3224,7 @@ function selPR(e,pid){
     <tbody>${fgRows}</tbody>
   </table>`;
   openRP(html,'PRO: '+p[0]);
+}catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selPR ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
 }
 
 R.jobs=function(p){
@@ -3240,7 +3243,7 @@ R.jobs=function(p){
     </tr>`;
   }).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
 };
-function selJob(e,jid){
+function selJob(e,jid){try{
   const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
@@ -3312,6 +3315,7 @@ function selJob(e,jid){
     <tbody>${procsRows}</tbody>
   </table>`;
   openRP(html,'Job: '+j[0]);
+}catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selJob ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
 }
 
 R.dies=function(p){
