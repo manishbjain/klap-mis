@@ -106,16 +106,30 @@ tr.sel td{background:var(--acc-lt)}
 .bd{background:var(--s2);color:var(--t2)}
 
 /* RIGHT PANE */
-#rp{width:0;background:var(--s1);border-left:1px solid var(--bdr);flex-shrink:0;
+#rp{width:0;background:var(--bg);border-left:1px solid var(--bdr);flex-shrink:0;
   overflow:hidden;transition:width .18s;display:flex;flex-direction:column}
-#rp.open{width:340px}
-#rp-h{padding:12px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center}
-#rp-h h3{font-size:13px;font-weight:700;flex:1}
-#rp-x{cursor:pointer;color:var(--t2);font-size:16px;padding:2px 4px}
-#rp-b{flex:1;overflow-y:auto;padding:14px}
-.rf{margin-bottom:10px}.rl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
-.rv{font-size:12px;font-weight:500}
+#rp.open{width:680px}
+#rp-h{padding:10px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;background:var(--s1);gap:8px}
+#rp-h h3{font-size:13px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rp-x{cursor:pointer;color:var(--t2);font-size:18px;padding:2px 6px;line-height:1;flex-shrink:0}
+#rp-b{flex:1;overflow-y:auto;padding:16px}
+.rf{margin-bottom:8px}.rl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.rv{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
+/* detail panel grid rows — single line label+value */
+.dp-grid{display:grid;grid-template-columns:140px 1fr;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.dp-grid .dk{padding:5px 10px;font-size:11px;font-weight:600;color:var(--t3);background:var(--s1);border-bottom:1px solid var(--bdr);white-space:nowrap}
+.dp-grid .dv{padding:5px 10px;font-size:12px;border-bottom:1px solid var(--bdr);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-grid .dp-sec{grid-column:1/-1;padding:5px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);background:rgba(79,99,240,.06);border-bottom:1px solid var(--bdr)}
+.dp-grid .dk:last-of-type,.dp-grid .dv:last-of-type{border-bottom:none}
+.dp-sec-title{font-size:10px;font-weight:700;color:var(--t2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.dp-tbl{width:100%;border-collapse:collapse;border:1px solid var(--bdr);border-radius:6px;overflow:hidden;margin-bottom:14px;font-size:11px}
+.dp-tbl th{padding:4px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);background:var(--s1);border-bottom:1px solid var(--bdr);white-space:nowrap}
+.dp-tbl td{padding:5px 8px;border-bottom:1px solid var(--bdr);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.dp-tbl tr:last-child td{border-bottom:none}
+.dp-tbl tr:hover td{background:var(--s1)}
+/* two-column info layout inside rp */
+.dp-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 
 /* DASH 2-col */
 .d2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
@@ -2011,6 +2025,11 @@ async function loadData(){
     // D.procs_raw — raw proc records for process page
     D.procs_raw=procs;
 
+    // Raw arrays for rich detail views
+    D.products_raw=products;
+    D.orders_raw=orders;
+    D.pros_raw=pros;
+
     // D.rm_cats / D.rm_subcats / D.rm_list
     D.rm_cats=rm_cats;
     D.rm_subcats=rm_subcats;
@@ -2123,11 +2142,17 @@ function closeRP(){
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRP();});
-function rf(l,v){return v!=null&&v!==''?`<div class="rf"><div class="rl">${l}</div><div class="rv">${v}</div></div>`:''}
-// rpRow: label+value on one line inside a bordered 2-col grid table
-function rpRow(l,v){return `<div style="display:contents"><div style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--t3);background:var(--s1);border-bottom:1px solid var(--bdr)">${l}</div><div style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--bdr)">${v!=null&&v!==''?v:'—'}</div></div>`;}
-// rpSection: labelled section header
-function rpSec(l){return `<div style="grid-column:1/-1;padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);background:rgba(79,99,240,.06);border-bottom:1px solid var(--bdr)">${l}</div>`;}
+// rf: legacy single field (kept for any old usage)
+function rf(l,v){return v!=null&&v!==''?`<div style="display:flex;align-items:baseline;gap:6px;padding:3px 0;font-size:12px"><span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;min-width:110px;flex-shrink:0">${l}</span><span style="font-weight:500">${v}</span></div>`:''}
+// dpRow: single row inside a .dp-grid — must be used inside dpGrid() or dpGridOpen()
+function dpRow(l,v){return `<div class="dk">${l}</div><div class="dv" title="${typeof v==='string'?v:''}">${v!=null&&v!==''?v:'—'}</div>`;}
+// dpSec: section divider inside a .dp-grid
+function dpSec(l){return `<div class="dp-sec">${l}</div>`;}
+// dpGrid: wrap rows in a grid
+function dpGrid(...rows){return `<div class="dp-grid">${rows.join('')}</div>`;}
+// rpRow / rpSec: legacy aliases
+function rpRow(l,v){return dpRow(l,v);}
+function rpSec(l){return dpSec(l);}
 
 // HELPERS
 const bmap={active:'bg',complete:'bg',cancelled:'br',on_hold:'by',
@@ -2700,59 +2725,112 @@ function oSetView(v){
   R.orders(1);
 }
 function selO(e,oid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const o=D.o.find(x=>x[0]===oid);
   if(!o)return;
-  // Find linked PROs
+  // D.o: [id,date,customer_name,product_name,qty,order_status,is_repeat,product_id,has_changes,order_type,customer_id,units]
+  const raw=D.orders_raw?.find(x=>x.id===oid)||{};
+  const custRec=D.cu.find(x=>x[0]===o[10])||D.cu.find(x=>x[1]===o[2]);
+  const prodRec=D.products_raw?.find(x=>x.id===o[7]);
   const linkedPros=D.pr.filter(p=>p[7]===oid);
-  // Product info
-  const prodRec=D.pd.find(x=>x[1]===o[3])||D.dq.find(x=>x[1]===o[3]);
-  // Customer info
-  const custRec=D.cu.find(x=>x[1]===o[2]);
-  // FG stock for this product
-  const fgRecs=D.fg.filter(f=>f[7]===o[3]);
+  const fgRecs=D.fg.filter(f=>{
+    const pro=D.pros_raw?.find(p=>p.id===f[2]);
+    return pro&&pro.order_id===oid;
+  });
   const totalStock=fgRecs.reduce((s,f)=>s+(Number(f[5])||0),0);
-  const prosRows=linkedPros.length?linkedPros.map(p=>`<tr>
-    <td style="font-size:11px;padding:4px 8px;font-family:monospace">${p[0]}</td>
-    <td style="font-size:11px;padding:4px 8px">${p[1]||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${proSubStatus(p)}</td>
-    <td style="font-size:11px;padding:4px 8px;font-family:monospace">${p[9]||'—'}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:4px 8px;font-size:11px;color:var(--t3)">No production orders yet</td></tr>';
+  const totalPackets=fgRecs.reduce((s,f)=>s+(Number(f[4])||0),0);
+  // PROs progress summary
+  const proStatusCounts={};
+  linkedPros.forEach(p=>{const s=p[8]||'unknown';proStatusCounts[s]=(proStatusCounts[s]||0)+1;});
+  const totalPROQty=linkedPros.reduce((s,p)=>s+(Number(p[4])||0),0);
+  const completedQty=linkedPros.filter(p=>p[8]==='complete'&&!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
+  // Delivery orders for this order
+  const doRecs=D.dos?.filter(x=>x[2]===oid)||[];
+  const totalDespatched=doRecs.reduce((s,x)=>s+(Number(x[4])||0),0);
+  const pendingQty=Math.max(0,(Number(o[4])||0)-totalDespatched);
+  const imgUrl=prodRec?getProductImageUrl(prodRec.id):null;
+  const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:8px;background:var(--s1)">📦</div>`;
+  const prosRows=linkedPros.length?linkedPros.map(p=>`<tr onclick="selPR(null,${JSON.stringify(p[0])})" style="cursor:pointer">
+    <td class="mono" style="padding:4px 8px;font-size:11px">${p[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${proSubStatus(p)}</td>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${p[9]||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs yet</td></tr>';
+  const doRows=doRecs.length?doRecs.map(d=>`<tr>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${d[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${d[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${d[4]?Number(d[4]).toLocaleString():'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="3" style="padding:8px;font-size:11px;color:var(--t3)">No deliveries yet</td></tr>';
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
-    ${rpSec('Order Details')}
-    ${rpRow('Order ID',o[0])}
-    ${rpRow('Date',o[1]||'—')}
-    ${rpRow('Status',badge(o[5]))}
-    ${rpRow('Type',o[6]?'🔁 Repeat Order':'🆕 New Order')}
-    ${rpRow('Qty Ordered',o[4]?Number(o[4]).toLocaleString()+' pcs':'—')}
-    ${rpSec('Customer')}
-    ${rpRow('Name',o[2]||'—')}
-    ${rpRow('Brand',custRec?custRec[2]||'—':'—')}
-    ${rpRow('Alias',custRec?custRec[3]||'—':'—')}
-    ${rpRow('Cust Ref',custRec?custRec[0]||'—':'—')}
-    ${rpSec('Product')}
-    ${rpRow('Product Name',o[3]||'—')}
-    ${rpRow('Product Code',prodRec?prodRec[0]||'—':'—')}
-    ${rpRow('Design Status',prodRec?badge(prodRec[3]):'—')}
-    ${rpRow('FG Stock',totalStock?Number(totalStock).toLocaleString()+' pcs in stock':'None in stock')}
+  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
+    ${imgHtml}
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:700;margin-bottom:2px">${o[3]||'—'}</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:6px">${o[2]||'—'}${custRec&&custRec[2]?' · '+custRec[2]:''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${badge(o[5])}${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bo">New</span>'}${raw.has_changes?'<span class="b by">Has Changes</span>':''}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:20px;font-weight:800">${o[4]?Number(o[4]).toLocaleString():'—'}</div>
+      <div style="font-size:10px;color:var(--t3)">pcs ordered</div>
+    </div>
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Production Orders (${linkedPros.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">PRO ID</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Qty</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Job</th>
-      </tr></thead>
-      <tbody>${prosRows}</tbody>
-    </table>
-  </div>`;
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--acc)">${totalPROQty?Number(totalPROQty).toLocaleString():'0'}</div>
+      <div style="font-size:10px;color:var(--t3)">In Production</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:#22c55e">${totalStock?Number(totalStock).toLocaleString():'0'}</div>
+      <div style="font-size:10px;color:var(--t3)">FG Stock (${o[11]||'pcs'})</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:${pendingQty>0?'#f59e0b':'#22c55e'}">${pendingQty}</div>
+      <div style="font-size:10px;color:var(--t3)">Pending Despatch</div>
+    </div>
+  </div>
+  ${dpGrid(
+    dpSec('Order Details'),
+    dpRow('Order ID',`<span class="mono">${o[0]}</span>`),
+    dpRow('Date',o[1]||'—'),
+    dpRow('Status',badge(o[5])),
+    dpRow('Type',o[6]?'🔁 Repeat':'🆕 New'),
+    dpRow('Order Type',raw.order_type||'—'),
+    dpRow('Qty',o[4]?Number(o[4]).toLocaleString()+' '+(o[11]||'pcs'):'—'),
+    dpRow('Party Reference',raw.party_reference||'—'),
+    dpRow('Due Date',raw.due_ds||'—'),
+    dpRow('Price',raw.price?'₹'+Number(raw.price).toLocaleString():'—'),
+    dpSec('Customer'),
+    dpRow('Customer Name',o[2]||'—'),
+    dpRow('Brand',custRec?custRec[2]||'—':'—'),
+    dpRow('Alias',custRec?custRec[3]||'—':'—'),
+    dpSec('Product'),
+    dpRow('Product Name',o[3]||'—'),
+    dpRow('Product Code',prodRec?prodRec.product_code||'—':'—'),
+    dpRow('Design Status',prodRec?badge(prodRec.design_status):'—'),
+    dpRow('Category',prodRec?prodRec.category||'—':'—'),
+    dpRow('Material',prodRec?prodRec.material||'—':'—'),
+    dpRow('Size',prodRec&&prodRec.size_l?`${prodRec.size_l}×${prodRec.size_b}${prodRec.size_h?' ×'+prodRec.size_h:''} ${prodRec.size_units||'mm'}`:'—'),
+    dpSec('Billing & Despatch'),
+    dpRow('Billing Detail',raw.billing_detail||'—'),
+    dpRow('Billing Approved',raw.billing_approved?'✅ Yes':'⏳ Pending'),
+    dpRow('Despatch Location 1',raw.despatch_location_1||'—'),
+    dpRow('Despatch Location 2',raw.despatch_location_2||'—'),
+    dpRow('Despatch Approved',raw.despatch_approved?'✅ Yes':'⏳ Pending'),
+    dpRow('FG Stock',totalStock?`${Number(totalStock).toLocaleString()} pcs (${totalPackets} pkts)`:'None in stock')
+  )}
+  <div class="dp-sec-title">Production Orders (${linkedPros.length})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>PRO ID</th><th>Date</th><th>Qty</th><th>Status</th><th>Job</th></tr></thead>
+    <tbody>${prosRows}</tbody>
+  </table>
+  <div class="dp-sec-title">Delivery History (${doRecs.length})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>DO ID</th><th>Date</th><th>Qty</th></tr></thead>
+    <tbody>${doRows}</tbody>
+  </table>`;
   openRP(html,'Order: '+o[0]);
 }
 
@@ -2844,67 +2922,140 @@ function pdSetView(v){
   R.products(1);
 }
 function selPD(e,code){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const p=D.pd.find(x=>x[0]===code)||D.dq.find(x=>x[0]===code);
   if(!p)return;
-  // Related orders
-  const relOrders=D.o.filter(o=>o[3]===p[1]);
-  // Related PROs
-  const relPros=D.pr.filter(pr=>pr[2]===p[1]);
-  // Dies/plates
-  const relDies=D.di.filter(d=>d[0]===code||(d[1]&&d[1].toLowerCase().includes((p[1]||'').toLowerCase().slice(0,8))));
-  const relPlates=D.pl.filter(pl=>pl[0]===code||(pl[1]&&pl[1].toLowerCase().includes((p[1]||'').toLowerCase().slice(0,8))));
-  const ordRows=relOrders.slice(0,10).map(o=>`<tr>
-    <td style="font-size:11px;padding:4px 8px;font-family:monospace">${o[0]}</td>
-    <td style="font-size:11px;padding:4px 8px">${o[1]||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${o[4]?Number(o[4]).toLocaleString():'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${badge(o[5])}</td>
-  </tr>`).join('')||'<tr><td colspan="4" style="padding:4px 8px;font-size:11px;color:var(--t3)">No orders</td></tr>';
-  const proRows=relPros.slice(0,8).map(pr=>`<tr>
-    <td style="font-size:11px;padding:4px 8px;font-family:monospace">${pr[0]}</td>
-    <td style="font-size:11px;padding:4px 8px">${pr[1]||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${pr[4]?Number(pr[4]).toLocaleString():'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${proSubStatus(pr)}</td>
-  </tr>`).join('')||'<tr><td colspan="4" style="padding:4px 8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
+  const raw=D.products_raw?.find(x=>x.id===code)||{};
+  // Related orders — use product_id match (index 7)
+  const relOrders=D.o.filter(o=>o[7]===code);
+  // Related PROs — use product_id match (index 10)
+  const relPros=D.pr.filter(pr=>pr[10]===code);
+  const activePros=relPros.filter(pr=>!pr[5]&&!pr[6]&&pr[8]!=='complete');
+  // FG inventory for this product
+  const fgRecs=D.fg.filter(f=>f[7]===p[1]||f[8]===p[2]);
+  const totalFGStock=fgRecs.reduce((s,f)=>s+(Number(f[5])||0),0);
+  const totalFGPkts=fgRecs.reduce((s,f)=>s+(Number(f[4])||0),0);
+  // FG by batch
+  const recentFG=fgRecs.slice().sort((a,b)=>b[1]>a[1]?1:-1).slice(0,5);
+  // Total ordered qty
+  const totalOrdQty=relOrders.reduce((s,o)=>s+(Number(o[4])||0),0);
+  const totalPROQty=relPros.filter(pr=>!pr[5]).reduce((s,pr)=>s+(Number(pr[4])||0),0);
+  // Image
+  const imgUrl=getProductImageUrl(code);
+  const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:90px;height:90px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;font-size:40px;border-radius:8px;background:var(--s1)">📦</div>`;
+  // Size string
+  const sizeStr=raw.size_l?`${raw.size_l}×${raw.size_b}${raw.size_h?'×'+raw.size_h:''} ${raw.size_units||'mm'}`:'—';
+  // Specs pill builder
+  const spec=(v,label)=>v?`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border:1px solid var(--bdr);border-radius:4px;font-size:10px;background:var(--s2)"><span style="color:var(--t3);font-size:9px">${label}</span> ${v}</span>`:'';
+  const specRow=[
+    spec(raw.material,'Material'), spec(raw.gsm?raw.gsm+'gsm':'','GSM'),
+    spec(sizeStr,'Size'), spec(raw.lamination,'Lamination'),
+    spec(raw.coating,'Coating'), spec(raw.foil?raw.foil+(raw.foil_color?' '+raw.foil_color:''):'','Foil'),
+    spec(raw.emboss?'Yes':'','Emboss'), spec(raw.gumming?raw.gumming+(raw.gumming_type?' '+raw.gumming_type:''):'','Gumming'),
+    spec(raw.border?'Yes':'','Border')
+  ].filter(Boolean).join(' ');
+  // Orders table (ALL orders, not just 10)
+  const ordRows=relOrders.length?relOrders.map(o=>`<tr onclick="selO(null,${JSON.stringify(o[0])})" style="cursor:pointer">
+    <td class="mono" style="padding:4px 8px;font-size:11px">${o[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${o[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${badge(o[5])}</td>
+    <td style="padding:4px 8px;font-size:11px">${o[6]?'🔁':'🆕'}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No orders</td></tr>';
+  // PROs table (ALL PROs)
+  const proRows=relPros.length?relPros.map(pr=>`<tr onclick="selPR(null,${JSON.stringify(pr[0])})" style="cursor:pointer">
+    <td class="mono" style="padding:4px 8px;font-size:11px">${pr[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${pr[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${pr[4]?Number(pr[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${proSubStatus(pr)}</td>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${pr[7]||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
+  // FG batches
+  const fgRows=recentFG.length?recentFG.map(f=>`<tr>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${f[2]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${f[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${f[5]?Number(f[5]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${f[4]||'—'} pkts</td>
+  </tr>`).join(''):'<tr><td colspan="4" style="padding:8px;font-size:11px;color:var(--t3)">No FG stock</td></tr>';
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
-    ${rpSec('Product Details')}
-    ${rpRow('Code',p[0]||'—')}
-    ${rpRow('Product Name',p[1]||'—')}
-    ${rpRow('Customer',p[2]||'—')}
-    ${rpRow('Design Status',badge(p[3]))}
-    ${rpRow('Total Orders',relOrders.length+' orders')}
-    ${rpRow('Active PROs',relPros.filter(pr=>!pr[5]&&!pr[6]&&pr[8]!=='complete').length+' active')}
-    ${relDies.length?rpRow('Dies',relDies.map(d=>d[0]).join(', ')):''}
-    ${relPlates.length?rpRow('Plates',relPlates.map(pl=>pl[0]).join(', ')):''}
+  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
+    ${imgHtml}
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:700;margin-bottom:2px">${raw.product_name||p[1]||'—'}</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:4px">${p[2]||'—'} · <span class="mono" style="font-size:11px">${raw.product_code||p[0]||'—'}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${badge(p[3]||raw.design_status)}${raw.product_class?`<span class="b bd">${raw.product_class}</span>`:''}</div>
+      ${specRow?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${specRow}</div>`:''}
+    </div>
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Orders (${relOrders.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:10px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">OID</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Qty</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
-      </tr></thead>
-      <tbody>${ordRows}</tbody>
-    </table>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700">${relOrders.length}</div>
+      <div style="font-size:10px;color:var(--t3)">Total Orders</div>
+      <div style="font-size:11px;color:var(--acc);margin-top:2px">${totalOrdQty?Number(totalOrdQty).toLocaleString()+' pcs':''}</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--acc)">${activePros.length}</div>
+      <div style="font-size:10px;color:var(--t3)">Active PROs</div>
+      <div style="font-size:11px;color:var(--acc);margin-top:2px">${totalPROQty?Number(totalPROQty).toLocaleString()+' pcs':''}</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:#22c55e">${Number(totalFGStock).toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--t3)">FG In Stock</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px">${totalFGPkts?totalFGPkts+' pkts':''}</div>
+    </div>
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Production Orders (${relPros.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">PRO</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Qty</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
-      </tr></thead>
-      <tbody>${proRows}</tbody>
-    </table>
-  </div>`;
-  openRP(html,'Product: '+p[1]);
+  ${dpGrid(
+    dpSec('Identity'),
+    dpRow('Product Code',`<span class="mono">${raw.product_code||p[0]||'—'}</span>`),
+    dpRow('Product Name',raw.product_name||p[1]||'—'),
+    dpRow('Customer',p[2]||raw.customer_name||'—'),
+    dpRow('Category',raw.category||'—'),
+    dpRow('Product Class',raw.product_class||'—'),
+    dpRow('Design Status',badge(p[3]||raw.design_status)),
+    dpRow('Design Assigned',raw.design_assigned||'—'),
+    dpRow('First Order',raw.first_oid||'—'),
+    dpSec('Version'),
+    dpRow('Version Type',raw.version_type||'—'),
+    dpRow('Version No.',raw.version_no||'—'),
+    dpRow('Base Product',raw.base_product||'—'),
+    dpRow('Old Reference',raw.old_reference||'—'),
+    dpRow('Has Changes',raw.has_changes?'Yes':'No'),
+    dpRow('Change Desc',raw.change_desc||'—'),
+    dpRow('Specs Final',raw.specs_final?'✅ Yes':'⏳ No'),
+    dpSec('Specifications'),
+    dpRow('Size',sizeStr),
+    dpRow('Material',raw.material||'—'),
+    dpRow('GSM',raw.gsm||'—'),
+    dpRow('Lamination',raw.lamination||'—'),
+    dpRow('Coating',raw.coating||'—'),
+    dpRow('Foil',raw.foil?(raw.foil+(raw.foil_color?' ('+raw.foil_color+')'||'')):'No'),
+    dpRow('Emboss',raw.emboss?'Yes':'No'),
+    dpRow('Gumming',raw.gumming?(raw.gumming+(raw.gumming_type?' ('+raw.gumming_type+')'||'')):'No'),
+    dpRow('Border',raw.border?'Yes':'No'),
+    dpRow('Data Clear',raw.data_clear?'Yes':'No'),
+    dpSec('References'),
+    dpRow('Thread Link',raw.thread_link?`<a href="${raw.thread_link}" target="_blank" style="color:var(--acc)">Open</a>`:'—'),
+    dpRow('Approval Proof',raw.approval_proof?`<a href="${raw.approval_proof}" target="_blank" style="color:var(--acc)">Open</a>`:'—'),
+    dpRow('Created At',raw.created_at?raw.created_at.slice(0,10):'—')
+  )}
+  <div class="dp-sec-title">All Orders (${relOrders.length})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>Order ID</th><th>Date</th><th>Qty</th><th>Status</th><th>Type</th></tr></thead>
+    <tbody>${ordRows}</tbody>
+  </table>
+  <div class="dp-sec-title">All Production Orders (${relPros.length}) · ${activePros.length} active</div>
+  <table class="dp-tbl">
+    <thead><tr><th>PRO ID</th><th>Date</th><th>Qty</th><th>Status</th><th>Order</th></tr></thead>
+    <tbody>${proRows}</tbody>
+  </table>
+  <div class="dp-sec-title">FG Inventory (${totalFGStock?Number(totalFGStock).toLocaleString()+' pcs':'No stock'})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>PRO ID</th><th>Date</th><th>Qty</th><th>Packets</th></tr></thead>
+    <tbody>${fgRows}</tbody>
+  </table>`;
+  openRP(html,(raw.product_name||p[1])+(p[2]?' · '+p[2]:''));
 }
 
 R.customers=function(p){
@@ -2913,7 +3064,7 @@ R.customers=function(p){
   let items=D.cu.filter(x=>(!q||[x[0],x[1],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('customers',items);
   const slice=pgr(items,'customers','R.customers','cu-pg','cu-cnt');
-  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Brand',${JSON.stringify(a[2]||'—')})+rf('Alias',${JSON.stringify(a[3]||'—')}),${JSON.stringify(a[1])})">
+  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(dpGrid(dpSec('Customer'),dpRow('Ref',${JSON.stringify(a[0])}),dpRow('Name',${JSON.stringify(a[1])}),dpRow('Brand',${JSON.stringify(a[2]||'—')}),dpRow('Alias',${JSON.stringify(a[3]||'—')})),${JSON.stringify(a[1])})">
     <td class="mono">${a[0]||'—'}</td><td title="${a[1]}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
 };
@@ -2964,78 +3115,112 @@ R.pros=function(p){
   });
 };
 function selPR(e,pid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const p=D.pr.find(x=>x[0]===pid);
   if(!p)return;
-  // Related data
+  // D.pr: [id,date,product_name,customer_name,qty,is_cancelled,is_on_hold,order_id,pro_status,job_id,product_id]
+  const rawPro=D.pros_raw?.find(x=>x.id===pid)||{};
+  const rawProd=D.products_raw?.find(x=>x.id===p[10])||{};
   const job=p[9]?D.jo.find(j=>j[0]===p[9]):null;
   const procs=D.procs_raw.filter(r=>r.prod_order_id===p[0]);
-  const rmOut=D.rm_out.filter(r=>r[3]&&procs.find(pr=>(pr.id||pr[0])===r[3]));
+  const rmOut=D.rm_out.filter(r=>r[3]&&procs.find(pr=>pr.id===r[3]));
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
-  // pp sizes from D.pp
   const ppRec=D.pp.find(x=>x[0]===p[0]);
+  const fgRecs=D.fg.filter(f=>f[2]===p[0]);
+  const totalFG=fgRecs.reduce((s,f)=>s+(Number(f[5])||0),0);
+  const sizeStr=rawProd.size_l?`${rawProd.size_l}×${rawProd.size_b}${rawProd.size_h?'×'+rawProd.size_h:''} ${rawProd.size_units||'mm'}`:ppRec&&ppRec[11]?`${ppRec[11]}×${ppRec[12]} ${ppRec[13]||'mm'}`:'—';
+  // Process progress bar
+  const totalProcs=procs.length;
+  const doneProcs=procs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
+  const pct=totalProcs?Math.round(doneProcs/totalProcs*100):0;
+  const imgUrl=p[10]?getProductImageUrl(p[10]):null;
+  const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:8px;background:var(--s1)">📦</div>`;
   const procsRows=procs.length?procs.map(r=>`<tr>
-    <td style="font-size:11px;padding:4px 8px">${r.process_name||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${r.date||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${veMap[r.vendor_id]||r.vendor_id||r.machine||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${r.counter?Number(r.counter).toLocaleString():'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${badge(r.process_status||'pending')}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:4px 8px;font-size:11px;color:var(--t3)">No processes yet</td></tr>';
+    <td style="padding:4px 8px;font-size:11px">${r.process_name||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${r.date||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${veMap[r.vendor_id]||r.vendor_id||r.machine||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${r.counter?Number(r.counter).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${badge(r.process_status||'pending')}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No processes yet</td></tr>';
   const matRows=rmOut.length?rmOut.map(x=>{
     const ri=D.rm_in.find(r=>r[0]===x[2]);
     return `<tr>
-      <td style="font-size:11px;padding:4px 8px">${ri?ri[2]:x[2]||'—'}</td>
-      <td style="font-size:11px;padding:4px 8px">${x[4]||'—'}</td>
-      <td style="font-size:11px;padding:4px 8px">${x[5]?Number(x[5]).toLocaleString():''} ${ri?ri[6]||'':''}</td>
+      <td style="padding:4px 8px;font-size:11px">${ri?ri[2]:x[2]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px">${x[4]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${x[5]?Number(x[5]).toLocaleString():''} ${ri?ri[6]||'':''}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="3" style="padding:4px 8px;font-size:11px;color:var(--t3)">No materials issued</td></tr>';
+  }).join(''):'<tr><td colspan="3" style="padding:8px;font-size:11px;color:var(--t3)">No materials issued</td></tr>';
+  const fgRows=fgRecs.length?fgRecs.map(f=>`<tr>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${f[3]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${f[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${f[5]?Number(f[5]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${f[4]||'—'} pkts</td>
+  </tr>`).join(''):'<tr><td colspan="4" style="padding:8px;font-size:11px;color:var(--t3)">No FG batches</td></tr>';
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
-    ${rpSec('PRO Details')}
-    ${rpRow('PRO ID',p[0])}
-    ${rpRow('Date',p[1]||'—')}
-    ${rpRow('Status',proSubStatus(p))}
-    ${rpRow('Qty',p[4]?Number(p[4]).toLocaleString()+' pcs':'—')}
-    ${rpRow('Cancelled',p[5]?'Yes':'No')}
-    ${rpRow('On Hold',p[6]?'Yes':'No')}
-    ${rpSec('Product & Customer')}
-    ${rpRow('Product',p[2]||'—')}
-    ${rpRow('Customer',p[3]||'—')}
-    ${rpRow('Order',p[7]||'—')}
-    ${rpSec('Job & Production')}
-    ${rpRow('Job ID',p[9]||'—')}
-    ${rpRow('Job Name',job?job[3]||'—':'—')}
-    ${rpRow('Job Type',job?badge(job[2]):'—')}
-    ${ppRec?rpRow('Sheet Qty',ppRec[5]?Number(ppRec[5]).toLocaleString():'—'):''}
-    ${ppRec?rpRow('Size',ppRec[11]&&ppRec[12]?ppRec[11]+' × '+ppRec[12]+' '+ppRec[13]:'—'):''}
-    ${ppRec?rpRow('Material',ppRec[10]||'—'):''}
+  <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+    ${imgHtml}
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:700;margin-bottom:1px">${p[2]||'—'}</div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:4px">${p[3]||'—'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${proSubStatus(p)}${p[5]?'<span class="b br">Cancelled</span>':''}${p[6]?'<span class="b by">On Hold</span>':''}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:20px;font-weight:800">${p[4]?Number(p[4]).toLocaleString():'—'}</div>
+      <div style="font-size:10px;color:var(--t3)">pcs</div>
+    </div>
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Processes (${procs.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:10px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Process</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Vendor/Machine</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Counter</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
-      </tr></thead>
-      <tbody>${procsRows}</tbody>
-    </table>
-  </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Materials Used</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Material</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Purpose</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Qty</th>
-      </tr></thead>
-      <tbody>${matRows}</tbody>
-    </table>
-  </div>`;
+  ${totalProcs>0?`<div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--t2)">Process Progress</span><span style="font-weight:700">${doneProcs}/${totalProcs} · ${pct}%</span></div>
+    <div style="height:6px;background:var(--s1);border-radius:3px;overflow:hidden;border:1px solid var(--bdr)"><div style="height:100%;background:var(--acc);width:${pct}%;border-radius:3px;transition:width .3s"></div></div>
+  </div>`:''}
+  ${dpGrid(
+    dpSec('PRO Details'),
+    dpRow('PRO ID',`<span class="mono">${p[0]}</span>`),
+    dpRow('Date',p[1]||'—'),
+    dpRow('Status',proSubStatus(p)),
+    dpRow('Qty',p[4]?Number(p[4]).toLocaleString()+' pcs':'—'),
+    dpRow('Sheet Qty',rawPro.sheet_qty?Number(rawPro.sheet_qty).toLocaleString():(ppRec?Number(ppRec[5]||0).toLocaleString():'—')),
+    dpRow('Cancelled',p[5]?'⛔ Yes':'No'),
+    dpRow('On Hold',p[6]?'⏸ Yes':'No'),
+    dpRow('Linked Order',p[7]?`<span class="mono" onclick="selO(null,${JSON.stringify(p[7])})" style="cursor:pointer;color:var(--acc)">${p[7]}</span>`:'—'),
+    dpSec('Product Specs'),
+    dpRow('Product',p[2]||'—'),
+    dpRow('Product Code',rawProd.product_code||p[10]||'—'),
+    dpRow('Customer',p[3]||'—'),
+    dpRow('Category',rawProd.category||'—'),
+    dpRow('Size',sizeStr),
+    dpRow('Material',rawProd.material||ppRec?.[10]||'—'),
+    dpRow('GSM',rawProd.gsm||'—'),
+    dpRow('Lamination',rawProd.lamination||'—'),
+    dpRow('Coating',rawProd.coating||'—'),
+    dpRow('Foil',rawProd.foil||'—'),
+    dpRow('Emboss',rawProd.emboss?'Yes':'No'),
+    dpRow('Gumming',rawProd.gumming||'No'),
+    dpSec('Job'),
+    dpRow('Job ID',p[9]?`<span class="mono" onclick="selJob(null,${JSON.stringify(p[9])})" style="cursor:pointer;color:var(--acc)">${p[9]}</span>`:'—'),
+    dpRow('Job Name',job?job[3]||'—':'—'),
+    dpRow('Job Type',job?badge(job[2]):'—'),
+    dpSec('FG Output'),
+    dpRow('FG Produced',totalFG?Number(totalFG).toLocaleString()+' pcs':'None yet'),
+    dpRow('FG Batches',fgRecs.length||'None')
+  )}
+  <div class="dp-sec-title">Processes (${procs.length}) · ${doneProcs} done</div>
+  <table class="dp-tbl">
+    <thead><tr><th>Process</th><th>Date</th><th>Vendor/Machine</th><th>Counter</th><th>Status</th></tr></thead>
+    <tbody>${procsRows}</tbody>
+  </table>
+  <div class="dp-sec-title">Materials Issued (${rmOut.length})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>Material</th><th>Purpose</th><th>Qty</th></tr></thead>
+    <tbody>${matRows}</tbody>
+  </table>
+  <div class="dp-sec-title">FG Inventory Batches (${fgRecs.length})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>Batch ID</th><th>Date</th><th>Qty</th><th>Packets</th></tr></thead>
+    <tbody>${fgRows}</tbody>
+  </table>`;
   openRP(html,'PRO: '+p[0]);
 }
 
@@ -3056,66 +3241,76 @@ R.jobs=function(p){
   }).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
 };
 function selJob(e,jid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const j=D.jo.find(x=>x[0]===jid);
   if(!j)return;
   const pros=D.pr.filter(p=>p[9]===jid);
   const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
+  const cancelledPros=pros.filter(p=>p[5]);
   const allProcs=D.procs_raw.filter(r=>pros.some(p=>p[0]===r.prod_order_id));
+  const doneProcs=allProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
-  const prosRows=pros.length?pros.map(p=>`<tr>
-    <td style="font-size:11px;padding:4px 8px;font-family:monospace">${p[0]}</td>
-    <td style="font-size:11px;padding:4px 8px">${p[2]||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${p[3]||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${proSubStatus(p)}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:4px 8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
+  const totalQty=pros.filter(p=>!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
+  const prosRows=pros.length?pros.map(p=>`<tr onclick="selPR(null,${JSON.stringify(p[0])})" style="cursor:pointer">
+    <td class="mono" style="padding:4px 8px;font-size:11px">${p[0]}</td>
+    <td style="padding:4px 8px;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${p[2]||''}">${p[2]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${p[3]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${proSubStatus(p)}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
   const procsRows=allProcs.length?allProcs.map(r=>`<tr>
-    <td style="font-size:11px;padding:4px 8px">${r.process_name||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px;font-family:monospace">${r.prod_order_id||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${veMap[r.vendor_id]||r.machine||'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${r.counter?Number(r.counter).toLocaleString():'—'}</td>
-    <td style="font-size:11px;padding:4px 8px">${badge(r.process_status||'pending')}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:4px 8px;font-size:11px;color:var(--t3)">No processes</td></tr>';
+    <td style="padding:4px 8px;font-size:11px">${r.process_name||'—'}</td>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${r.prod_order_id||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${veMap[r.vendor_id]||r.machine||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${r.counter?Number(r.counter).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${badge(r.process_status||'pending')}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No processes</td></tr>';
+  // Unique customers, products on this job
+  const uniqCustomers=[...new Set(pros.filter(p=>p[3]).map(p=>p[3]))];
+  const uniqProducts=[...new Set(pros.filter(p=>p[2]).map(p=>p[2]))];
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
-    ${rpSec('Job Details')}
-    ${rpRow('Job ID',j[0])}
-    ${rpRow('Date',j[1]||'—')}
-    ${rpRow('Type',badge(j[2]))}
-    ${rpRow('Job Name',j[3]||'—')}
-    ${rpRow('Total PROs',pros.length+' PROs')}
-    ${rpRow('Active PROs',activePros.length+' active')}
-    ${rpRow('Processes',allProcs.length+' processes')}
+  <div style="margin-bottom:14px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:2px">${j[3]||j[0]||'—'}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${badge(j[2])}<span class="mono" style="font-size:11px;color:var(--t2)">${j[0]}</span></div>
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Production Orders (${pros.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:10px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">PRO</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Product</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Customer</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Qty</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
-      </tr></thead>
-      <tbody>${prosRows}</tbody>
-    </table>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--acc)">${activePros.length}</div>
+      <div style="font-size:10px;color:var(--t3)">Active PROs</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700">${totalQty?Number(totalQty).toLocaleString():'0'}</div>
+      <div style="font-size:10px;color:var(--t3)">Total Qty</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:700">${doneProcs}<span style="font-size:12px;color:var(--t3)">/${allProcs.length}</span></div>
+      <div style="font-size:10px;color:var(--t3)">Procs Done</div>
+    </div>
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">All Processes (${allProcs.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Process</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">PRO</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Vendor/Machine</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Counter</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
-      </tr></thead>
-      <tbody>${procsRows}</tbody>
-    </table>
-  </div>`;
+  ${dpGrid(
+    dpSec('Job Details'),
+    dpRow('Job ID',`<span class="mono">${j[0]}</span>`),
+    dpRow('Date',j[1]||'—'),
+    dpRow('Type',badge(j[2])),
+    dpRow('Job Name',j[3]||'—'),
+    dpRow('Total PROs',pros.length),
+    dpRow('Active PROs',activePros.length),
+    dpRow('Cancelled PROs',cancelledPros.length||'None'),
+    dpRow('Customers',uniqCustomers.join(', ')||'—'),
+    dpRow('Products',uniqProducts.slice(0,3).join(', ')+(uniqProducts.length>3?' + '+(uniqProducts.length-3)+' more':'') ||'—')
+  )}
+  <div class="dp-sec-title">Production Orders (${pros.length})</div>
+  <table class="dp-tbl">
+    <thead><tr><th>PRO ID</th><th>Product</th><th>Customer</th><th>Qty</th><th>Status</th></tr></thead>
+    <tbody>${prosRows}</tbody>
+  </table>
+  <div class="dp-sec-title">All Processes (${allProcs.length}) · ${doneProcs} done</div>
+  <table class="dp-tbl">
+    <thead><tr><th>Process</th><th>PRO</th><th>Vendor/Machine</th><th>Counter</th><th>Status</th></tr></thead>
+    <tbody>${procsRows}</tbody>
+  </table>`;
   openRP(html,'Job: '+j[0]);
 }
 
