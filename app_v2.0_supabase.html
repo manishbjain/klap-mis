@@ -571,7 +571,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-jobs"><span id="fd-bar-jobs-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('jobs')">Clear all</button></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Job ID</th><th>Date</th><th>Type</th><th>Job Name</th><th>Active PROs</th></tr></thead><tbody id="jo-body"></tbody></table></div>
+    <div id="jo-body" style="display:flex;flex-direction:column;gap:6px;padding:4px 0"></div>
     <div class="pg-bar" id="jo-pg"></div>
   </div>
 </div>
@@ -3247,6 +3247,18 @@ function selPR(e,pid){try{
 }catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selPR ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
 }
 
+// Process display names
+const PROC_LABEL={'PRT':'Print','PUN':'Punch','LMN':'Laminate','COAT':'Coat','CUT':'Cut','EMB':'Emboss','CCLD':'CCLD','DVD':'Divide','SHT':'Sheet','SPT':'Split','STRG':'Storage','TBND':'Tab Bond','TDSC':'Tab Disc','TLBL':'Tab Label','TSMG':'Tab SMG','WPT':'WPT','RW':'Rewind'};
+function joProcChips(procs){
+  if(!procs.length)return'<span style="font-size:10px;color:var(--t3)">No processes</span>';
+  const byName={};
+  procs.forEach(r=>{const n=r.process_name||'?';if(!byName[n])byName[n]={total:0,done:0};byName[n].total++;if(r.process_status==='Complete'||r.process_status==='Moved')byName[n].done++;});
+  return Object.entries(byName).map(([n,s])=>{
+    const allDone=s.done===s.total;
+    const col=allDone?'#22c55e':s.done>0?'#f59e0b':'var(--t3)';
+    return`<span style="display:inline-flex;align-items:center;gap:2px;background:${allDone?'#f0fdf4':'var(--s1)'};border:1px solid ${allDone?'#86efac':'var(--bdr)'};border-radius:4px;padding:1px 5px;font-size:10px;color:${col};font-weight:600">${PROC_LABEL[n]||n}${s.total>1?`<span style="font-size:9px;opacity:.7">×${s.total}</span>`:''}</span>`;
+  }).join('');
+}
 R.jobs=function(p){
   if(p)pp.jobs=p;
   const t=document.getElementById('jo-t')?.value||'';
@@ -3254,88 +3266,248 @@ R.jobs=function(p){
   let items=D.jo.filter(x=>(!t||x[2]===t)&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('jobs',items);
   const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
+  const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
   document.getElementById('jo-body').innerHTML=slice.map(j=>{
-    const activePros=D.pr.filter(p=>p[9]===j[0]&&!p[5]&&!p[6]&&p[8]!=='complete').length;
-    return `<tr onclick="selJob(event,${esc(j[0])})" style="cursor:pointer">
-      <td class="mono">${j[0]}</td><td>${j[1]||'—'}</td><td>${badge(j[2])}</td>
-      <td style="max-width:320px;font-size:11px;color:var(--t2)" title="${j[3]||''}">${tr(j[3]||'—',50)}</td>
-      <td style="font-size:12px;font-weight:700;color:${activePros>0?'var(--org)':'var(--t3)'}">${activePros||'—'}</td>
-    </tr>`;
-  }).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No jobs</td></tr>';
+    const pros=D.pr.filter(p=>p[9]===j[0]);
+    const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
+    const allProcs=D.procs_raw.filter(r=>pros.some(p=>p[0]===r.prod_order_id));
+    const doneProcs=allProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
+    const statusCol=activePros.length>0?'var(--org)':pros.length?'#22c55e':'var(--t3)';
+    const jid=j[0].replace(/[^a-zA-Z0-9]/g,'_');
+    return`<div id="jocard_${jid}" style="border:1px solid var(--bdr);border-radius:10px;overflow:hidden;background:var(--bg)">
+      <div onclick="joToggle('${jid}',${esc(j[0])})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;user-select:none">
+        <span id="joarr_${jid}" style="font-size:11px;color:var(--t3);transition:transform .15s;flex-shrink:0">▶</span>
+        <span class="mono" style="font-size:11px;font-weight:700;color:var(--acc);flex-shrink:0;min-width:60px">${j[0]}</span>
+        <span style="font-size:10px;color:var(--t3);flex-shrink:0">${j[1]||'—'}</span>
+        ${badge(j[2])}
+        <span style="font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j[3]||''}">${j[3]||'—'}</span>
+        <span style="display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0;max-width:260px">${joProcChips(allProcs)}</span>
+        <span style="flex-shrink:0;font-size:11px;font-weight:700;color:${statusCol};min-width:28px;text-align:right">${activePros.length||'✓'}</span>
+        <button onclick="event.stopPropagation();selJob(null,${esc(j[0])})" style="flex-shrink:0;border:1px solid var(--bdr);background:var(--s1);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--t2)">Manage</button>
+      </div>
+      <div id="joexp_${jid}" style="display:none;border-top:1px solid var(--bdr);background:var(--s1);padding:10px 12px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${pros.length?pros.map(p=>{
+          const pProcs=D.procs_raw.filter(r=>r.prod_order_id===p[0]);
+          const pDone=pProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
+          return`<div style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;min-width:200px;flex:1;cursor:pointer" onclick="selPR(null,${esc(p[0])})">
+            <div style="font-size:10px;font-weight:700;color:var(--acc);font-family:monospace;margin-bottom:4px">${p[0]}</div>
+            <div style="font-size:11px;color:var(--t2);margin-bottom:4px">${p[2]||'—'} · ${p[3]||'—'}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${proSubStatus(p)}
+              ${pProcs.length?`<span style="font-size:10px;color:var(--t3)">${pDone}/${pProcs.length} procs</span>`:''}
+              ${pProcs.length?pProcs.map(r=>{const v=veMap[r.vendor_id]||r.machine||'';return`<span style="font-size:9px;background:${r.process_status==='Moved'||r.process_status==='Complete'?'#f0fdf4':'var(--s2)'};border:1px solid ${r.process_status==='Moved'||r.process_status==='Complete'?'#86efac':'var(--bdr)'};border-radius:3px;padding:1px 4px;color:var(--t2)">${PROC_LABEL[r.process_name]||r.process_name||'?'}${v?' · '+tr(v,10):''}</span>`;}).join(''):'<span style="font-size:10px;color:var(--t3)">No processes</span>'}
+            </div>
+          </div>`;
+        }).join(''):'<span style="font-size:11px;color:var(--t3);padding:8px">No PROs linked to this job</span>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No jobs match</div>';
 };
+function joToggle(jid,rawId){
+  const exp=document.getElementById('joexp_'+jid);
+  const arr=document.getElementById('joarr_'+jid);
+  if(!exp)return;
+  const open=exp.style.display==='none';
+  exp.style.display=open?'block':'none';
+  arr.style.transform=open?'rotate(90deg)':'';
+}
 function selJob(e,jid){try{
-  const tr2=e?.target?.closest('tr');
-  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
-  if(tr2)tr2.classList.add('sel');
   const j=D.jo.find(x=>x[0]===jid);
   if(!j)return;
   const pros=D.pr.filter(p=>p[9]===jid);
   const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
-  const cancelledPros=pros.filter(p=>p[5]);
   const allProcs=D.procs_raw.filter(r=>pros.some(p=>p[0]===r.prod_order_id));
   const doneProcs=allProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
   const totalQty=pros.filter(p=>!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
-  const prosRows=pros.length?pros.map(p=>`<tr onclick="selPR(null,${esc(p[0])})" style="cursor:pointer">
-    <td class="mono" style="padding:4px 8px;font-size:11px">${p[0]}</td>
-    <td style="padding:4px 8px;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${p[2]||''}">${p[2]||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${p[3]||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${proSubStatus(p)}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
-  const procsRows=allProcs.length?allProcs.map(r=>`<tr>
-    <td style="padding:4px 8px;font-size:11px">${r.process_name||'—'}</td>
-    <td class="mono" style="padding:4px 8px;font-size:11px">${r.prod_order_id||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${veMap[r.vendor_id]||r.machine||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px;text-align:right">${r.counter?Number(r.counter).toLocaleString():'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${badge(r.process_status||'pending')}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No processes</td></tr>';
-  // Unique customers, products on this job
   const uniqCustomers=[...new Set(pros.filter(p=>p[3]).map(p=>p[3]))];
-  const uniqProducts=[...new Set(pros.filter(p=>p[2]).map(p=>p[2]))];
+  const allProcNames=['PRT','PUN','LMN','COAT','CUT','EMB','CCLD','DVD','SHT','SPT','STRG','TBND','TDSC','TLBL','TSMG','WPT','RW'];
+  const procStatuses=['Pending','In Progress','Complete','Moved','On Hold'];
+
+  // Build vendor options for select
+  const veOpts=`<option value="">— None —</option>`+D.ve.map(v=>`<option value="${v[0]}">${v[1]}</option>`).join('');
+
+  // Per-PRO sections with process rows
+  const proSections=pros.map(p=>{
+    const pProcs=D.procs_raw.filter(r=>r.prod_order_id===p[0]).sort((a,b)=>(a.seq||0)-(b.seq||0));
+    const pDone=pProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
+    const procRows=pProcs.map((r,i)=>{
+      const ve=veMap[r.vendor_id]||'';
+      const stepSt=r.step_status||r.process_status||'Pending';
+      const isDone=r.process_status==='Complete'||r.process_status==='Moved';
+      return`<div style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--bdr);background:${isDone?'rgba(34,197,94,.04)':'transparent'}">
+        <span style="font-size:10px;color:var(--t3);min-width:16px;text-align:center">${r.seq||i+1}</span>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:${isDone?'#22c55e':'var(--fg)'}">${PROC_LABEL[r.process_name]||r.process_name||'?'}</div>
+          <div style="font-size:10px;color:var(--t3)">${r.qty_in?'In: '+Number(r.qty_in).toLocaleString():''}${r.qty_out?' → Out: '+Number(r.qty_out).toLocaleString():''}</div>
+        </div>
+        <select onchange="joSetVendor(${esc(r.id)},this.value,${esc(jid)})" style="font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:2px 4px;background:var(--s1);color:var(--fg);max-width:110px">
+          ${D.ve.map(v=>`<option value="${v[0]}"${r.vendor_id===v[0]?' selected':''}>${v[1]}</option>`).join('')}
+          ${!r.vendor_id?'<option value="" selected>— Vendor —</option>':''}
+        </select>
+        <input value="${r.machine||''}" placeholder="Machine" onblur="joSetMachine(${esc(r.id)},this.value,${esc(jid)})" style="width:70px;font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:2px 5px;background:var(--s1);color:var(--fg)">
+        <select onchange="joSetProcStatus(${esc(r.id)},this.value,${esc(jid)})" style="font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:2px 4px;background:var(--s1);color:${isDone?'#22c55e':'var(--org)'}">
+          ${procStatuses.map(s=>`<option value="${s}"${(r.process_status||'Pending')===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <button onclick="joDeleteProc(${esc(r.id)},${esc(jid)})" style="border:none;background:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px" title="Delete step">✕</button>
+      </div>`;
+    }).join('');
+
+    return`<div style="border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s1);border-bottom:1px solid var(--bdr)">
+        <span class="mono" style="font-size:11px;font-weight:700;color:var(--acc);cursor:pointer" onclick="selPR(null,${esc(p[0])})">${p[0]}</span>
+        <span style="font-size:11px;color:var(--t2);flex:1">${p[2]||'—'} · ${p[3]||'—'}</span>
+        <span style="font-size:11px;color:var(--t3)">${p[4]?Number(p[4]).toLocaleString()+' pcs':''}</span>
+        ${proSubStatus(p)}
+        <span style="font-size:10px;color:var(--t3)">${pDone}/${pProcs.length}</span>
+      </div>
+      ${procRows||`<div style="padding:10px 12px;font-size:11px;color:var(--t3)">No process steps</div>`}
+      <div style="padding:6px 8px;background:var(--s1);border-top:1px solid var(--bdr);display:flex;gap:6px;align-items:center">
+        <span style="font-size:10px;color:var(--t3)">Add step:</span>
+        <select id="addproc_proc_${p[0].replace(/[^a-z0-9]/gi,'_')}" style="font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:2px 5px;background:var(--bg);color:var(--fg)">
+          ${allProcNames.map(n=>`<option value="${n}">${PROC_LABEL[n]||n}</option>`).join('')}
+        </select>
+        <select id="addproc_ve_${p[0].replace(/[^a-z0-9]/gi,'_')}" style="font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:2px 5px;background:var(--bg);color:var(--fg);max-width:100px">
+          ${veOpts}
+        </select>
+        <button onclick="joAddProc(${esc(p[0])},${esc(jid)},'addproc_proc_${p[0].replace(/[^a-z0-9]/gi,'_')}','addproc_ve_${p[0].replace(/[^a-z0-9]/gi,'_')}')" style="font-size:10px;padding:2px 8px;border:1px solid var(--acc);border-radius:5px;background:transparent;color:var(--acc);cursor:pointer">+ Add</button>
+      </div>
+    </div>`;
+  }).join('')||'<div style="padding:12px;font-size:12px;color:var(--t3)">No PROs linked to this job</div>';
+
   const html=`
+  <!-- Header -->
+  <div style="margin-bottom:12px">
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;margin-bottom:3px" id="jname_disp">${j[3]||'—'}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${badge(j[2])}<span class="mono" style="font-size:11px;color:var(--t3)">${j[0]}</span><span style="font-size:11px;color:var(--t3)">${j[1]||''}</span></div>
+      </div>
+      <button onclick="joEditHeader(${esc(jid)})" style="font-size:10px;padding:3px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--s1);color:var(--t2);cursor:pointer">✏ Edit</button>
+    </div>
+    ${uniqCustomers.length?`<div style="font-size:11px;color:var(--t2)">👤 ${uniqCustomers.join(', ')}</div>`:''}
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:14px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--acc)">${pros.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">PROs</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--org)">${activePros.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Active</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700">${totalQty?Number(totalQty).toLocaleString():'0'}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Qty</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:#22c55e">${doneProcs}<span style="font-size:10px;color:var(--t3)">/${allProcs.length}</span></div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Steps Done</div>
+    </div>
+  </div>
+
+  <!-- Process pipeline overview -->
   <div style="margin-bottom:14px">
-    <div style="font-size:15px;font-weight:700;margin-bottom:2px">${j[3]||j[0]||'—'}</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${badge(j[2])}<span class="mono" style="font-size:11px;color:var(--t2)">${j[0]}</span></div>
+    <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Process Pipeline</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap">${joProcChips(allProcs)}</div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
-      <div style="font-size:18px;font-weight:700;color:var(--acc)">${activePros.length}</div>
-      <div style="font-size:10px;color:var(--t3)">Active PROs</div>
-    </div>
-    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
-      <div style="font-size:18px;font-weight:700">${totalQty?Number(totalQty).toLocaleString():'0'}</div>
-      <div style="font-size:10px;color:var(--t3)">Total Qty</div>
-    </div>
-    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px;text-align:center">
-      <div style="font-size:18px;font-weight:700">${doneProcs}<span style="font-size:12px;color:var(--t3)">/${allProcs.length}</span></div>
-      <div style="font-size:10px;color:var(--t3)">Procs Done</div>
-    </div>
-  </div>
-  ${dpGrid(
-    dpSec('Job Details'),
-    dpRow('Job ID',`<span class="mono">${j[0]}</span>`),
-    dpRow('Date',j[1]||'—'),
-    dpRow('Type',badge(j[2])),
-    dpRow('Job Name',j[3]||'—'),
-    dpRow('Total PROs',pros.length),
-    dpRow('Active PROs',activePros.length),
-    dpRow('Cancelled PROs',cancelledPros.length||'None'),
-    dpRow('Customers',uniqCustomers.join(', ')||'—'),
-    dpRow('Products',uniqProducts.slice(0,3).join(', ')+(uniqProducts.length>3?' + '+(uniqProducts.length-3)+' more':'') ||'—')
-  )}
-  <div class="dp-sec-title">Production Orders (${pros.length})</div>
-  <table class="dp-tbl">
-    <thead><tr><th>PRO ID</th><th>Product</th><th>Customer</th><th>Qty</th><th>Status</th></tr></thead>
-    <tbody>${prosRows}</tbody>
-  </table>
-  <div class="dp-sec-title">All Processes (${allProcs.length}) · ${doneProcs} done</div>
-  <table class="dp-tbl">
-    <thead><tr><th>Process</th><th>PRO</th><th>Vendor/Machine</th><th>Counter</th><th>Status</th></tr></thead>
-    <tbody>${procsRows}</tbody>
-  </table>`;
+
+  <!-- PRO + Process management -->
+  <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Production Orders & Steps</div>
+  ${proSections}`;
+
   openRP(html,'Job: '+j[0]);
 }catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selJob ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
+}
+
+// ---- Job management actions ----
+async function joSetVendor(procId,vendorId,jid){
+  try{
+    const r=await sb.from('pro_steps').update({vendor_id:vendorId||null}).eq('id',procId);
+    if(r.error)throw r.error;
+    const idx=D.procs_raw.findIndex(x=>x.id===procId);
+    if(idx>=0)D.procs_raw[idx].vendor_id=vendorId||null;
+    showToast('✓ Vendor updated',1200);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+async function joSetMachine(procId,machine,jid){
+  try{
+    const r=await sb.from('pro_steps').update({machine:machine||null}).eq('id',procId);
+    if(r.error)throw r.error;
+    const idx=D.procs_raw.findIndex(x=>x.id===procId);
+    if(idx>=0)D.procs_raw[idx].machine=machine||null;
+    showToast('✓ Machine updated',1200);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+async function joSetProcStatus(procId,status,jid){
+  try{
+    const r=await sb.from('pro_steps').update({process_status:status}).eq('id',procId);
+    if(r.error)throw r.error;
+    const idx=D.procs_raw.findIndex(x=>x.id===procId);
+    if(idx>=0)D.procs_raw[idx].process_status=status;
+    showToast('✓ Status → '+status,1200);
+    selJob(null,jid);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+async function joAddProc(proid,jid,procSelId,veSelId){
+  try{
+    const procName=document.getElementById(procSelId)?.value;
+    const vendorId=document.getElementById(veSelId)?.value||null;
+    if(!procName)return;
+    const existing=D.procs_raw.filter(r=>r.prod_order_id===proid);
+    const seq=(existing.reduce((m,r)=>Math.max(m,r.seq||0),0))+1;
+    const row={process_name:procName,prod_order_id:proid,vendor_id:vendorId,seq,process_status:'Pending',step_status:'Pending'};
+    const r=await sb.from('pro_steps').insert(row).select().single();
+    if(r.error)throw r.error;
+    D.procs_raw.push(r.data);
+    showToast('✓ Step added: '+(PROC_LABEL[procName]||procName),1500);
+    selJob(null,jid);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+async function joDeleteProc(procId,jid){
+  if(!confirm('Delete this process step?'))return;
+  try{
+    const r=await sb.from('pro_steps').delete().eq('id',procId);
+    if(r.error)throw r.error;
+    D.procs_raw=D.procs_raw.filter(x=>x.id!==procId);
+    showToast('✓ Step deleted',1200);
+    selJob(null,jid);
+  }catch(e){showToast('❌ '+e.message,3000);}
+}
+function joEditHeader(jid){
+  const j=D.jo.find(x=>x[0]===jid);if(!j)return;
+  const jobTypes=['Print','Packaging','Finishing','Other'];
+  const html=`<div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
+    <div>
+      <label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">Job Name</label>
+      <input id="je_name" value="${(j[3]||'').replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--bdr);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--bg);color:var(--fg)">
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">Type</label>
+      <select id="je_type" style="width:100%;border:1px solid var(--bdr);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--bg);color:var(--fg)">
+        ${jobTypes.map(t=>`<option value="${t}"${j[2]===t?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <button onclick="joSaveHeader(${esc(jid)})" style="padding:7px 16px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600">Save Changes</button>
+  </div>`;
+  openRP(html,'Edit Job: '+jid);
+}
+async function joSaveHeader(jid){
+  try{
+    const name=document.getElementById('je_name')?.value?.trim();
+    const type=document.getElementById('je_type')?.value;
+    const r=await sb.from('jobs').update({job_name:name,job_type:type}).eq('id',jid);
+    if(r.error)throw r.error;
+    const idx=D.jo.findIndex(x=>x[0]===jid);
+    if(idx>=0){D.jo[idx][3]=name;D.jo[idx][2]=type;}
+    showToast('Job updated');
+    selJob(null,jid);
+    R.jobs();
+  }catch(e){showToast('Error: '+e.message,true);}
 }
 
 R.dies=function(p){
