@@ -2754,18 +2754,20 @@ function selO(e,oid){try{
   const pendingQty=Math.max(0,(Number(o[4])||0)-totalDespatched);
   const imgUrl=prodRec?getProductImageUrl(prodRec.id):null;
   const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:8px;background:var(--s1)">📦</div>`;
-  const prosRows=linkedPros.length?linkedPros.map(p=>`<tr onclick="selPR(null,${esc(p[0])})" style="cursor:pointer">
+  const proQty=p=>{const q=Number(p[4]);if(q)return q;const r=D.pros_raw?.find(x=>x.id===p[0]);return r?(r.sheet_qty||0)*(r.ups||1):0;};
+  const doQtyPcs=d=>d[4]?Math.round(Number(d[4])*100000):0;
+  const prosRows=linkedPros.length?linkedPros.map(p=>{const q=proQty(p);return`<tr onclick="selPR(null,${esc(p[0])})" style="cursor:pointer">
     <td class="mono" style="padding:4px 8px;font-size:11px">${p[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${q?Number(q).toLocaleString():'—'}</td>
     <td style="padding:4px 8px;font-size:11px">${proSubStatus(p)}</td>
     <td class="mono" style="padding:4px 8px;font-size:11px">${p[9]||'—'}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs yet</td></tr>';
-  const doRows=doRecs.length?doRecs.map(d=>`<tr>
+  </tr>`;}).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs yet</td></tr>';
+  const doRows=doRecs.length?doRecs.map(d=>{const q=doQtyPcs(d);return`<tr>
     <td class="mono" style="padding:4px 8px;font-size:11px">${d[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${d[1]||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px;text-align:right">${d[4]?Number(d[4]).toLocaleString():'—'}</td>
-  </tr>`).join(''):'<tr><td colspan="3" style="padding:8px;font-size:11px;color:var(--t3)">No deliveries yet</td></tr>';
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${q?Number(q).toLocaleString():'—'}</td>
+  </tr>`;}).join(''):'<tr><td colspan="3" style="padding:8px;font-size:11px;color:var(--t3)">No deliveries yet</td></tr>';
   const html=`
   <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
     ${imgHtml}
@@ -2936,6 +2938,10 @@ function selPD(e,code){try{
   // Related PROs — use product_id match (index 10)
   const relPros=D.pr.filter(pr=>pr[10]===code);
   const activePros=relPros.filter(pr=>!pr[5]&&!pr[6]&&pr[8]!=='complete');
+  // Delivery orders for this product (via linked orders)
+  const relOrderIds=new Set(relOrders.map(o=>o[0]));
+  const relDos=D.dos?.filter(d=>relOrderIds.has(d[2]))||[];
+  const totalDeliveredPcs=relDos.reduce((s,d)=>s+Math.round((Number(d[4])||0)*100000),0);
   // FG inventory for this product
   const fgRecs=D.fg.filter(f=>f[7]===p[1]||f[8]===p[2]);
   const totalFGStock=fgRecs.reduce((s,f)=>s+(Number(f[5])||0),0);
@@ -2968,13 +2974,14 @@ function selPD(e,code){try{
     <td style="padding:4px 8px;font-size:11px">${o[6]?'🔁':'🆕'}</td>
   </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No orders</td></tr>';
   // PROs table (ALL PROs)
-  const proRows=relPros.length?relPros.map(pr=>`<tr onclick="selPR(null,${esc(pr[0])})" style="cursor:pointer">
+  const pdProQty=pr=>{const q=Number(pr[4]);if(q)return q;const r=D.pros_raw?.find(x=>x.id===pr[0]);return r?(r.sheet_qty||0)*(r.ups||1):0;};
+  const proRows=relPros.length?relPros.map(pr=>{const q=pdProQty(pr);return`<tr onclick="selPR(null,${esc(pr[0])})" style="cursor:pointer">
     <td class="mono" style="padding:4px 8px;font-size:11px">${pr[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${pr[1]||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px;text-align:right">${pr[4]?Number(pr[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${q?Number(q).toLocaleString():'—'}</td>
     <td style="padding:4px 8px;font-size:11px">${proSubStatus(pr)}</td>
     <td class="mono" style="padding:4px 8px;font-size:11px">${pr[7]||'—'}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
+  </tr>`;}).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs</td></tr>';
   // FG batches
   const fgRows=recentFG.length?recentFG.map(f=>`<tr>
     <td class="mono" style="padding:4px 8px;font-size:11px">${f[2]||'—'}</td>
@@ -3052,6 +3059,16 @@ function selPD(e,code){try{
   <table class="dp-tbl">
     <thead><tr><th>PRO ID</th><th>Date</th><th>Qty</th><th>Status</th><th>Order</th></tr></thead>
     <tbody>${proRows}</tbody>
+  </table>
+  <div class="dp-sec-title">Delivery History (${relDos.length})${totalDeliveredPcs?' · '+Number(totalDeliveredPcs).toLocaleString()+' pcs delivered':''}</div>
+  <table class="dp-tbl">
+    <thead><tr><th>DO ID</th><th>Date</th><th>Order</th><th>Qty</th></tr></thead>
+    <tbody>${relDos.length?relDos.map(d=>{const q=Math.round((Number(d[4])||0)*100000);return`<tr>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${d[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${d[1]||'—'}</td>
+    <td class="mono" style="padding:4px 8px;font-size:11px;cursor:pointer;color:var(--acc)" onclick="selO(null,${esc(d[2])})">${d[2]}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${q?Number(q).toLocaleString():'—'}</td>
+  </tr>`;}).join(''):'<tr><td colspan="4" style="padding:8px;font-size:11px;color:var(--t3)">No deliveries yet</td></tr>'}</tbody>
   </table>
   <div class="dp-sec-title">FG Inventory (${totalFGStock?Number(totalFGStock).toLocaleString()+' pcs':'No stock'})</div>
   <table class="dp-tbl">
