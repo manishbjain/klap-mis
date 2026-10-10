@@ -617,24 +617,18 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 
 <!-- PLACEHOLDER PAGES -->
 <div id="pg-wflow-order" class="pg">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-  <div>
-    <h2 style="font-size:18px;font-weight:800;margin-bottom:2px">Order Operations</h2>
-    <div style="font-size:11px;color:var(--t2)">Live order pipeline — all stages at a glance</div>
-  </div>
-  <div class="kb-filters">
-    <select class="f" id="kb-cust" onchange="kbFilter()"><option value="">All Customers</option></select>
-    <select class="f" id="kb-prod" onchange="kbFilter()"><option value="">All Products</option></select>
-    <select class="f" id="kb-age" onchange="kbFilter()">
-      <option value="">Any Age</option>
-      <option value="7">Within 7d</option>
-      <option value="14">Within 14d</option>
-      <option value="30">Within 30d</option>
-      <option value="old">Older than 30d</option>
-    </select>
-    <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="kbClear()">Clear</button>
-    <button class="btn btn-p" style="font-size:11px" onclick="openNewOrderForm()">+ New Order</button>
-  </div>
+<div class="kb-filters" style="margin-bottom:12px">
+  <select class="f" id="kb-cust" onchange="kbFilter()"><option value="">All Customers</option></select>
+  <select class="f" id="kb-prod" onchange="kbFilter()"><option value="">All Products</option></select>
+  <select class="f" id="kb-age" onchange="kbFilter()">
+    <option value="">Any Age</option>
+    <option value="7">Within 7d</option>
+    <option value="14">Within 14d</option>
+    <option value="30">Within 30d</option>
+    <option value="old">Older than 30d</option>
+  </select>
+  <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="kbClear()">Clear</button>
+  <button class="btn btn-p" style="font-size:11px" onclick="openNewOrderForm()">+ New Order</button>
 </div>
 <div id="tg-inbox"></div>
 <div class="kb-wrap" id="kb-board"></div>
@@ -651,16 +645,10 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 </div>
 
 <div id="pg-wflow-design" class="pg">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-  <div>
-    <h2 style="font-size:18px;font-weight:800;margin-bottom:2px">✏️ Design Workflow</h2>
-    <div style="font-size:11px;color:var(--t2)">Track artwork from brief to File Ready — all stages at a glance</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <input class="f" id="dw-q" placeholder="Search product / customer / code…" oninput="initDesignWF()" style="width:210px">
-    <select class="f" id="dw-cust" onchange="initDesignWF()"><option value="">All Customers</option></select>
-    <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="document.getElementById('dw-q').value='';document.getElementById('dw-cust').value='';initDesignWF()">Clear</button>
-  </div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+  <input class="f" id="dw-q" placeholder="Search product / customer / code…" oninput="initDesignWF()" style="width:210px">
+  <select class="f" id="dw-cust" onchange="initDesignWF()"><option value="">All Customers</option></select>
+  <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="document.getElementById('dw-q').value='';document.getElementById('dw-cust').value='';initDesignWF()">Clear</button>
 </div>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="dw-stats"></div>
 <div class="kb-wrap" id="dw-board"></div>
