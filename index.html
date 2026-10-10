@@ -465,7 +465,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-orders"><span id="fd-bar-orders-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('orders')">Clear all</button></div>
-    <div id="o-list-view" style="overflow-x:auto"><table><thead id="o-thead"><tr><th onclick="thSort('orders',0,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">OID<span id="o-arr-0" style="font-size:9px;margin-left:3px">▼</span></th><th onclick="thSort('orders',1,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Date<span id="o-arr-1" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',2,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Customer<span id="o-arr-2" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',3,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Product<span id="o-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',4,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Qty<span id="o-arr-4" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th>Status</th><th>Type</th><th onclick="thSort('orders',8,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Age<span id="o-arr-8" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th></tr></thead><tbody id="o-body"></tbody></table></div>
+    <div id="o-list-view" style="overflow-x:auto"><table><thead id="o-thead"><tr><th style="width:48px"></th><th onclick="thSort('orders',0,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">OID<span id="o-arr-0" style="font-size:9px;margin-left:3px">▼</span></th><th onclick="thSort('orders',1,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Date<span id="o-arr-1" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',2,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Customer<span id="o-arr-2" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',3,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Product<span id="o-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('orders',4,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Qty<span id="o-arr-4" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th>Status</th><th>Type</th><th onclick="thSort('orders',8,'R.orders')" style="cursor:pointer;user-select:none;white-space:nowrap">Age<span id="o-arr-8" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th></tr></thead><tbody id="o-body"></tbody></table></div>
     <div id="o-card-view" style="display:none;padding:12px;display:none"><div id="o-card-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px"></div></div>
     <div class="pg-bar" id="o-pg"></div>
   </div>
@@ -1836,7 +1836,7 @@ function getProductImageUrl(productId){
 async function renderProductImage(productId,size=40){
   const url=await getProductImageUrl(productId);
   if(!url)return `<div style="width:${size}px;height:${size}px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size/2.5)}px">🏷</div>`;
-  return `<img src="${url}" style="width:${size}px;height:${size}px;border-radius:6px;object-fit:cover;border:1px solid var(--bdr)" onerror="this.outerHTML='<div style=\\'width:${size}px;height:${size}px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size/2.5)}px\\'>🏷</div>'">`;
+  return `<img src="${url}" style="width:${size}px;height:${size}px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid var(--bdr)" onerror="this.outerHTML='<div style=\\'width:${size}px;height:${size}px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size/2.5)}px\\'>🏷</div>'">`;
 }
 let D={o:[],pr:[],dq:[],pd:[],cu:[],ve:[],jo:[],di:[],pl:[],
   rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[["Flexo Press 01","press"],["RF Punching 01","punching"],["RF Punching 02","punching"],["Rewinding 01","rewinding"],["Rewinding 02","rewinding"],["Platen 01","platen"],["Platen 02","platen"],["Tube Labelling 01","tube"],["Core Cutting 01","cutting"],["Core Cutting 02","cutting"],["Tube Seaming 01","tube"]],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
@@ -1883,7 +1883,8 @@ async function loadData(){
       prodMap[o.product_id]?.product_name||o.product_id||'—',
       o.qty||'',
       o.order_status||'active',
-      o.is_repeat?'1':'0'
+      o.is_repeat?'1':'0',
+      o.product_id||''   // index 7: product_id for image lookup
     ]).sort((a,b)=>(parseInt(b[0].replace(/\D/g,''),10)||0)-(parseInt(a[0].replace(/\D/g,''),10)||0));
     D.OT=orders.length;
 
@@ -2630,8 +2631,9 @@ R.orders=function(p){
       const age=o[8]??0;
       const ageCol=age>30?'#fee2e2':age>14?'#fef3c7':'#d1fae5';
       const ageTxt=age>30?'#991b1b':age>14?'#854d0e':'#166534';
+      const oImgId='oi-'+o[0].replace(/[^a-zA-Z0-9]/g,'_');
       return `<div onclick="selO(event,${JSON.stringify(o[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
-        <div style="background:var(--s2);height:100px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
+        <div id="${oImgId}" style="background:var(--s2);height:100px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
           <span style="font-size:40px;opacity:.4">📦</span>
         </div>
         <div style="padding:10px 12px">
@@ -2654,14 +2656,35 @@ R.orders=function(p){
     document.getElementById('o-body').innerHTML=slice.map(o=>{
       const age=o[8]??0;
       const ageCol=age>30?'color:var(--red)':age>14?'color:var(--ylw)':'color:var(--t2)';
+      const liImgId='oli-'+o[0].replace(/[^a-zA-Z0-9]/g,'_');
       return `<tr onclick="selO(event,${JSON.stringify(o[0])})">
+        <td><div id="${liImgId}" style="width:40px;height:40px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden">📦</div></td>
         <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${o[2]}">${tr(o[2],22)}</td>
         <td title="${o[3]}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
         <td>${badge(o[5])}</td><td>${o[6]?'<span class="b bb">Repeat</span>':'<span class="b bd">New</span>'}</td>
         <td style="font-size:11px;font-weight:600;${ageCol}">${age}d</td>
       </tr>`;
-    }).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
+    }).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No orders match</td></tr>';
+    // Load product images for list rows
+    slice.forEach(o=>{
+      if(!o[7])return;
+      const el=document.getElementById('oli-'+o[0].replace(/[^a-zA-Z0-9]/g,'_'));
+      if(!el)return;
+      const url=getProductImageUrl(o[7]);
+      if(url)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:contain;background:#fff;display:block;border-radius:6px" onerror="this.closest('div').textContent='📦'">`;
+    });
   }
+  // Load product images for card view
+  slice.forEach(o=>{
+    if(!o[7])return;
+    const el=document.getElementById('oi-'+o[0].replace(/[^a-zA-Z0-9]/g,'_'));
+    if(!el)return;
+    const url=getProductImageUrl(o[7]);
+    if(url){
+      el.innerHTML=`<img src="${url}" style="width:100%;height:100px;object-fit:contain;background:#fff;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:40px;opacity:.4\\'>📦</span>'">`;
+      el.style.background='#fff';
+    }
+  });
 };
 function oSetView(v){
   var listBtn=document.getElementById('o-view-list'),cardBtn=document.getElementById('o-view-card');
@@ -2784,7 +2807,7 @@ R.products=function(p){
       if(!el)return;
       const url=getProductImageUrl(p[0]);
       if(url&&el){
-        el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:cover;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
+        el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:contain;background:#fff;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
         el.style.background='#000';
       }
     });
@@ -2804,7 +2827,7 @@ R.products=function(p){
       const el=document.getElementById(safeId);
       if(!el)return;
       const url=getProductImageUrl(p[0]);
-      if(url&&el)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:cover;display:block;border-radius:6px" onerror="this.closest('div').textContent='🏷'">`;
+      if(url&&el)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:contain;background:#fff;display:block;border-radius:6px" onerror="this.closest('div').textContent='🏷'">`;
     });
   }
 };
