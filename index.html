@@ -5355,6 +5355,48 @@ async function tgCreateTopic(code){
   _dwcCount=-1;tgLoadChat();
 }
 
+// ── TELEGRAM TOPIC LINK in Product / Order / PRO detail panels ──
+const _tgLinkCache={};
+async function tgInsertTopicLink(pid){
+  const host=document.getElementById('rp-b');if(!host||!pid)return;
+  host.querySelector('#rp-tg')?.remove();
+  host.insertAdjacentHTML('afterbegin',`<div id="rp-tg" data-pid="${hx(pid)}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:12px;border:1px solid var(--bdr);border-radius:8px;background:var(--s2);font-size:12px"><span>💬</span><span style="color:var(--t3)">Checking Telegram design topic…</span></div>`);
+  let info=_tgLinkCache[pid];
+  if(!info){
+    try{const j=await tgApi('/design/'+encodeURIComponent(pid));info={link:j.product?.thread_link&&j.product?.tg_topic_id?j.product.thread_link:null,msgs:(j.messages||[]).length};_tgLinkCache[pid]=info;}
+    catch(e){info={error:e.message};}
+  }
+  const el=document.getElementById('rp-tg');if(!el||el.dataset.pid!==pid)return;
+  if(info.error){el.remove();return;}
+  el.innerHTML=info.link
+    ?`<span>💬</span><span style="flex:1"><b>Design topic</b> in Telegram${info.msgs?` · ${info.msgs} message${info.msgs>1?'s':''}`:''}</span>
+      <a href="${hx(info.link)}" target="_blank" rel="noopener" class="btn btn-p" style="font-size:11px;padding:4px 10px;text-decoration:none">Open in Telegram ↗</a>`
+    :`<span>💬</span><span style="flex:1;color:var(--t2)">No Telegram design topic for <span class="mono">${hx(pid)}</span> yet</span>
+      <button class="ab ab-b" onclick="tgCreateTopicFromPanel('${hx(pid)}')">➕ Create topic</button>`;
+}
+async function tgCreateTopicFromPanel(pid){
+  try{
+    const j=await tgApi('/design/'+encodeURIComponent(pid)+'/topic',{method:'POST',body:'{}'});
+    _tgLinkCache[pid]={link:j.link,msgs:1};TG_THREADS.add(pid);
+    toast('Design topic created in Telegram');
+  }catch(e){toast('⚠ '+e.message);}
+  tgInsertTopicLink(pid);
+}
+const _tgOrigSelPD=selPD;
+selPD=function(e,code){_tgOrigSelPD(e,code);tgInsertTopicLink(code);};
+const _tgOrigSelO=selO;
+selO=function(e,oid){
+  _tgOrigSelO(e,oid);
+  const pid=(D.orders_raw?.find(x=>x.id===oid)||{}).product_id||((D.o||[]).find(x=>x[0]===oid)||[])[7];
+  if(pid)tgInsertTopicLink(pid);
+};
+const _tgOrigSelPR=selPR;
+selPR=function(e,id){
+  _tgOrigSelPR(e,id);
+  const pid=(D.pros_raw?.find(x=>x.id===id)||{}).product_id||((D.pr||[]).find(x=>x[0]===id)||[])[10];
+  if(pid)tgInsertTopicLink(pid);
+};
+
 // Design board moves now save to the database (and post in the topic)
 const TG_DESIGN_STATUSES=['to_process','in_process','internal_approval','customer_approval','file_ready','cancelled'];
 const _tgOrigDwMove=dwMove;
