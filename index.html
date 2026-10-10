@@ -1263,7 +1263,7 @@ async function loadSettingsUsers(){
         <td><span class="role-badge" style="background:${color}">${esc(role.name||u.role_id)}</span></td>
         <td><span class="status-pill" style="background:${u.is_active?'#10b981':'#6b7280'};color:#fff">${u.is_active?'Active':'Inactive'}</span></td>
         <td style="color:var(--t3)">${lastLogin}</td>
-        <td><button class="btn" style="font-size:11px;padding:2px 8px;background:var(--s2);border:1px solid var(--bdr);margin-right:4px" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})">Edit</button>
+        <td><button class="btn" style="font-size:11px;padding:2px 8px;background:var(--s2);border:1px solid var(--bdr);margin-right:4px" onclick="openUserModal(${esc(u)})">Edit</button>
         <button class="btn" style="font-size:11px;padding:2px 8px;background:${u.is_active?'#fee2e2':'#d1fae5'};border:1px solid var(--bdr);color:${u.is_active?'#ef4444':'#10b981'}" onclick="toggleUserActive('${u.id}','${u.email}',${!u.is_active})">${u.is_active?'Deactivate':'Activate'}</button></td>`;
       tbody.appendChild(tr);
     });
@@ -2150,6 +2150,8 @@ function dpRow(l,v){const t=typeof v==='string'&&!v.includes('<')?` title="${v.r
 function dpSec(l){return `<div class="dp-sec">${l}</div>`;}
 // dpGrid: wrap rows in a grid
 function dpGrid(...rows){return `<div class="dp-grid">${rows.join('')}</div>`;}
+// esc: esc a value and HTML-escape quotes so it's safe inside onclick="..." attributes
+function esc(v){return JSON.stringify(v).replace(/"/g,'&quot;');}
 // rpRow / rpSec: legacy aliases
 function rpRow(l,v){return dpRow(l,v);}
 function rpSec(l){return dpSec(l);}
@@ -2658,7 +2660,7 @@ R.orders=function(p){
       const ageCol=age>30?'#fee2e2':age>14?'#fef3c7':'#d1fae5';
       const ageTxt=age>30?'#991b1b':age>14?'#854d0e':'#166534';
       const oImgId='oi-'+o[0].replace(/[^a-zA-Z0-9]/g,'_');
-      return `<div onclick="selO(event,${JSON.stringify(o[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
+      return `<div onclick="selO(event,${esc(o[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
         <div id="${oImgId}" style="background:var(--s2);height:100px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
           <span style="font-size:40px;opacity:.4">📦</span>
         </div>
@@ -2683,7 +2685,7 @@ R.orders=function(p){
       const age=o[8]??0;
       const ageCol=age>30?'color:var(--red)':age>14?'color:var(--ylw)':'color:var(--t2)';
       const liImgId='oli-'+o[0].replace(/[^a-zA-Z0-9]/g,'_');
-      return `<tr onclick="selO(event,${JSON.stringify(o[0])})">
+      return `<tr onclick="selO(event,${esc(o[0])})">
         <td><div id="${liImgId}" style="width:40px;height:40px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden">📦</div></td>
         <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td title="${(o[2]||'').replace(/"/g,'&quot;')}">${tr(o[2],22)}</td>
         <td title="${(o[3]||'').replace(/"/g,'&quot;')}">${tr(o[3],26)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
@@ -2752,7 +2754,7 @@ function selO(e,oid){try{
   const pendingQty=Math.max(0,(Number(o[4])||0)-totalDespatched);
   const imgUrl=prodRec?getProductImageUrl(prodRec.id):null;
   const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:8px;background:var(--s1)">📦</div>`;
-  const prosRows=linkedPros.length?linkedPros.map(p=>`<tr onclick="selPR(null,${JSON.stringify(p[0])})" style="cursor:pointer">
+  const prosRows=linkedPros.length?linkedPros.map(p=>`<tr onclick="selPR(null,${esc(p[0])})" style="cursor:pointer">
     <td class="mono" style="padding:4px 8px;font-size:11px">${p[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
     <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
@@ -2842,7 +2844,7 @@ R.dq=function(p){
   let items=D.dq.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('dq',items);
   const slice=pgr(items,'dq','R.dq','dq-pg','dq-cnt');
-  document.getElementById('dq-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+  document.getElementById('dq-body').innerHTML=slice.map(p=>`<tr onclick="selPD(event,${esc(p[0])})">
     <td class="mono">${p[0]||'—'}</td><td title="${(p[1]||'').replace(/"/g,'&quot;')}">${tr(p[1],28)}</td>
     <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No items</td></tr>';
@@ -2866,7 +2868,7 @@ R.products=function(p){
       const stClr=stClrMap[p[3]]||'var(--s2)';
       const stIcon=stIconMap[p[3]]||'📦';
       const safeId='pi-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
-      return `<div onclick="selPD(event,${JSON.stringify(p[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
+      return `<div onclick="selPD(event,${esc(p[0])})" style="background:var(--s1);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseleave="this.style.boxShadow=''">
         <div id="${safeId}" style="background:${stClr};height:90px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--bdr)">
           <span style="font-size:36px;opacity:.55">${stIcon}</span>
         </div>
@@ -2895,7 +2897,7 @@ R.products=function(p){
     document.getElementById('pd-card-view').style.display='none';
     document.getElementById('pd-body').innerHTML=slice.map(p=>{
       const safeId='pli-'+p[0].replace(/[^a-zA-Z0-9]/g,'_');
-      return `<tr onclick="selPD(event,${JSON.stringify(p[0])})">
+      return `<tr onclick="selPD(event,${esc(p[0])})">
       <td><div id="${safeId}" style="width:40px;height:40px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden">🏷</div></td>
       <td class="mono">${p[0]||'—'}</td><td title="${(p[1]||'').replace(/"/g,'&quot;')}">${tr(p[1],28)}</td>
       <td>${tr(p[2]||'—',20)}</td><td>${badge(p[3])}</td>
@@ -2958,7 +2960,7 @@ function selPD(e,code){try{
     spec(raw.border?'Yes':'','Border')
   ].filter(Boolean).join(' ');
   // Orders table (ALL orders, not just 10)
-  const ordRows=relOrders.length?relOrders.map(o=>`<tr onclick="selO(null,${JSON.stringify(o[0])})" style="cursor:pointer">
+  const ordRows=relOrders.length?relOrders.map(o=>`<tr onclick="selO(null,${esc(o[0])})" style="cursor:pointer">
     <td class="mono" style="padding:4px 8px;font-size:11px">${o[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${o[1]||'—'}</td>
     <td style="padding:4px 8px;font-size:11px;text-align:right">${o[4]?Number(o[4]).toLocaleString():'—'}</td>
@@ -2966,7 +2968,7 @@ function selPD(e,code){try{
     <td style="padding:4px 8px;font-size:11px">${o[6]?'🔁':'🆕'}</td>
   </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No orders</td></tr>';
   // PROs table (ALL PROs)
-  const proRows=relPros.length?relPros.map(pr=>`<tr onclick="selPR(null,${JSON.stringify(pr[0])})" style="cursor:pointer">
+  const proRows=relPros.length?relPros.map(pr=>`<tr onclick="selPR(null,${esc(pr[0])})" style="cursor:pointer">
     <td class="mono" style="padding:4px 8px;font-size:11px">${pr[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${pr[1]||'—'}</td>
     <td style="padding:4px 8px;font-size:11px;text-align:right">${pr[4]?Number(pr[4]).toLocaleString():'—'}</td>
@@ -3066,7 +3068,7 @@ R.customers=function(p){
   let items=D.cu.filter(x=>(!q||[x[0],x[1],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('customers',items);
   const slice=pgr(items,'customers','R.customers','cu-pg','cu-cnt');
-  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(dpGrid(dpSec('Customer'),dpRow('Ref',${JSON.stringify(a[0])}),dpRow('Name',${JSON.stringify(a[1])}),dpRow('Brand',${JSON.stringify(a[2]||'—')}),dpRow('Alias',${JSON.stringify(a[3]||'—')})),${JSON.stringify(a[1])})">
+  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(dpGrid(dpSec('Customer'),dpRow('Ref',${esc(a[0])}),dpRow('Name',${esc(a[1])}),dpRow('Brand',${esc(a[2]||'—')}),dpRow('Alias',${esc(a[3]||'—')})),${esc(a[1])})">
     <td class="mono">${a[0]||'—'}</td><td title="${(a[1]||'').replace(/"/g,'&quot;')}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
 };
@@ -3100,7 +3102,7 @@ R.pros=function(p){
   items=sortItems(items,'pros');
   [0,1,2,3,4].forEach(i=>{const el=document.getElementById('pr-arr-'+i);if(el){const s=_SORT['pros'];el.textContent=s&&s.col===i?(s.dir==='asc'?'▲':'▼'):'⇅';el.style.color=s&&s.col===i?'inherit':'var(--t3)';}});
   const slice=pgr(items,'pros','R.pros','pr-pg','pr-cnt');
-  document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
+  document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${esc(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
     <td><div id="pri-${p[0].replace(/[^a-zA-Z0-9]/g,'_')}" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:6px;background:var(--s1)">📦</div></td>
@@ -3186,7 +3188,7 @@ function selPR(e,pid){try{
     dpRow('Sheet Qty',rawPro.sheet_qty?Number(rawPro.sheet_qty).toLocaleString():(ppRec?Number(ppRec[5]||0).toLocaleString():'—')),
     dpRow('Cancelled',p[5]?'⛔ Yes':'No'),
     dpRow('On Hold',p[6]?'⏸ Yes':'No'),
-    dpRow('Linked Order',p[7]?`<span class="mono" onclick="selO(null,${JSON.stringify(p[7])})" style="cursor:pointer;color:var(--acc)">${p[7]}</span>`:'—'),
+    dpRow('Linked Order',p[7]?`<span class="mono" onclick="selO(null,${esc(p[7])})" style="cursor:pointer;color:var(--acc)">${p[7]}</span>`:'—'),
     dpSec('Product Specs'),
     dpRow('Product',p[2]||'—'),
     dpRow('Product Code',rawProd.product_code||p[10]||'—'),
@@ -3201,7 +3203,7 @@ function selPR(e,pid){try{
     dpRow('Emboss',rawProd.emboss?'Yes':'No'),
     dpRow('Gumming',rawProd.gumming||'No'),
     dpSec('Job'),
-    dpRow('Job ID',p[9]?`<span class="mono" onclick="selJob(null,${JSON.stringify(p[9])})" style="cursor:pointer;color:var(--acc)">${p[9]}</span>`:'—'),
+    dpRow('Job ID',p[9]?`<span class="mono" onclick="selJob(null,${esc(p[9])})" style="cursor:pointer;color:var(--acc)">${p[9]}</span>`:'—'),
     dpRow('Job Name',job?job[3]||'—':'—'),
     dpRow('Job Type',job?badge(job[2]):'—'),
     dpSec('FG Output'),
@@ -3236,7 +3238,7 @@ R.jobs=function(p){
   const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
   document.getElementById('jo-body').innerHTML=slice.map(j=>{
     const activePros=D.pr.filter(p=>p[9]===j[0]&&!p[5]&&!p[6]&&p[8]!=='complete').length;
-    return `<tr onclick="selJob(event,${JSON.stringify(j[0])})" style="cursor:pointer">
+    return `<tr onclick="selJob(event,${esc(j[0])})" style="cursor:pointer">
       <td class="mono">${j[0]}</td><td>${j[1]||'—'}</td><td>${badge(j[2])}</td>
       <td style="max-width:320px;font-size:11px;color:var(--t2)" title="${j[3]||''}">${tr(j[3]||'—',50)}</td>
       <td style="font-size:12px;font-weight:700;color:${activePros>0?'var(--org)':'var(--t3)'}">${activePros||'—'}</td>
@@ -3256,7 +3258,7 @@ function selJob(e,jid){try{
   const doneProcs=allProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
   const totalQty=pros.filter(p=>!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
-  const prosRows=pros.length?pros.map(p=>`<tr onclick="selPR(null,${JSON.stringify(p[0])})" style="cursor:pointer">
+  const prosRows=pros.length?pros.map(p=>`<tr onclick="selPR(null,${esc(p[0])})" style="cursor:pointer">
     <td class="mono" style="padding:4px 8px;font-size:11px">${p[0]}</td>
     <td style="padding:4px 8px;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${p[2]||''}">${p[2]||'—'}</td>
     <td style="padding:4px 8px;font-size:11px">${p[3]||'—'}</td>
@@ -3325,7 +3327,7 @@ R.dies=function(p){
   let items=D.di.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('dies',items);
   const slice=pgr(items,'dies','R.dies','di-pg','di-cnt');
-  document.getElementById('di-body').innerHTML=slice.map(d=>`<tr onclick="openRP(rf('Code',${JSON.stringify(d[0])})+rf('Name',${JSON.stringify(d[1]||'—')})+rf('Ups',${JSON.stringify(String(d[2]||'—'))})+rf('Status',badge(${JSON.stringify(d[3]||'active')})),${JSON.stringify(d[0])})">
+  document.getElementById('di-body').innerHTML=slice.map(d=>`<tr onclick="openRP(rf('Code',${esc(d[0])})+rf('Name',${esc(d[1]||'—')})+rf('Ups',${esc(String(d[2]||'—'))})+rf('Status',badge(${esc(d[3]||'active')})),${esc(d[0])})">
     <td class="mono">${d[0]}</td><td>${tr(d[1]||'—',22)}</td><td>${d[2]||'—'}</td><td>${badge(d[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No dies</td></tr>';
 };
@@ -3337,7 +3339,7 @@ R.plates=function(p){
   let items=D.pl.filter(x=>(!st||x[2]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('plates',items);
   const slice=pgr(items,'plates','R.plates','pl-pg','pl-cnt');
-  document.getElementById('pl-body').innerHTML=slice.map(p=>`<tr onclick="openRP(rf('Code',${JSON.stringify(p[0])})+rf('Name',${JSON.stringify(p[1]||'—')})+rf('Status',badge(${JSON.stringify(p[2]||'active')})),${JSON.stringify(p[0])})">
+  document.getElementById('pl-body').innerHTML=slice.map(p=>`<tr onclick="openRP(rf('Code',${esc(p[0])})+rf('Name',${esc(p[1]||'—')})+rf('Status',badge(${esc(p[2]||'active')})),${esc(p[0])})">
     <td class="mono">${p[0]}</td><td>${tr(p[1]||'—',26)}</td><td>${badge(p[2]||'active')}</td>
   </tr>`).join('')||'<tr><td colspan="3" style="padding:24px;text-align:center;color:var(--t3)">No plates</td></tr>';
 };
@@ -3353,7 +3355,7 @@ R.vendors=function(p){
   let items=D.ve.filter(x=>(!vtype||x[3]===vtype)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('vendors',items);
   const slice=pgr(items,'vendors','R.vendors','ve-pg','ve-cnt');
-  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Alias',${JSON.stringify(a[2]||'—')})+rf('Type',badge(${JSON.stringify(a[3])})),${JSON.stringify(a[1])})">
+  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${esc(a[0])})+rf('Name',${esc(a[1])})+rf('Alias',${esc(a[2]||'—')})+rf('Type',badge(${esc(a[3])})),${esc(a[1])})">
     <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td><td>${badge(a[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No vendors</td></tr>';
 };
@@ -3364,7 +3366,7 @@ R.transporters=function(p){
   let items=D.ve.filter(x=>x[3]==='transporter'&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('transporters',items);
   const slice=pgr(items,'transporters','R.transporters','tr-pg','tr-cnt');
-  document.getElementById('tr-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${JSON.stringify(a[0])})+rf('Name',${JSON.stringify(a[1])})+rf('Alias',${JSON.stringify(a[2]||'—')})+rf('Type',badge(${JSON.stringify(a[3])})),${JSON.stringify(a[1])})">
+  document.getElementById('tr-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${esc(a[0])})+rf('Name',${esc(a[1])})+rf('Alias',${esc(a[2]||'—')})+rf('Type',badge(${esc(a[3])})),${esc(a[1])})">
     <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td><td>${badge(a[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No transporters</td></tr>';
 };
@@ -3500,7 +3502,7 @@ R.processes=function(p){
   document.getElementById('proc-body').innerHTML=slice.map(r=>{
     const pro=proMap[r.prod_order_id]||{};
     const vname=veMap[r.vendor_id]||r.vendor_id||'—';
-    return `<tr onclick="selProc(event,${JSON.stringify(r.id||r[0])})" style="cursor:pointer">
+    return `<tr onclick="selProc(event,${esc(r.id||r[0])})" style="cursor:pointer">
       <td><strong>${r.process_name||'—'}</strong></td>
       <td class="mono">${r.prod_order_id||'—'}</td>
       <td>${tr(pro.pname||'—',22)}</td><td>${tr(pro.cname||'—',18)}</td>
@@ -4490,7 +4492,7 @@ function pwTimeline(jobs){
       var qty=r.counter?Number(r.counter).toLocaleString():'—';
       var rmOut=(D.rm_out||[]).filter(function(x){return x[3]===r.id;});
       var matLine=rmOut.length?rmOut.slice(0,2).map(function(x){var ri=(D.rm_in||[]).find(function(ri){return ri[0]===x[2];});return ri?ri[2]:'RM-'+x[2];}).join(', '):'No material';
-      return '<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="selProc(event,'+JSON.stringify(r.id||r.process_name)+')" onmouseenter="this.style.borderColor=\'var(--acc)\'" onmouseleave="this.style.borderColor=\'var(--bdr)\'">'
+      return '<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="selProc(event,'+esc(r.id||r.process_name)+')" onmouseenter="this.style.borderColor=\'var(--acc)\'" onmouseleave="this.style.borderColor=\'var(--bdr)\'">'
         +'<div style="font-weight:700;font-size:12px;color:var(--acc);margin-bottom:4px">'+( r.process_name||'Process')+'</div>'
         +'<div style="font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+prodName+'">'+prodName+'</div>'
         +'<div style="color:var(--t2);margin-bottom:6px">'+custName+'</div>'
