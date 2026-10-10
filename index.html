@@ -540,7 +540,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <th onclick="thSort('pros',2,'R.pros')" style="cursor:pointer;user-select:none;white-space:nowrap">Product<span id="pr-arr-2" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th>
       <th onclick="thSort('pros',3,'R.pros')" style="cursor:pointer;user-select:none;white-space:nowrap">Customer<span id="pr-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th>
       <th onclick="thSort('pros',4,'R.pros')" style="cursor:pointer;user-select:none;white-space:nowrap">Qty<span id="pr-arr-4" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th>
-      <th>Order</th><th>Job</th><th>Status</th>
+      <th style="width:48px"></th><th>Order</th><th>Job</th><th>Status</th>
     </tr></thead><tbody id="pr-body"></tbody></table></div>
     <div class="pg-bar" id="pr-pg"></div>
   </div>
@@ -1950,7 +1950,7 @@ async function loadData(){
     });
     D.kb={...kbGroups,despatched:D.od.slice(0,10)};
 
-    // D.pr: [id, date, product_name, customer_name, qty, is_cancelled(bool), is_on_hold(bool), order_id, pro_status, job_id]
+    // D.pr: [id, date, product_name, customer_name, qty, is_cancelled(bool), is_on_hold(bool), order_id, pro_status, job_id, product_id]
     // Active sub-status: to_process (no job_id), in_production, in_packing (packing), complete
     D.pr=pros.map(p=>[
       p.id,           // 0
@@ -1962,7 +1962,8 @@ async function loadData(){
       !!p.is_on_hold,   // 6
       p.order_id||'', // 7
       p.pro_status||'', // 8
-      p.job_id||''    // 9
+      p.job_id||'',   // 9
+      p.product_id||'' // 10
     ]);
     D.PT=pros.length;
 
@@ -2949,10 +2950,18 @@ R.pros=function(p){
   document.getElementById('pr-body').innerHTML=slice.map(p=>`<tr onclick="selPR(event,${JSON.stringify(p[0])})">
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td><div id="pri-${p[0].replace(/[^a-zA-Z0-9]/g,'_')}" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:6px;background:var(--s1)">📦</div></td>
     <td class="mono" style="font-size:11px">${p[7]?`<span onclick="event.stopPropagation();nav('orders')" style="cursor:pointer;color:var(--acc)">${p[7]}</span>`:'—'}</td>
     <td class="mono" style="font-size:11px">${p[9]||'—'}</td>
     <td>${proSubStatus(p)}</td>
-  </tr>`).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
+  </tr>`).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No PROs match</td></tr>';
+  slice.forEach(p=>{
+    if(!p[10])return;
+    const el=document.getElementById('pri-'+p[0].replace(/[^a-zA-Z0-9]/g,'_'));
+    if(!el)return;
+    const url=getProductImageUrl(p[10]);
+    if(url)el.innerHTML=`<img src="${url}" style="width:40px;height:40px;object-fit:contain;background:#fff;display:block;border-radius:6px" onload="this.closest('div').style.background='#fff'" onerror="this.closest('div').textContent='📦';this.closest('div').style.background='var(--s1)'">`;
+  });
 };
 function selPR(e,pid){
   const tr2=e.target.closest('tr');
