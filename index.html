@@ -2807,8 +2807,7 @@ R.products=function(p){
       if(!el)return;
       const url=getProductImageUrl(p[0]);
       if(url&&el){
-        el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:contain;background:#fff;display:block" onerror="this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
-        el.style.background='#000';
+        el.innerHTML=`<img src="${url}" style="width:100%;height:90px;object-fit:contain;background:#fff;display:block" onload="this.closest('div').style.background='#fff'" onerror="this.closest('div').style.background='';this.closest('div').innerHTML='<span style=\\'font-size:36px;opacity:.55\\'>🏷</span>'">`;
       }
     });
   } else {
