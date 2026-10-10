@@ -2145,7 +2145,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRP();});
 // rf: legacy single field (kept for any old usage)
 function rf(l,v){return v!=null&&v!==''?`<div style="display:flex;align-items:baseline;gap:6px;padding:3px 0;font-size:12px"><span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;min-width:110px;flex-shrink:0">${l}</span><span style="font-weight:500">${v}</span></div>`:''}
 // dpRow: single row inside a .dp-grid — must be used inside dpGrid() or dpGridOpen()
-function dpRow(l,v){return `<div class="dk">${l}</div><div class="dv" title="${typeof v==='string'?v:''}">${v!=null&&v!==''?v:'—'}</div>`;}
+function dpRow(l,v){const t=typeof v==='string'&&!v.includes('<')?` title="${v.replace(/"/g,'&quot;')}"`:''  ;return `<div class="dk">${l}</div><div class="dv"${t}>${v!=null&&v!==''?v:'—'}</div>`;}
 // dpSec: section divider inside a .dp-grid
 function dpSec(l){return `<div class="dp-sec">${l}</div>`;}
 // dpGrid: wrap rows in a grid
