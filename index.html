@@ -407,7 +407,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <div id="sb">
   <div class="ni on" data-p="dash"><span class="ic">🏠</span><span class="nl">Dashboard</span></div>
   <div class="ns">Live Operations</div>
-  <div class="ni" data-p="wflow-order"><span class="ic">📋</span><span class="nl">Order</span><span class="nbadge nb-acc" id="b-o">—</span></div>
+  <div class="ni" data-p="wflow-order"><span class="ic">📋</span><span class="nl">Order</span><span class="nbadge nb-y" id="b-tg" style="display:none" title="Telegram orders awaiting confirmation">0</span><span class="nbadge nb-acc" id="b-o">—</span></div>
   <div class="ni" data-p="wflow-design"><span class="ic">✏️</span><span class="nl">Design</span></div>
   <div class="ni" data-p="wflow-prod"><span class="ic">⚙️</span><span class="nl">Production</span></div>
   <div class="ni" data-p="wpk"><span class="ic">📦</span><span class="nl">Packing</span></div>
@@ -652,6 +652,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <button class="btn btn-p" style="font-size:11px" onclick="openNewOrderForm()">+ New Order</button>
   </div>
 </div>
+<div id="tg-inbox"></div>
 <div class="kb-wrap" id="kb-board"></div>
 <div id="kb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1500;align-items:center;justify-content:center">
   <div style="background:var(--s1);border-radius:14px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
@@ -5052,5 +5053,318 @@ function initApp(){
 </script>
 
 <div id="new-order-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;padding:16px"></div>
+<div id="tg-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2100;align-items:center;justify-content:center;padding:16px"></div>
+
+<style>
+/* ── Telegram inbox (Order Operations) ── */
+#tg-inbox{margin-bottom:14px}
+.tgi-head{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;margin-bottom:8px}
+.tgi-sub{font-weight:500;font-size:11px;color:var(--t2)}
+.tgi-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.tgi-card{flex:0 0 290px;background:var(--s1);border:1px solid var(--bdr);border-left:3px solid var(--ylw);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.tgi-top{display:flex;gap:10px;align-items:flex-start}
+.tgi-top img,.tgi-ph{width:44px;height:44px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid var(--bdr);flex-shrink:0}
+.tgi-ph{display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--s2)}
+.tgi-cust{font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tgi-prod{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tgi-meta{font-size:10px;color:var(--t2);display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.tgi-qty{font-weight:800;font-size:14px}.tgi-qty span{font-weight:500;font-size:11px;color:var(--t2)}
+.tgi-notes{font-size:11px;color:var(--t2)}
+.tgi-warn{font-size:11px;font-weight:700;color:var(--rdk);background:var(--rlt);border-radius:5px;padding:2px 7px;align-self:flex-start}
+.tgi-raw{font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tgi-act{display:flex;gap:6px;margin-top:2px}
+.tgi-empty{font-size:11px;color:var(--t2);background:var(--s1);border:1px dashed var(--bdr);border-radius:8px;padding:8px 12px}
+.tge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tge-grid label{display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.tge-grid .f{width:100%}
+.tge-full{grid-column:1/-1}
+/* ── Design chat (Design board card) ── */
+.dwc{margin-top:14px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
+.dwc-h{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);font-weight:700;font-size:12px}
+.dwc-h a{margin-left:auto;font-weight:600;font-size:11px;color:var(--acc);text-decoration:none}
+.dwc-list{max-height:320px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.dwc-m{max-width:85%;background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:6px 10px;font-size:12px;align-self:flex-start}
+.dwc-m.app{align-self:flex-end;background:var(--acc-lt);border-color:transparent}
+.dwc-m.bot{align-self:center;background:transparent;border:none;color:var(--t2);font-size:11px;text-align:center}
+.dwc-who{font-size:10px;font-weight:700;color:var(--t2);margin-bottom:2px}
+.dwc-txt{white-space:pre-wrap;word-break:break-word}
+.dwc-m img{max-width:220px;max-height:180px;border-radius:6px;display:block;margin:4px 0;cursor:pointer;background:#fff}
+.dwc-file{display:inline-block;margin:4px 0;font-size:11px;color:var(--acc)}
+.dwc-time{font-size:9px;color:var(--t3);margin-top:2px}
+.dwc-in{display:flex;gap:6px;padding:8px;border-top:1px solid var(--bdr);background:var(--s1);align-items:flex-end}
+.dwc-in textarea{flex:1;resize:none;height:36px;padding:7px 9px;border:1px solid var(--bdr);border-radius:7px;font:inherit;font-size:12px}
+.dwc-empty{color:var(--t3);font-size:11px;text-align:center;padding:16px}
+.kb-tg{font-size:9px;padding:1px 5px;border-radius:10px;background:var(--blt);color:var(--bdk);font-weight:700}
+</style>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// TELEGRAM INTEGRATION — order inbox + design chat
+// Talks to the klap-telegram edge function with the user's Supabase session
+// ══════════════════════════════════════════════════════════
+const TG_URL=`${SB_URL}/functions/v1/klap-telegram`;
+const hx=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function tgApi(path,opts={}){
+  const{data:{session}}=await SB_CLIENT.auth.getSession();
+  const r=await fetch(TG_URL+path,{...opts,headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+(session?.access_token||''),...(opts.headers||{})}});
+  const j=await r.json().catch(()=>({error:'Bad response ('+r.status+')'}));
+  if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+function tgAgo(ts){
+  const m=Math.round((Date.now()-new Date(ts).getTime())/60000);
+  return m<1?'just now':m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago';
+}
+
+// ── ORDER INBOX ───────────────────────────────────────────
+let TG_INBOX=[];
+async function tgLoadInbox(){
+  try{const j=await tgApi('/inbox');TG_INBOX=j.items||[];}
+  catch(e){console.warn('Telegram inbox:',e.message);TG_INBOX=null;}
+  tgRenderInbox();
+}
+function tgRenderInbox(){
+  const badge=document.getElementById('b-tg');
+  if(badge){const n=TG_INBOX?.length||0;badge.textContent=n;badge.style.display=n?'':'none';}
+  const el=document.getElementById('tg-inbox');if(!el)return;
+  if(TG_INBOX===null){el.innerHTML='';return;}
+  if(!TG_INBOX.length){
+    el.innerHTML=`<div class="tgi-empty">📨 No orders waiting. Orders posted in the Telegram <b>New Order</b> group appear here for confirmation.</div>`;
+    return;
+  }
+  el.innerHTML=`<div class="tgi-head">📨 Awaiting confirmation <span class="kb-hdr-cnt">${TG_INBOX.length}</span>
+    <span class="tgi-sub">from Telegram · confirm here or in the group</span></div>
+    <div class="tgi-row">${TG_INBOX.map(tgCardHTML).join('')}</div>`;
+}
+function tgCardHTML(r){
+  const img=r.product_id
+    ?`<img src="${getProductImageUrl(r.product_id)}" onerror="this.outerHTML='<div class=&quot;tgi-ph&quot;>📦</div>'">`
+    :`<div class="tgi-ph">✨</div>`;
+  const kind=!r.product_id?'<span class="b bp" style="font-size:9px">✨ New product</span>'
+    :r.has_changes?'<span class="b by" style="font-size:9px">✏️ With changes</span>'
+    :'<span class="b bg" style="font-size:9px">🔁 Repeat</span>';
+  const warn=!r.customer_id?'<div class="tgi-warn">⚠ Customer not matched</div>'
+    :!r.qty?'<div class="tgi-warn">⚠ Quantity missing</div>'
+    :(r.candidates?.confidence==='low'&&r.product_id)?'<div class="tgi-warn">⚠ Check the product</div>':'';
+  return `<div class="tgi-card">
+    <div class="tgi-top">${img}
+      <div style="min-width:0;flex:1">
+        <div class="tgi-cust" title="${hx(r.customer_name)}">${hx(r.customer_name||'—')}</div>
+        <div class="tgi-prod" title="${hx(r.product_name)}">${hx(r.product_name||'—')}</div>
+        <div class="tgi-meta"><span class="mono">${hx(r.product_id||'new')}</span>${kind}</div>
+      </div>
+    </div>
+    <div class="tgi-qty">${r.qty!=null?Number(r.qty).toLocaleString('en-IN'):'?'} ${hx(r.units||'')} <span>· ${hx(r.order_type||'')}</span></div>
+    ${r.notes?`<div class="tgi-notes">📝 ${hx(r.notes)}</div>`:''}
+    ${warn}
+    <div class="tgi-raw" title="${hx(r.raw_text)}">“${hx(r.raw_text||'(image)')}” — ${hx(r.posted_by||'')}, ${tgAgo(r.created_at)}</div>
+    <div class="tgi-act">
+      <button class="ab ab-g" onclick="tgConfirm('${r.id}')">✅ Confirm</button>
+      <button class="ab ab-y" onclick="tgEdit('${r.id}')">✏️ Edit</button>
+      <button class="ab ab-r" onclick="tgDelete('${r.id}')">🗑 Delete</button>
+    </div>
+  </div>`;
+}
+async function tgConfirm(id){
+  const r=(TG_INBOX||[]).find(x=>x.id===id);if(!r)return;
+  if(!r.customer_id){toast('Pick the customer first');return tgEdit(id);}
+  if(!r.qty){toast('Enter the quantity first');return tgEdit(id);}
+  try{
+    const j=await tgApi(`/inbox/${id}/confirm`,{method:'POST',body:'{}'});
+    toast(j.ok?`✅ ${j.order_id} entered${j.new_product?' · design topic created':''}`:'Already '+(j.reason||'handled'));
+  }catch(e){toast('⚠ '+e.message);}
+  tgLoadInbox();
+}
+async function tgDelete(id){
+  if(!confirm('Delete this provisional order?'))return;
+  try{await tgApi(`/inbox/${id}/delete`,{method:'POST',body:'{}'});toast('Deleted');}
+  catch(e){toast('⚠ '+e.message);}
+  tgLoadInbox();
+}
+
+// Edit modal — customer + product pickers from loaded data
+function tgEdit(id){
+  const r=(TG_INBOX||[]).find(x=>x.id===id);if(!r)return;
+  const custOpts='<option value="">— select customer —</option>'+D.cu.map(c=>
+    `<option value="${hx(c[0])}" ${c[0]===r.customer_id?'selected':''}>${hx(c[1])}${c[3]?' — '+hx(c[3]):''}</option>`).join('');
+  const units=['pcs','Minimum','kg','meters','packets','bundles','Single Block','Double Block'];
+  const m=document.getElementById('tg-edit-modal');
+  m.innerHTML=`<div style="background:var(--s1);border-radius:14px;width:600px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:22px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <div><h2 style="font-size:16px;font-weight:800">Edit provisional order</h2>
+      <div style="font-size:11px;color:var(--t2);margin-top:2px">Posted by ${hx(r.posted_by||'')} · ${tgAgo(r.created_at)}</div></div>
+      <span onclick="tgEditClose()" style="margin-left:auto;cursor:pointer;font-size:20px;color:var(--t2);padding:2px 6px">✕</span>
+    </div>
+    <div style="background:var(--s2);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--t2);white-space:pre-wrap">${hx(r.raw_text||'(image)')}</div>
+    <div class="tge-grid">
+      <div class="tge-full"><label>Customer</label><select class="f" id="tge-cust" onchange="tgEditFillProducts()">${custOpts}</select></div>
+      <div class="tge-full"><label>Product</label><select class="f" id="tge-prod" onchange="tgEditToggleNew()"></select></div>
+      <div class="tge-full" id="tge-new-wrap"><label>New product name</label><input class="f" id="tge-new" value="${hx(r.product_id?'':r.product_name||'')}"></div>
+      <div><label>Quantity</label><input class="f" id="tge-qty" type="number" value="${r.qty??''}"></div>
+      <div><label>Units</label><select class="f" id="tge-units">${units.map(u=>`<option ${u===(r.units||'pcs')?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div><label>Order type</label><select class="f" id="tge-type">${['From Production','From Stock'].map(u=>`<option ${u===r.order_type?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div><label>Customer PO</label><input class="f" id="tge-po" value="${hx(r.party_reference||'')}"></div>
+      <div class="tge-full" id="tge-chg-wrap"><label><input type="checkbox" id="tge-chg" ${r.has_changes?'checked':''} style="vertical-align:middle"> Repeat with changes</label><input class="f" id="tge-chgd" placeholder="What changes?" value="${hx(r.change_desc||'')}"></div>
+      <div class="tge-full"><label>Notes</label><input class="f" id="tge-notes" value="${hx(r.notes||'')}"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="tgEditClose()">Cancel</button>
+      <button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="tgEditSave('${id}',false)">Save</button>
+      <button class="btn btn-p" onclick="tgEditSave('${id}',true)">✅ Save &amp; Confirm</button>
+    </div>
+  </div>`;
+  m.dataset.prod=r.product_id||'';
+  tgEditFillProducts();
+  m.style.display='flex';
+}
+function tgEditFillProducts(){
+  const m=document.getElementById('tg-edit-modal');
+  const cid=document.getElementById('tge-cust').value;
+  const cname=(D.cu.find(c=>c[0]===cid)||[])[1];
+  const list=D.pd.filter(p=>cname&&p[2]===cname&&p[3]!=='cancelled').sort((a,b)=>String(b[0]).localeCompare(String(a[0])));
+  const cur=m.dataset.prod;
+  document.getElementById('tge-prod').innerHTML='<option value="">✨ New product</option>'+
+    list.map(p=>`<option value="${hx(p[0])}" ${p[0]===cur?'selected':''}>${hx(p[1])} · ${hx(p[0])}</option>`).join('');
+  tgEditToggleNew();
+}
+function tgEditToggleNew(){
+  const isNew=!document.getElementById('tge-prod').value;
+  document.getElementById('tge-new-wrap').style.display=isNew?'':'none';
+  document.getElementById('tge-chg-wrap').style.display=isNew?'none':'';
+}
+function tgEditClose(){document.getElementById('tg-edit-modal').style.display='none';}
+async function tgEditSave(id,andConfirm){
+  const v=x=>document.getElementById(x).value;
+  const pid=v('tge-prod')||null;
+  const body={customer_id:v('tge-cust')||null,product_id:pid,qty:v('tge-qty')?Math.round(Number(v('tge-qty'))):null,
+    units:v('tge-units'),order_type:v('tge-type'),party_reference:v('tge-po')||null,notes:v('tge-notes')||null,
+    has_changes:!!pid&&document.getElementById('tge-chg').checked,change_desc:v('tge-chgd')||null};
+  if(!pid)body.product_name=v('tge-new').trim();
+  if(!body.customer_id){toast('Select a customer');return;}
+  if(!pid&&!body.product_name){toast('Enter the new product name');return;}
+  try{
+    await tgApi(`/inbox/${id}/update`,{method:'POST',body:JSON.stringify(body)});
+    tgEditClose();
+    if(andConfirm){await tgLoadInbox();return tgConfirm(id);}
+    toast('Saved — card updated in Telegram too');
+  }catch(e){toast('⚠ '+e.message);}
+  tgLoadInbox();
+}
+
+// Hook into Order Operations page + poll while it is open
+const _tgOrigInitOrderWF=initOrderWF;
+initOrderWF=function(){tgLoadInbox();try{_tgOrigInitOrderWF();}catch(e){console.warn('initOrderWF',e);}};
+setInterval(()=>{
+  if(document.getElementById('pg-wflow-order')?.classList.contains('on'))tgLoadInbox();
+},20000);
+setTimeout(()=>{if(CURRENT_USER)tgLoadInbox();},4000); // badge on startup
+
+// ── DESIGN CHAT ───────────────────────────────────────────
+let TG_THREADS=new Set();
+let _dwcTimer=null,_dwcCode=null,_dwcCount=-1;
+
+const _tgOrigInitDesignWF=initDesignWF;
+initDesignWF=function(){
+  _tgOrigInitDesignWF();
+  tgMarkThreads();
+  tgApi('/design-threads').then(j=>{TG_THREADS=new Set((j.items||[]).map(x=>x.id));tgMarkThreads();}).catch(()=>{});
+};
+function tgMarkThreads(){
+  document.querySelectorAll('#dw-board .kb-card').forEach(c=>{
+    const code=c.querySelector('.kb-code')?.textContent?.trim();
+    if(code&&TG_THREADS.has(code)&&!c.querySelector('.kb-tg')){
+      c.querySelector('.kb-card-tags')?.insertAdjacentHTML('beforeend','<span class="kb-tg">💬 Chat</span>');
+    }
+  });
+}
+
+const _tgOrigDwOpenCard=dwOpenCard;
+dwOpenCard=function(code){
+  _tgOrigDwOpenCard(code);
+  const body=document.getElementById('dw-modal-body');if(!body)return;
+  body.insertAdjacentHTML('beforeend',`<div class="dwc" id="dwc"><div class="dwc-h">💬 Design chat</div><div class="dwc-list"><div class="dwc-empty">Loading…</div></div></div>`);
+  const box=body.closest('div[style*="width:520px"]');if(box)box.style.width='640px';
+  _dwcCode=code;_dwcCount=-1;
+  tgLoadChat();
+  clearInterval(_dwcTimer);
+  _dwcTimer=setInterval(()=>{
+    if(!document.getElementById('dw-modal')?.classList.contains('open')){clearInterval(_dwcTimer);return;}
+    tgLoadChat(true);
+  },10000);
+};
+async function tgLoadChat(quiet){
+  const code=_dwcCode;const el=document.getElementById('dwc');if(!el)return;
+  let j;
+  try{j=await tgApi('/design/'+encodeURIComponent(code));}
+  catch(e){if(!quiet)el.querySelector('.dwc-list').innerHTML=`<div class="dwc-empty">Chat unavailable: ${hx(e.message)}</div>`;return;}
+  if(code!==_dwcCode)return;
+  const p=j.product,msgs=j.messages||[];
+  if(quiet&&msgs.length===_dwcCount)return;
+  _dwcCount=msgs.length;
+  const head=`<div class="dwc-h">💬 Design chat${p.thread_link?`<a href="${hx(p.thread_link)}" target="_blank" rel="noopener">Open in Telegram ↗</a>`:''}</div>`;
+  if(!p.tg_topic_id){
+    el.innerHTML=head+`<div class="dwc-empty">No Telegram topic for this product yet.<br>
+      <button class="ab ab-b" style="margin-top:8px" onclick="tgCreateTopic('${hx(code)}')">➕ Create design topic</button></div>`;
+    return;
+  }
+  const list=msgs.length?msgs.map(m=>{
+    const cls=m.source==='app'?'app':m.source==='bot'?'bot':'';
+    if(cls==='bot')return `<div class="dwc-m bot">${hx(m.text)} · ${tgAgo(m.created_at)}</div>`;
+    let file='';
+    if(m.file_url&&(m.mime_type||'').startsWith('image/'))file=`<img src="${hx(m.file_url)}" onclick="window.open(this.src,'_blank')">`;
+    else if(m.file_url)file=`<a class="dwc-file" href="${hx(m.file_url)}" target="_blank" rel="noopener">📎 ${hx(m.file_name||'file')}</a>`;
+    else if(m.file_type)file=`<div class="dwc-file" style="color:var(--t3)">📎 ${hx(m.file_name||m.file_type)} (too large to sync — open in Telegram)</div>`;
+    return `<div class="dwc-m ${cls}"><div class="dwc-who">${hx(m.from_name||'')}</div>${file}${m.text?`<div class="dwc-txt">${hx(m.text)}</div>`:''}<div class="dwc-time">${new Date(m.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${m.edited?' · edited':''}</div></div>`;
+  }).join(''):'<div class="dwc-empty">No messages yet</div>';
+  const draft=el.querySelector('textarea')?.value||'';
+  el.innerHTML=head+`<div class="dwc-list">${list}</div>
+    <div class="dwc-in">
+      <label class="ab" style="background:var(--s2);cursor:pointer;padding:8px 10px" title="Attach file">📎<input type="file" style="display:none" onchange="tgSendFile(this)"></label>
+      <textarea placeholder="Message the design topic…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();tgSendChat()}">${hx(draft)}</textarea>
+      <button class="btn btn-p" style="font-size:12px" onclick="tgSendChat()">Send</button>
+    </div>`;
+  const l=el.querySelector('.dwc-list');l.scrollTop=l.scrollHeight;
+}
+async function tgSendChat(){
+  const ta=document.querySelector('#dwc textarea');const text=ta?.value.trim();if(!text)return;
+  ta.disabled=true;
+  try{await tgApi('/design/'+encodeURIComponent(_dwcCode),{method:'POST',body:JSON.stringify({text})});ta.value='';}
+  catch(e){toast('⚠ '+e.message);}
+  ta.disabled=false;_dwcCount=-1;tgLoadChat();
+}
+function tgSendFile(input){
+  const f=input.files?.[0];if(!f)return;
+  if(f.size>15e6){toast('File too large (max 15 MB)');return;}
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    const b64=String(rd.result).split(',')[1];
+    const text=document.querySelector('#dwc textarea')?.value.trim()||'';
+    toast('Uploading '+f.name+'…');
+    try{
+      await tgApi('/design/'+encodeURIComponent(_dwcCode),{method:'POST',body:JSON.stringify({file_name:f.name,mime:f.type,file_base64:b64,text})});
+      const ta=document.querySelector('#dwc textarea');if(ta)ta.value='';
+      toast('Sent ✅');
+    }catch(e){toast('⚠ '+e.message);}
+    _dwcCount=-1;tgLoadChat();
+  };
+  rd.readAsDataURL(f);
+}
+async function tgCreateTopic(code){
+  try{await tgApi('/design/'+encodeURIComponent(code)+'/topic',{method:'POST',body:'{}'});TG_THREADS.add(code);toast('Design topic created in Telegram');}
+  catch(e){toast('⚠ '+e.message);}
+  _dwcCount=-1;tgLoadChat();
+}
+
+// Design board moves now save to the database (and post in the topic)
+const TG_DESIGN_STATUSES=['to_process','in_process','internal_approval','customer_approval','file_ready','cancelled'];
+const _tgOrigDwMove=dwMove;
+dwMove=function(d,newSt){
+  _tgOrigDwMove(d,newSt);
+  if(!TG_DESIGN_STATUSES.includes(newSt))return;
+  tgApi('/design/'+encodeURIComponent(d[0])+'/status',{method:'POST',body:JSON.stringify({status:newSt})})
+    .then(()=>{[D.pd,D.dq].forEach(arr=>{const x=arr.find(r=>r[0]===d[0]);if(x)x[3]=newSt;});})
+    .catch(e=>toast('⚠ Status not saved: '+e.message));
+};
+</script>
 </body>
 </html>
