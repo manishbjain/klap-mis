@@ -155,6 +155,13 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 .wft:hover{color:var(--txt)}.wft.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:700}
 .wp{display:block}
 
+/* TOP TAB BAR (flat nav) */
+#tab-bar{position:sticky;top:0;z-index:10;display:none!important}
+#tab-bar.tb-on{display:block!important}
+#tab-bar .wft{padding:10px 18px;font-size:12px}
+#tab-bar-actions{padding:4px 0 6px;border-top:1px solid var(--bdr)}
+#tab-bar-actions:empty{display:none!important;padding:0;border:none}
+
 /* ACTION BTNS */
 .ab{padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:600}
 .ab-g{background:var(--glt);color:var(--gdk)}.ab-b{background:var(--blt);color:var(--bdk)}
@@ -405,52 +412,29 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 
 <div id="ptitle" style="display:none"></div><div id="body">
 <div id="sb">
-  <div class="ni on" data-p="dash"><span class="ic">🏠</span><span class="nl">Dashboard</span></div>
-  <div class="ns">Live Operations</div>
-  <div class="ni" data-p="wflow-order"><span class="ic">📋</span><span class="nl">Order</span><span class="nbadge nb-y" id="b-tg" style="display:none" title="Telegram orders awaiting confirmation">0</span><span class="nbadge nb-acc" id="b-o">—</span></div>
-  <div class="ni" data-p="wflow-design"><span class="ic">✏️</span><span class="nl">Design</span></div>
-  <div class="ni" data-p="wflow-prod"><span class="ic">⚙️</span><span class="nl">Production</span></div>
-  <div class="ni" data-p="wpk"><span class="ic">📦</span><span class="nl">Packing</span></div>
-  <div class="ni" data-p="winv"><span class="ic">🗄</span><span class="nl">Inventory</span></div>
-  <div class="ni" data-p="wp"><span class="ic">🛒</span><span class="nl">Purchase</span></div>
-  <div class="ni" data-p="wdep"><span class="ic">🚚</span><span class="nl">Despatch</span></div>
+  <div class="ni on" data-p="dash" data-sec="dash"><span class="ic">🏠</span><span class="nl">Dashboard</span></div>
+  <div class="ns">Operations</div>
+  <div class="ni" data-p="orders-sec" data-sec="orders-sec"><span class="ic">📋</span><span class="nl">Orders</span><span class="nbadge nb-y" id="b-tg" style="display:none" title="Telegram orders awaiting confirmation">0</span><span class="nbadge nb-acc" id="b-o">—</span></div>
+  <div class="ni" data-p="design-sec" data-sec="design-sec"><span class="ic">✏️</span><span class="nl">Design</span></div>
+  <div class="ni" data-p="production-sec" data-sec="production-sec"><span class="ic">⚙️</span><span class="nl">Production</span></div>
+  <div class="ni" data-p="packing-sec" data-sec="packing-sec"><span class="ic">📦</span><span class="nl">Packing</span></div>
+  <div class="ni" data-p="inventory-sec" data-sec="inventory-sec"><span class="ic">🗄</span><span class="nl">Inventory</span></div>
+  <div class="ni" data-p="despatch-sec" data-sec="despatch-sec"><span class="ic">🚚</span><span class="nl">Despatch</span></div>
+  <div class="ni" data-p="purchase-sec" data-sec="purchase-sec"><span class="ic">🛒</span><span class="nl">Purchase</span></div>
   <div class="ns">Data</div>
-  <div class="ng"><span class="ng-ic">👥</span><span class="nl">Accounts</span><span class="ng-arr" id="ng-acc">›</span></div>
-  <div class="ng-ch" id="ngc-acc">
-    <div class="ni ni-sub" data-p="customers"><span class="ic">🏷</span><span class="nl">Customers</span></div>
-    <div class="ni ni-sub" data-p="vendors"><span class="ic">🏪</span><span class="nl">Vendors</span></div>
-    <div class="ni ni-sub" data-p="transporters"><span class="ic">🚛</span><span class="nl">Transporters</span></div>
-  </div>
-  <div class="ni" data-p="products"><span class="ic">🏷</span><span class="nl">Products</span></div>
-  <div class="ni" data-p="orders"><span class="ic">📋</span><span class="nl">Orders</span><span class="nbadge nb-acc" id="b-orders">—</span></div>
-  <div class="ng"><span class="ng-ic">🏭</span><span class="nl">Production</span><span class="ng-arr" id="ng-prod">›</span></div>
-  <div class="ng-ch" id="ngc-prod">
-    <div class="ni ni-sub" data-p="pros"><span class="ic">📄</span><span class="nl">Prod Orders (PROs)</span><span class="nbadge nb-y" id="b-pr">—</span></div>
-    <div class="ni ni-sub" data-p="jobs"><span class="ic">🔢</span><span class="nl">Jobs</span></div>
-    <div class="ni ni-sub" data-p="processes"><span class="ic">⚙️</span><span class="nl">Processes</span></div>
-    <div class="ng2"><span class="ng-ic">🛠</span><span class="nl">Assets</span><span class="ng-arr" id="ng-assets">›</span></div>
-    <div class="ng-ch2" id="ngc-assets">
-      <div class="ni ni-sub2" data-p="dies"><span class="ic">🔲</span><span class="nl">Dies</span></div>
-      <div class="ni ni-sub2" data-p="plates"><span class="ic">🖨</span><span class="nl">Plates</span></div>
-      <div class="ni ni-sub2" data-p="machines"><span class="ic">🔧</span><span class="nl">Machines</span></div>
-    </div>
-  </div>
-  <div class="ng"><span class="ng-ic">📦</span><span class="nl">Inventory</span><span class="ng-arr" id="ng-inv">›</span></div>
-  <div class="ng-ch" id="ngc-inv">
-    <div class="ns2">Raw Material</div>
-    <div class="ni ni-sub" data-p="rm-cat"><span class="ic">📂</span><span class="nl">RM Category</span></div>
-    <div class="ni ni-sub" data-p="rm-subcat"><span class="ic">📂</span><span class="nl">RM Sub-Category</span></div>
-    <div class="ni ni-sub" data-p="rm-inv"><span class="ic">📦</span><span class="nl">RM Inventory</span></div>
-    <div class="ns2">Finished Goods</div>
-    <div class="ni ni-sub" data-p="winv"><span class="ic">🗄</span><span class="nl">FG Inventory</span></div>
-  </div>
-  <div class="ni" data-p="wp"><span class="ic">🛒</span><span class="nl">Purchase</span></div>
-  <div class="ni" data-p="wdep"><span class="ic">🚚</span><span class="nl">Despatches</span></div>
+  <div class="ni" data-p="accounts-sec" data-sec="accounts-sec"><span class="ic">👥</span><span class="nl">Accounts</span></div>
+  <div class="ni" data-p="products-sec" data-sec="products-sec"><span class="ic">🏷</span><span class="nl">Products</span></div>
   <div class="ns">System</div>
-  <div class="ni" data-p="settings"><span class="ic">⚙️</span><span class="nl">Settings</span></div>
+  <div class="ni" data-p="settings" data-sec="settings"><span class="ic">⚙️</span><span class="nl">Settings</span></div>
 </div>
 
 <div id="ctr">
+
+<!-- TAB BAR (injected by tabNav) -->
+<div id="tab-bar" style="border-bottom:1px solid var(--bdr);background:var(--s1);margin:-18px -18px 14px -18px;padding:0 18px">
+  <div id="tab-bar-inner" class="wft-row" style="margin-bottom:0;border-bottom:none;flex-wrap:wrap"></div>
+  <div id="tab-bar-actions" style="display:flex;align-items:center;gap:8px;padding:6px 0;flex-wrap:wrap"></div>
+</div>
 
 <!-- DASHBOARD -->
 <div id="pg-dash" class="pg on">
@@ -2112,24 +2096,151 @@ document.querySelectorAll('.ng2').forEach(g=>{
 document.getElementById('ngc-prod')?.classList.add('open');
 document.getElementById('ng-prod')?.classList.add('open');
 
+// ── TAB NAV SYSTEM ──
+// Each section defines its tabs and which pg-* to show; actions are optional CTA buttons
+const SECTIONS={
+  'dash':{tabs:null,pages:['dash']},
+  'orders-sec':{
+    tabs:[
+      {id:'wflow-order',label:'🟢 Live'},
+      {id:'orders',label:'All Orders'},
+      {id:'orders-onhold',label:'On Hold'},
+      {id:'orders-cancelled',label:'Cancelled'}
+    ],
+    pages:['wflow-order','orders'],
+    actions:{
+      'wflow-order':'<button class="btn btn-p" onclick="openNewOrderForm()">+ New Order</button>'
+    }
+  },
+  'design-sec':{
+    tabs:[
+      {id:'wflow-design',label:'Queue'},
+      {id:'products',label:'All Products'}
+    ],
+    pages:['wflow-design','products','dq']
+  },
+  'production-sec':{
+    tabs:[
+      {id:'wflow-prod',label:'Workflow'},
+      {id:'pros',label:'PROs'},
+      {id:'jobs',label:'Jobs'},
+      {id:'processes',label:'Processes'},
+      {id:'dies',label:'Dies'},
+      {id:'plates',label:'Plates'},
+      {id:'machines',label:'Machines'}
+    ],
+    pages:['wflow-prod','pros','jobs','processes','dies','plates','machines'],
+    actions:{
+      'wflow-prod':'<button class="btn btn-p" onclick="pwNewJob()">+ New Job</button>'
+    }
+  },
+  'packing-sec':{tabs:null,pages:['wpk']},
+  'inventory-sec':{
+    tabs:[
+      {id:'rm-inv',label:'RM Inventory'},
+      {id:'rm-cat',label:'RM Category'},
+      {id:'rm-subcat',label:'RM Sub-Category'},
+      {id:'winv',label:'FG Inventory'}
+    ],
+    pages:['rm-inv','rm-cat','rm-subcat','winv']
+  },
+  'despatch-sec':{tabs:null,pages:['wdep']},
+  'purchase-sec':{tabs:null,pages:['wp']},
+  'accounts-sec':{
+    tabs:[
+      {id:'customers',label:'Customers'},
+      {id:'vendors',label:'Vendors'},
+      {id:'transporters',label:'Transporters'}
+    ],
+    pages:['customers','vendors','transporters']
+  },
+  'products-sec':{tabs:null,pages:['products']},
+  'settings':{tabs:null,pages:['settings']}
+};
+
+// Map virtual tab IDs that need filter logic
+const TAB_FILTERS={
+  'orders-onhold':{page:'orders',filter:()=>{const el=document.getElementById('o-st');if(el){el.value='on_hold';R.orders(1);}}},
+  'orders-cancelled':{page:'orders',filter:()=>{const el=document.getElementById('o-st');if(el){el.value='cancelled';R.orders(1);}}}
+};
+
+let _curSec=null;
+let _curTab=null;
+
+function showPg(pgId){
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  const el=document.getElementById('pg-'+pgId);
+  if(el)el.classList.add('on');
+}
+
+function activateTab(tabId){
+  _curTab=tabId;
+  // resolve real page
+  const virt=TAB_FILTERS[tabId];
+  const realPg=virt?virt.page:tabId;
+  showPg(realPg);
+  document.getElementById('ptitle').textContent=titles[realPg]||titles[tabId]||tabId;
+  closeRP();
+  // highlight tab
+  document.querySelectorAll('#tab-bar-inner .wft').forEach(t=>t.classList.toggle('on',t.dataset.tab===tabId));
+  // actions
+  const sec=SECTIONS[_curSec];
+  const actEl=document.getElementById('tab-bar-actions');
+  if(actEl){actEl.innerHTML=sec&&sec.actions&&sec.actions[tabId]?sec.actions[tabId]:'';}
+  // trigger data load
+  if(virt){virt.filter();}else{
+    // Pages with matching R.key names
+    const directR=['orders','customers','pros','jobs','dies','plates','machines','vendors','transporters','products','processes','dash'];
+    if(directR.includes(realPg)){const fn=R[realPg];if(fn)fn(1);}
+    // Pages that need special init or different R key names
+    if(realPg==='wflow-order'){initKanban();initOrderWF();}
+    if(realPg==='wflow-design'){initDesignWF();}
+    if(realPg==='wflow-prod'){initProdWF();}
+    if(realPg==='rm-cat'){R.rm_cats();}
+    if(realPg==='rm-subcat'){R.rm_subcats(1);}
+    if(realPg==='rm-inv'){R.rm_list(1);R.rm_in(1);R.rm_out(1);const el=document.getElementById('rmi-total');if(el)el.textContent=D.rm_list.length;}
+    if(realPg==='wp'){R.po_list(1);}
+    if(realPg==='wpk'){R.packing(1);}
+    if(realPg==='winv'){R.fg_inventory(1);}
+    if(realPg==='wdep'){R.despatch_live(1);}
+    if(realPg==='settings'&&R.settings)R.settings();
+  }
+}
+
+function activateSec(sec){
+  _curSec=sec;
+  const def=SECTIONS[sec];if(!def)return;
+  const bar=document.getElementById('tab-bar');
+  const inner=document.getElementById('tab-bar-inner');
+  // build tab bar
+  if(def.tabs&&def.tabs.length){
+    inner.innerHTML=def.tabs.map(t=>`<div class="wft" data-tab="${t.id}" onclick="activateTab('${t.id}')">${t.label}</div>`).join('');
+    bar.classList.add('tb-on');
+  }else{
+    inner.innerHTML='';
+    bar.classList.remove('tb-on');
+  }
+  // hide all pages first
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  // activate first tab or single page
+  const firstTab=def.tabs&&def.tabs.length?def.tabs[0].id:(def.pages?def.pages[0]:null);
+  if(firstTab)activateTab(firstTab);
+}
+
 // NAV
 document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
-  const p=n.dataset.p; if(!p)return;
-  document.querySelectorAll('.ni').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
-  document.querySelectorAll('.pg').forEach(x=>x.classList.toggle('on',x.id==='pg-'+p));
-  document.getElementById('ptitle').textContent=titles[p]||p;
-  closeRP();
-  const fn=R[p]; if(fn)fn(1);
-  if(p==='wflow-order'){initKanban();initOrderWF();}
-  if(p==='wflow-design'){initDesignWF();}
-  if(p==='wflow-prod'){initProdWF();}
-  if(p==='processes'){R.processes(1);}
-  if(p==='rm-cat'){R.rm_cats();}
-  if(p==='rm-subcat'){R.rm_subcats(1);}
-  if(p==='rm-inv'){R.rm_list(1);R.rm_in(1);R.rm_out(1);const el=document.getElementById('rmi-total');if(el)el.textContent=D.rm_list.length;}
-  if(p==='wp'){R.po_list(1);}
-  if(p==='winv'){R.fg_inventory(1);}
-  if(p==='wdep'){R.despatch_live(1);}
+  const sec=n.dataset.sec||n.dataset.p; if(!sec)return;
+  document.querySelectorAll('.ni').forEach(x=>x.classList.toggle('on',x===n));
+  const def=SECTIONS[sec];
+  if(!def){
+    // fallback: direct page (legacy)
+    showPg(sec);
+    document.getElementById('ptitle').textContent=titles[sec]||sec;
+    document.getElementById('tab-bar').classList.remove('tb-on');
+    closeRP();
+    return;
+  }
+  activateSec(sec);
 }));
 
 // RIGHT PANE
@@ -2636,7 +2747,26 @@ R.dash=function(){
   _s('b-o',ao);_s('b-dq',dql);_s('b-pr',ap);
 };
 
-function nav(p){document.querySelector('.ni[data-p="'+p+'"]')?.click();}
+// nav(p): navigate to a page. p can be a section (orders-sec) or a direct pg id.
+// Tries to find the right section and tab, else falls back to direct page show.
+function nav(p){
+  // Find if there's a direct section match
+  const secEl=document.querySelector('.ni[data-sec="'+p+'"]');
+  if(secEl){secEl.click();return;}
+  // Find if p is a tab inside any section
+  for(const [sec,def] of Object.entries(SECTIONS)){
+    if(def.tabs&&def.tabs.find(t=>t.id===p)){
+      const secEl2=document.querySelector('.ni[data-sec="'+sec+'"]');
+      if(secEl2){secEl2.click();setTimeout(()=>activateTab(p),50);return;}
+    }
+    if(def.pages&&def.pages.includes(p)){
+      const secEl3=document.querySelector('.ni[data-sec="'+sec+'"]');
+      if(secEl3){secEl3.click();return;}
+    }
+  }
+  // Fallback: legacy direct
+  document.querySelector('.ni[data-p="'+p+'"]')?.click();
+}
 
 R.orders=function(p){
   if(p)pp.orders=p;
