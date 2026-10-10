@@ -2761,7 +2761,7 @@ function selO(e,oid){try{
     <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
     <td style="padding:4px 8px;font-size:11px;text-align:right">${q?Number(q).toLocaleString():'—'}</td>
     <td style="padding:4px 8px;font-size:11px">${proSubStatus(p)}</td>
-    <td class="mono" style="padding:4px 8px;font-size:11px">${p[9]||'—'}</td>
+    <td class="mono" style="padding:4px 8px;font-size:11px">${p[9]?`<span onclick="event.stopPropagation();selJob(null,${esc(p[9])})" style="cursor:pointer;color:var(--acc)">${p[9]}</span>`:'—'}</td>
   </tr>`;}).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No PROs yet</td></tr>';
   const doRows=doRecs.length?doRecs.map(d=>{const q=doQtyPcs(d);return`<tr>
     <td class="mono" style="padding:4px 8px;font-size:11px">${d[0]}</td>
