@@ -97,18 +97,24 @@ async function claudeTool(system: string, content: any[], tool: any): Promise<an
     headers: { "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 2000,
-      system,
+      max_tokens: 4000,
+      system: `${system}\n\nAlways respond by calling the ${tool.name} tool exactly once. Do not reply with plain text.`,
       tools: [tool],
-      tool_choice: { type: "tool", name: tool.name },
+      tool_choice: { type: "auto" },
       messages: [{ role: "user", content }],
     }),
   });
   const j = await r.json();
   if (!r.ok) throw new Error("Claude error: " + JSON.stringify(j).slice(0, 300));
-  const block = (j.content || []).find((b: any) => b.type === "tool_use");
-  if (!block) throw new Error("Claude returned no tool call");
-  return block.input;
+  const block = (j.content || []).find((b: any) => b.type === "tool_use" && b.name === tool.name);
+  if (block) return block.input;
+  // Fallback: model answered in text — pull the first JSON object out of it
+  const text = (j.content || []).filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n");
+  const s = text.indexOf("{"), e = text.lastIndexOf("}");
+  if (s >= 0 && e > s) {
+    try { return JSON.parse(text.slice(s, e + 1)); } catch { /* fall through */ }
+  }
+  throw new Error("Claude returned no tool call: " + text.slice(0, 200));
 }
 
 const EXTRACT_SYSTEM = `You read order messages posted in the "New Order" Telegram group of Krishiv Labels & Packaging (Ahmedabad), a label and packaging printer.
