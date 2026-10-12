@@ -2944,7 +2944,7 @@ function selO(e,oid){try{
   let totalDespatched=0;
   if(D.do_items&&D.do_items.length){
     const doIds=new Set(doRecs.map(d=>d[0]));
-    totalDespatched=D.do_items.filter(it=>doIds.has(it[1])).reduce((s,it)=>s+(Number(it[3])||Number(it[4])||0),0);
+    totalDespatched=D.do_items.filter(it=>doIds.has(it.delivery_order_id)).reduce((s,it)=>s+(Number(it.packet_qty)||0),0);
   } else {
     // Fallback: each DO ships the full order qty (approximate)
     totalDespatched=doRecs.length>0?(Number(o[4])||0):0;
