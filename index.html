@@ -3291,16 +3291,16 @@ function selPR(e,pid){try{
     const stepLabel=PROC_LABEL[r.process_name]||r.process_name||'?';
     const vendorName=veMap[r.vendor_id]||r.vendor_id||'';
     const machStr=[vendorName,r.machine].filter(Boolean).join(' / ')||'—';
-    const qtyStr=r.qty_in&&r.qty_out?`${Number(r.qty_in).toLocaleString()} → ${Number(r.qty_out).toLocaleString()}`:(r.qty_out?`Out: ${Number(r.qty_out).toLocaleString()}`:r.qty_in?`In: ${Number(r.qty_in).toLocaleString()}`:'—');
+    const qtyStr=r.qty_in&&r.qty_out?(Number(r.qty_in).toLocaleString()+' → '+Number(r.qty_out).toLocaleString()):(r.qty_out?'Out: '+Number(r.qty_out).toLocaleString():r.qty_in?'In: '+Number(r.qty_in).toLocaleString():'—');
     const dieStr=[r.die_id?'Die: '+r.die_id:'',r.plate_id?'Plate: '+r.plate_id:''].filter(Boolean).join(' ');
     const seqNo=r.seq||i+1;
     return `<tr style="${rowBg};cursor:pointer" onclick="selProc(event,${esc(r.id)})">
       <td style="padding:5px 6px;font-size:11px;text-align:center;font-weight:700;color:var(--t2);width:24px">${seqNo}</td>
-      <td style="padding:5px 8px;font-size:11px"><strong>${stepLabel}</strong>${dieStr?`<br><span style="font-size:10px;color:var(--t3)">${dieStr}</span>`:''}</td>
+      <td style="padding:5px 8px;font-size:11px"><strong>${stepLabel}</strong>${dieStr?'<br><span style="font-size:10px;color:var(--t3)">'+dieStr+'</span>':''}</td>
       <td style="padding:5px 8px;font-size:11px">${r.date||'—'}</td>
       <td style="padding:5px 8px;font-size:11px">${machStr}</td>
       <td style="padding:5px 8px;font-size:11px;text-align:right;font-variant-numeric:tabular-nums">${qtyStr}</td>
-      ${r.wastage?`<td style="padding:5px 8px;font-size:11px;text-align:right;color:var(--t3)">-${Number(r.wastage).toLocaleString()}</td>`:'<td></td>'}
+      ${r.wastage?'<td style="padding:5px 8px;font-size:11px;text-align:right;color:var(--t3)">-'+Number(r.wastage).toLocaleString()+'</td>':'<td></td>'}
       <td style="padding:5px 8px;font-size:11px">${badge(effStatus)}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="7" style="padding:8px;font-size:11px;color:var(--t3)">No processes yet</td></tr>';
