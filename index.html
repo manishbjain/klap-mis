@@ -4032,11 +4032,51 @@ R.despatch_live=function(p){
       <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
       <td style="text-align:right">${r[6]||0} items</td>
       <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
-      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>DC ${r[0]}</h3><table class=dtl><tr><td>DO ID</td><td class=mono>${r[0]}</td></tr><tr><td>Date</td><td>${r[1]||\'—\'}</td></tr><tr><td>Customer</td><td>${r[3]||\'—\'}</td></tr><tr><td>Order</td><td class=mono>${r[2]||\'—\'}</td></tr><tr><td>Items</td><td>${r[6]||0} batches</td></tr><tr><td>Price</td><td>${r[4]?\'₹\'+Number(r[4]).toLocaleString():\'—\'}</td></tr><tr><td>Taxation</td><td>${r[5]||\'—\'}</td></tr></table></div>',\'📄 DC ${r[0]}\')">📄 View DC</button></td>
+      <td><button class="ab ab-g" onclick="selDO(event,${esc(r[0])})">📄 View DC</button></td>
     </tr>`;
   }).join('');
   const rv=document.getElementById('wdep-r');if(rv)rv.textContent=D.dos.length;
 };
+
+function selDO(e,did){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const r=D.dos.find(x=>x[0]===did);
+  if(!r)return;
+  const items=D.do_items.filter(i=>i.delivery_order_id===did);
+  const fgMap={};D.fg.forEach(f=>{fgMap[f[3]]=f;});
+  const itemRows=items.length?items.map(i=>{
+    const fg=fgMap[i.inv_batch_id]||[];
+    return `<tr>
+      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${i.inv_batch_id||'-'}</td>
+      <td style="padding:4px 8px;font-size:11px">${fg[7]||'-'}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${i.packet_qty||'-'} pkts</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="3" style="padding:8px;font-size:11px;color:var(--t3)">No items</td></tr>';
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    ${rpRow('DO ID',`<span class="mono">${r[0]}</span>`)}
+    ${rpRow('Date',r[1]||'-')}
+    ${rpRow('Customer',r[3]||'-')}
+    ${rpRow('Order',r[2]?`<span class="mono">${r[2]}</span>`:'-')}
+    ${rpRow('Items',r[6]||0)}
+    ${rpRow('Price',r[4]?'Rs.'+Number(r[4]).toLocaleString():'-')}
+    ${rpRow('Taxation',r[5]||'-')}
+  </div>
+  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Items Despatched</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Batch ID</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Product</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Packets</th>
+      </tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+  </div>`;
+  openRP(html,'DC: '+r[0]);
+}
 
 // ── ORDER WORKFLOW ────────────────────────────────────────
 let OWF={active:[],on_hold:[],desp:[],cancelled:[],captured:[]};
