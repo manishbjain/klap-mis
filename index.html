@@ -765,7 +765,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="To Send">To Send</option><option value="Job Order Sent">Job Order Sent</option><option value="Job Approved">Job Approved</option><option value="Part Processed">Part Processed</option><option value="Complete">Complete</option><option value="Moved">Moved</option><option value="Cancelled">Cancelled</option></select>
+        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option><option value="skipped">Skipped</option></select>
         <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-processes" onclick="openFD('processes')">⚙ Filters</button>
       </div>
@@ -777,7 +777,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <th>Product</th><th>Customer</th>
       <th onclick="thSort('processes',3,'R.processes')" style="cursor:pointer;user-select:none;white-space:nowrap">Date<span id="prc-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th>
       <th>Material</th>
-      <th onclick="thSort('processes',6,'R.processes')" style="cursor:pointer;user-select:none;white-space:nowrap">Counter<span id="prc-arr-6" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th>
+      <th onclick="thSort('processes',6,'R.processes')" style="cursor:pointer;user-select:none;white-space:nowrap">Qty Out<span id="prc-arr-6" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th>
       <th>Machine/Vendor</th><th>Status</th>
     </tr></thead><tbody id="proc-body"></tbody></table></div>
     <div class="pg-bar" id="proc-pg"></div>
@@ -3277,17 +3277,33 @@ function selPR(e,pid){try{
   const sizeStr=rawProd.size_l?`${rawProd.size_l}×${rawProd.size_b}${rawProd.size_h?'×'+rawProd.size_h:''} ${rawProd.size_units||'mm'}`:ppRec&&ppRec[11]?`${ppRec[11]}×${ppRec[12]} ${ppRec[13]||'mm'}`:'—';
   // Process progress bar
   const totalProcs=procs.length;
-  const doneProcs=procs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
+  const doneProcs=procs.filter(r=>r.step_status==='done'||r.step_status==='skipped'||r.process_status==='Complete'||r.process_status==='Moved').length;
   const pct=totalProcs?Math.round(doneProcs/totalProcs*100):0;
   const imgUrl=p[10]?getProductImageUrl(p[10]):null;
   const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:8px;background:var(--s1)">📦</div>`;
-  const procsRows=procs.length?procs.map(r=>`<tr>
-    <td style="padding:4px 8px;font-size:11px">${r.process_name||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${r.date||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${veMap[r.vendor_id]||r.vendor_id||r.machine||'—'}</td>
-    <td style="padding:4px 8px;font-size:11px;text-align:right">${r.counter?Number(r.counter).toLocaleString():'—'}</td>
-    <td style="padding:4px 8px;font-size:11px">${badge(r.process_status||'pending')}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No processes yet</td></tr>';
+  const sortedProcs=procs.slice().sort((a,b)=>(a.seq||0)-(b.seq||0));
+  const procsRows=sortedProcs.length?sortedProcs.map((r,i)=>{
+    const effStatus=r.step_status||r.process_status||'pending';
+    const isDone=effStatus==='done'||effStatus==='Complete'||effStatus==='Moved';
+    const isSkip=effStatus==='skipped';
+    const isActive=effStatus==='in_progress';
+    const rowBg=isDone?'background:rgba(34,197,94,.08)':(isSkip?'background:rgba(0,0,0,.04)':(isActive?'background:rgba(245,158,11,.08)':''));
+    const stepLabel=PROC_LABEL[r.process_name]||r.process_name||'?';
+    const vendorName=veMap[r.vendor_id]||r.vendor_id||'';
+    const machStr=[vendorName,r.machine].filter(Boolean).join(' / ')||'—';
+    const qtyStr=r.qty_in&&r.qty_out?`${Number(r.qty_in).toLocaleString()} → ${Number(r.qty_out).toLocaleString()}`:(r.qty_out?`Out: ${Number(r.qty_out).toLocaleString()}`:r.qty_in?`In: ${Number(r.qty_in).toLocaleString()}`:'—');
+    const dieStr=[r.die_id?'Die: '+r.die_id:'',r.plate_id?'Plate: '+r.plate_id:''].filter(Boolean).join(' ');
+    const seqNo=r.seq||i+1;
+    return `<tr style="${rowBg};cursor:pointer" onclick="selProc(event,${esc(r.id)})">
+      <td style="padding:5px 6px;font-size:11px;text-align:center;font-weight:700;color:var(--t2);width:24px">${seqNo}</td>
+      <td style="padding:5px 8px;font-size:11px"><strong>${stepLabel}</strong>${dieStr?`<br><span style="font-size:10px;color:var(--t3)">${dieStr}</span>`:''}</td>
+      <td style="padding:5px 8px;font-size:11px">${r.date||'—'}</td>
+      <td style="padding:5px 8px;font-size:11px">${machStr}</td>
+      <td style="padding:5px 8px;font-size:11px;text-align:right;font-variant-numeric:tabular-nums">${qtyStr}</td>
+      ${r.wastage?`<td style="padding:5px 8px;font-size:11px;text-align:right;color:var(--t3)">-${Number(r.wastage).toLocaleString()}</td>`:'<td></td>'}
+      <td style="padding:5px 8px;font-size:11px">${badge(effStatus)}</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="7" style="padding:8px;font-size:11px;color:var(--t3)">No processes yet</td></tr>';
   const matRows=rmOut.length?rmOut.map(x=>{
     const ri=D.rm_in.find(r=>r[0]===x[2]);
     return `<tr>
@@ -3352,7 +3368,7 @@ function selPR(e,pid){try{
   )}
   <div class="dp-sec-title">Processes (${procs.length}) · ${doneProcs} done</div>
   <table class="dp-tbl">
-    <thead><tr><th>Process</th><th>Date</th><th>Vendor/Machine</th><th>Counter</th><th>Status</th></tr></thead>
+    <thead><tr><th style="width:24px">#</th><th>Process</th><th>Date</th><th>Vendor/Machine</th><th>Qty</th><th>Wastage</th><th>Status</th></tr></thead>
     <tbody>${procsRows}</tbody>
   </table>
   <div class="dp-sec-title">Materials Issued (${rmOut.length})</div>
@@ -3370,11 +3386,11 @@ function selPR(e,pid){try{
 }
 
 // Process display names
-const PROC_LABEL={'PRT':'Print','PUN':'Punch','LMN':'Laminate','COAT':'Coat','CUT':'Cut','EMB':'Emboss','CCLD':'CCLD','DVD':'Divide','SHT':'Sheet','SPT':'Split','STRG':'Storage','TBND':'Tab Bond','TDSC':'Tab Disc','TLBL':'Tab Label','TSMG':'Tab SMG','WPT':'WPT','RW':'Rewind'};
+const PROC_LABEL={'PRT':'Print','LAM':'Laminate','LMN':'Laminate','COAT':'Coat','PUN':'Punch','CUT':'Cut','EMB':'Emboss','CCLD':'CCLD','DVD':'Divide','SHT':'Sheet','SPT':'Split','STRG':'Strip Gum','RW':'Rewind','SEAL':'Seal','TBND':'Tab Bond','TDSC':'Tab Disc','TLBL':'Tab Label','TSMG':'Tab SMG','WPT':'WPT'};
 function joProcChips(procs){
   if(!procs.length)return'<span style="font-size:10px;color:var(--t3)">No processes</span>';
   const byName={};
-  procs.forEach(r=>{const n=r.process_name||'?';if(!byName[n])byName[n]={total:0,done:0};byName[n].total++;if(r.process_status==='Complete'||r.process_status==='Moved')byName[n].done++;});
+  procs.forEach(r=>{const n=r.process_name||'?';if(!byName[n])byName[n]={total:0,done:0};byName[n].total++;if(r.step_status==='done'||r.step_status==='skipped'||r.process_status==='Complete'||r.process_status==='Moved')byName[n].done++;});
   return Object.entries(byName).map(([n,s])=>{
     const allDone=s.done===s.total;
     const col=allDone?'#22c55e':s.done>0?'#f59e0b':'var(--t3)';
@@ -3803,10 +3819,11 @@ R.processes=function(p){
   const st=document.getElementById('proc-st')?.value||'';
   const q=(document.getElementById('proc-q')?.value||'').toLowerCase();
   const proMap={};D.pr.forEach(r=>{proMap[r[0]]={pname:r[2],cname:r[3]};});
-  // normalize procs_raw to array format for FD filters: [id,name,pro_id,date,mat,counter,machine,vendor,status]
-  const toArr=r=>[r.id,r.process_name,r.prod_order_id,r.date,r.material_id,r.counter,r.machine,r.vendor_id,r.process_status];
+  // normalize procs_raw to array format for FD filters: [id,name,pro_id,date,mat,qty_out,machine,vendor,status]
+  const toArr=r=>[r.id,r.process_name,r.prod_order_id,r.date,r.material_id,r.qty_out,r.machine,r.vendor_id,r.step_status||r.process_status];
   let items=D.procs_raw.filter(r=>{
-    if(st&&r.process_status!==st)return false;
+    const effStatus=r.step_status||r.process_status||'pending';
+    if(st&&effStatus!==st)return false;
     if(q&&![r.id,r.process_name,r.prod_order_id,proMap[r.prod_order_id]?.pname||'',proMap[r.prod_order_id]?.cname||''].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
@@ -3823,9 +3840,9 @@ R.processes=function(p){
       <td class="mono">${r.prod_order_id||'—'}</td>
       <td>${tr(pro.pname||'—',22)}</td><td>${tr(pro.cname||'—',18)}</td>
       <td>${r.date||'—'}</td><td class="mono" style="font-size:11px">${r.material_id||'—'}</td>
-      <td>${r.counter?Number(r.counter).toLocaleString():'—'}</td>
+      <td>${r.qty_out?Number(r.qty_out).toLocaleString():'—'}</td>
       <td style="font-size:11px">${vname}</td>
-      <td>${badge(r.process_status||'pending')}</td>
+      <td>${badge(r.step_status||r.process_status||'pending')}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No processes found</td></tr>';
 };
@@ -3849,14 +3866,18 @@ function selProc(e,pid){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('Process',r.process_name||'—')}
     ${rpRow('Process ID',r.id||'—')}
-    ${rpRow('Status',badge(r.process_status||'pending'))}
+    ${rpRow('Status',badge(r.step_status||r.process_status||'pending'))}
     ${rpRow('Date',r.date||'—')}
     ${rpRow('PRO',r.prod_order_id||'—')}
     ${rpRow('Product',proRec?proRec[2]:'—')}
     ${rpRow('Customer',proRec?proRec[3]:'—')}
     ${rpRow('Vendor',vname)}
     ${rpRow('Machine',r.machine||'—')}
-    ${rpRow('Counter',r.counter?Number(r.counter).toLocaleString():'—')}
+    ${rpRow('Qty In',r.qty_in?Number(r.qty_in).toLocaleString():'—')}
+    ${rpRow('Qty Out',r.qty_out?Number(r.qty_out).toLocaleString():'—')}
+    ${rpRow('Wastage',r.wastage?Number(r.wastage).toLocaleString():'—')}
+    ${rpRow('Die',r.die_id||'—')}
+    ${rpRow('Plate',r.plate_id||'—')}
     ${rpRow('Material ID',r.material_id||'—')}
     ${rpRow('Job',proRec?proRec[9]||'—':'—')}
   </div>
