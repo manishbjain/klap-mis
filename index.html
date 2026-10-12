@@ -619,7 +619,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <!-- PLACEHOLDER PAGES -->
 <div id="pg-wflow-order" class="pg">
 <div class="kb-filters" style="margin-bottom:12px">
-  <select class="f" id="kb-cust" onchange="kbFilter()"><option value="">All Customers</option></select>
+  <select class="f" id="kb-cust" onchange="kbCustChange()"><option value="">All Customers</option></select>
   <select class="f" id="kb-prod" onchange="kbFilter()"><option value="">All Products</option></select>
   <select class="f" id="kb-age" onchange="kbFilter()">
     <option value="">Any Age</option>
@@ -2940,8 +2940,17 @@ function selO(e,oid){try{
   const completedQty=linkedPros.filter(p=>p[8]==='complete'&&!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
   // Delivery orders for this order
   const doRecs=D.dos?.filter(x=>x[2]===oid)||[];
-  const totalDespatched=doRecs.reduce((s,x)=>s+Math.round((Number(x[4])||0)*100000),0);
-  const pendingQty=Math.max(0,(Number(o[4])||0)-totalDespatched);
+  // Sum despatched qty from do_items if available, else use count of DOs as proxy
+  let totalDespatched=0;
+  if(D.do_items&&D.do_items.length){
+    const doIds=new Set(doRecs.map(d=>d[0]));
+    totalDespatched=D.do_items.filter(it=>doIds.has(it[1])).reduce((s,it)=>s+(Number(it[3])||Number(it[4])||0),0);
+  } else {
+    // Fallback: each DO ships the full order qty (approximate)
+    totalDespatched=doRecs.length>0?(Number(o[4])||0):0;
+  }
+  const orderComplete=(o[5]==='complete'||o[5]==='despatched');
+  const pendingQty=orderComplete?0:Math.max(0,(Number(o[4])||0)-totalDespatched);
   const imgUrl=prodRec?getProductImageUrl(prodRec.id):null;
   const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:8px;background:var(--s1)">📦</div>`;
   const proQty=p=>{const q=Number(p[4]);if(q)return q;const r=D.pros_raw?.find(x=>x.id===p[0]);return r?(r.sheet_qty||0)*(r.ups||1):0;};
@@ -4061,19 +4070,27 @@ function rcDel(i){const el=document.getElementById('rc-'+i);if(el)el.remove();if
 R.packing=function(p){
   if(p)pp.packing=p;
   const q=(document.getElementById('wpk-sq')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const items=D.pr.filter(x=>x[8]==='packing'&&!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
+  const packedItems=D.pr.filter(x=>x[8]==='complete'&&!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   document.getElementById('wpk-a').textContent=items.length;
-  document.getElementById('wpk-d').textContent=Math.round(items.length*0.15);
-  document.getElementById('wpk-s').textContent=items.length;
+  document.getElementById('wpk-d').textContent=packedItems.length;
+  document.getElementById('wpk-s').textContent=D.fg.reduce((s,f)=>s+(Number(f[15])||0),0);
   const slice=pgr(items,'packing','R.packing','wpk-pg','wpk-cnt');
   document.getElementById('wpk-body').innerHTML=slice.map(p=>`<tr>
     <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
     <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
     <td><button class="ab ab-g" onclick="toast('Packing slip for ${p[0]} generated — '+Math.ceil((${p[4]||1000})/500)+' packets with QR codes 🔲')">📋 Generate Slip</button></td>
   </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs awaiting packing</td></tr>';
-  // packed items
-  const packed=D.pr.filter(x=>!x[5]&&!x[6]).slice(0,20).map(p=>({inv:'INV-'+p[0]+'-PKT001',pro:p[0],prod:p[2],pkts:Math.ceil((p[4]||500)/500)}));
-  document.getElementById('wpk-db').innerHTML=packed.map(p=>`<tr><td class="mono" style="font-size:10px">${p.inv}</td><td class="mono">${p.pro}</td><td>${tr(p.prod,26)}</td><td>${p.pkts}</td><td>${badge('in_stock')}</td></tr>`).join('');
+  // FG inventory records (actual packed batches)
+  const fgItems=sortItems([...D.fg],'winv');
+  document.getElementById('wpk-db').innerHTML=fgItems.slice(0,30).map(f=>`<tr>
+    <td class="mono" style="font-size:10px">${f[3]||f[2]||'—'}</td>
+    <td class="mono">${f[2]||'—'}</td>
+    <td title="${f[7]||''}">${tr(f[7]||'—',26)}</td>
+    <td style="text-align:right">${f[4]?Number(f[4]).toLocaleString():'—'}</td>
+    <td style="text-align:right">${f[15]?Number(f[15]).toLocaleString():'0'}</td>
+    <td>${badge(f[14]||'in_stock')}</td>
+  </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No packed inventory</td></tr>';
 };
 
 R.inventory=function(p){
@@ -5471,7 +5488,7 @@ const KB_COLS=[
   {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c0', nav:'wflow-design',
    actions:['design','assign']},
   {key:'to_create_pro',label:'To Create Production Order', ic:'📋', cls:'kb-c1', nav:'wflow-prod',
-   actions:['pro','production']},
+   actions:['create_pro','production']},
   {key:'in_production',label:'In Production',     ic:'⚙️', cls:'kb-c2', nav:'wflow-prod',
    actions:['production','pro']},
   {key:'in_packing',   label:'In Packing',        ic:'📦', cls:'kb-c3', nav:'wpk',
@@ -5484,7 +5501,7 @@ const KB_COLS=[
 const KB_ACTION_LABELS={
   confirm:'✅ Confirm',edit:'✏️ Edit',reject:'✕ Reject',
   design:'→ Design Workflow',assign:'📌 Assign Designer',
-  production:'→ Production Workflow',pro:'📄 View PRO',
+  production:'→ Production Workflow',pro:'📄 View PRO',create_pro:'➕ Create PRO',
   slip:'📋 Generate Slip',packing:'→ Packing Workflow',
   despatch:'🚚 Despatch Now',dc:'📄 Generate DC',
   viewdc:'📄 View DC',wa:'📲 WA Update',
@@ -5500,13 +5517,22 @@ function kbAge(age,desp){
 function kbRenderBoard(data){
   const cs=document.getElementById('kb-cust');
   const ps=document.getElementById('kb-prod');
+  // Always rebuild customer dropdown from ALL KB data (not just filtered)
   if(cs&&cs.options.length===1){
-    const custs=[...new Set(Object.values(data).flat().map(c=>c[2]).filter(Boolean))].sort();
+    const allCards=Object.values(KB||data).flat();
+    const custs=[...new Set(allCards.map(c=>c[2]).filter(Boolean))].sort();
     custs.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;cs.appendChild(o);});
   }
-  if(ps&&ps.options.length===1){
-    const prods=[...new Set(Object.values(data).flat().map(c=>c[3]).filter(Boolean))].sort();
+  // Product dropdown: always repopulate based on selected customer
+  if(ps){
+    const selCust=cs?.value||'';
+    const allCards=Object.values(KB||data).flat();
+    const filteredCards=selCust?allCards.filter(c=>c[2]===selCust):allCards;
+    const prods=[...new Set(filteredCards.map(c=>c[3]).filter(Boolean))].sort();
+    const prevProd=ps.value;
+    while(ps.options.length>1)ps.remove(1);
     prods.slice(0,60).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=tr(x,28);ps.appendChild(o);});
+    if(prods.includes(prevProd))ps.value=prevProd;
   }
   const board=document.getElementById('kb-board');
   if(!board) return;
@@ -5541,10 +5567,15 @@ function kbRenderBoard(data){
           if(fgQ>0) extraLine='<div style="font-size:10px;color:var(--grn);font-weight:700;margin-top:2px">📦 Stock: '+Number(fgQ).toLocaleString()+' pcs</div>';
         }
         const prodName=c[3]||'—';
-        card.innerHTML='<div class="kb-card-title" style="font-size:12px;font-weight:700;line-height:1.3;word-break:break-word">'+prodName+'</div>'
-          +'<div class="kb-card-sub" style="font-size:11px;color:var(--t2);margin-top:2px">'+( c[2]||'—')+'</div>'
-          +extraLine
-          +'<div class="kb-card-foot">'+kbAge(c[6]||0,col.key==='despatched')+'<span class="kb-code">'+c[0]+'</span></div>';
+        card.innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;gap:4px;margin-bottom:2px">'
+          +'<div class="kb-card-title" style="font-size:12px;font-weight:700;line-height:1.3;word-break:break-word;flex:1;min-width:0">'+prodName+'</div>'
+          +'<span class="kb-code" style="flex-shrink:0;font-size:10px">'+c[0]+'</span>'
+          +'</div>'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">'
+          +'<span style="font-size:11px;color:var(--t2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c[2]||'—')+'</span>'
+          +kbAge(c[6]||0,col.key==='despatched')
+          +'</div>'
+          +extraLine;
         card.addEventListener('click',function(){kbOpen(i,col.key);});
         body.appendChild(card);
       });
@@ -5586,6 +5617,33 @@ function kbAct(action,oid,nav){
   document.getElementById('kb-modal').style.display='none';
   if(['design','production','packing','viewdc'].includes(action)){
     document.querySelector('.ni[data-p="'+nav+'"]')?.click();
+    if(action==='production'){
+      // Navigate to production workflow and highlight this order
+      setTimeout(()=>{
+        const row=document.querySelector('tr[data-oid="'+oid+'"]');
+        if(row){row.click();row.scrollIntoView({block:'center',behavior:'smooth'});}
+      },400);
+    }
+  } else if(action==='create_pro'){
+    // Navigate to production workflow to create a PRO for this order
+    document.querySelector('.ni[data-p="'+nav+'"]')?.click();
+    setTimeout(()=>{
+      // Try to pre-select the order in the PRO creation form
+      const orderSel=document.getElementById('pro-order');
+      if(orderSel){orderSel.value=oid;orderSel.dispatchEvent(new Event('change'));}
+      toast('Navigate to Production Workflow → create PRO for '+oid);
+    },400);
+  } else if(action==='pro'){
+    // View linked PRO: find the first PRO for this order and open it
+    const linkedPro=D.pr.find(p=>p[7]===oid&&!p[5]&&!p[6]);
+    if(linkedPro){
+      document.querySelector('.ni[data-p="wflow-prod"]')?.click();
+      setTimeout(()=>selPR(null,linkedPro[0]),350);
+    } else {
+      toast('No active PRO found for '+oid+' — create one first');
+    }
+  } else if(action==='assign'){
+    document.querySelector('.ni[data-p="'+nav+'"]')?.click();
   } else if(action==='confirm'){toast('Order '+oid+' confirmed ✅ — PRO auto-created');
   } else if(action==='despatch'){if(confirm('Despatch '+oid+'?'))toast('Despatch initiated for '+oid+' 📄');
   } else if(action==='dc'){toast('DC generated for '+oid+' 📄');
@@ -5606,6 +5664,21 @@ function kbFilter(){
     );
   });
   kbRenderBoard(filtered);
+}
+function kbCustChange(){
+  // Repopulate product dropdown based on selected customer, then filter
+  const ps=document.getElementById('kb-prod');
+  if(ps){
+    const cs=document.getElementById('kb-cust');
+    const selCust=cs?.value||'';
+    const allCards=Object.values(KB||{}).flat();
+    const filteredCards=selCust?allCards.filter(c=>c[2]===selCust):allCards;
+    const prods=[...new Set(filteredCards.map(c=>c[3]).filter(Boolean))].sort();
+    while(ps.options.length>1)ps.remove(1);
+    prods.slice(0,60).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=tr(x,28);ps.appendChild(o);});
+    ps.value='';
+  }
+  kbFilter();
 }
 
 function kbClear(){
