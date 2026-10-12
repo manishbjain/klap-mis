@@ -765,7 +765,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option><option value="skipped">Skipped</option></select>
+        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option><option value="skipped">Skipped</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-processes" onclick="openFD('processes')">⚙ Filters</button>
       </div>
@@ -3836,7 +3836,7 @@ R.processes=function(p){
     const pro=proMap[r.prod_order_id]||{};
     const vname=veMap[r.vendor_id]||r.vendor_id||'—';
     return `<tr onclick="selProc(event,${esc(r.id||r[0])})" style="cursor:pointer">
-      <td><strong>${r.process_name||'—'}</strong></td>
+      <td><strong>${PROC_LABEL[r.process_name]||r.process_name||'—'}</strong></td>
       <td class="mono">${r.prod_order_id||'—'}</td>
       <td>${tr(pro.pname||'—',22)}</td><td>${tr(pro.cname||'—',18)}</td>
       <td>${r.date||'—'}</td><td class="mono" style="font-size:11px">${r.material_id||'—'}</td>
