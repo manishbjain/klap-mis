@@ -3203,7 +3203,7 @@ function selPD(e,code){try{
 }
 
 function selCust(e,cid,cname){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const cu=D.cu.find(x=>x[0]===cid)||[];
@@ -3211,24 +3211,71 @@ function selCust(e,cid,cname){
   const total=orders.length;
   const complete=orders.filter(o=>o[5]==='complete').length;
   const active=orders.filter(o=>o[5]==='active'||o[5]==='in_production').length;
-  const orderRows=orders.slice(0,20).map(o=>`<tr>
-    <td style="padding:4px 8px;font-size:11px;font-family:monospace;cursor:pointer" onclick="showNav('orders');setTimeout(()=>{const el=document.getElementById('o-q');if(el){el.value=${esc(o[0])};R.orders();}},200)">${o[0]}</td>
+  const onHold=orders.filter(o=>o[5]==='on_hold').length;
+  const totalQty=orders.reduce((s,o)=>s+(Number(o[4])||0),0);
+  const uniqueProducts=[...new Set(orders.map(o=>o[3]).filter(Boolean))];
+  const pros=D.pr.filter(p=>p[3]===cname);
+  const activePROs=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
+  const despatches=D.dos.filter(d=>d[3]===cname);
+  const fgInStock=D.fg.filter(f=>f[8]===cname&&(Number(f[15])||0)>0);
+  const totalFGInStock=fgInStock.reduce((s,f)=>s+(Number(f[15])||0),0);
+  const recentOrders=orders.slice(0,20);
+  const orderRows=recentOrders.map(o=>`<tr onclick="selO(event,${esc(o[0])})" style="cursor:pointer">
+    <td style="padding:4px 8px;font-size:11px;font-family:monospace">${o[0]}</td>
     <td style="padding:4px 8px;font-size:11px">${o[1]||'—'}</td>
     <td style="padding:4px 8px;font-size:11px">${tr(o[3]||'—',22)}</td>
     <td style="padding:4px 8px;font-size:11px;text-align:right">${o[4]?Number(o[4]).toLocaleString():'—'}</td>
     <td style="padding:4px 8px">${badge(o[5])}</td>
   </tr>`).join('')||'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No orders</td></tr>';
+  const activePRORows=activePROs.slice(0,10).map(p=>`<tr onclick="selPR(event,${esc(p[0])})" style="cursor:pointer">
+    <td style="padding:4px 8px;font-size:11px;font-family:monospace">${p[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${tr(p[2]||'—',22)}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px">${proSubStatus(p)}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="padding:6px;font-size:11px;color:var(--t3)">No active PROs</td></tr>';
+  const deспRows=despatches.slice(0,10).map(d=>`<tr onclick="selDO(event,${esc(d[0])})" style="cursor:pointer">
+    <td style="padding:4px 8px;font-size:11px;font-family:monospace">${d[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${d[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;font-family:monospace;font-size:10px">${d[2]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${d[4]?'₹'+Math.round(d[4]*100000).toLocaleString():'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:6px;font-size:11px;color:var(--t3)">No despatches</td></tr>';
   const html=`
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700">${total}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Orders</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--org)">${activePROs.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Active PROs</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:#22c55e">${despatches.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">DOs</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--acc)">${totalFGInStock}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Pkts In Stock</div>
+    </div>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('Ref',`<span class="mono">${cu[0]||'—'}</span>`)}
     ${rpRow('Name',cu[1]||'—')}
     ${rpRow('Brand',cu[2]||'—')}
     ${rpRow('Alias',cu[3]||'—')}
-    ${rpRow('Total Orders',total)}
-    ${rpRow('Complete',complete+' / Active: '+active)}
+    ${rpRow('Total Orders',total+' · Complete: '+complete+' · Active: '+active+(onHold?' · On Hold: '+onHold:''))}
+    ${rpRow('Total Qty Ordered',totalQty?Number(totalQty).toLocaleString()+' pcs':'—')}
+    ${rpRow('Unique Products',uniqueProducts.length+' products')}
+    ${rpRow('Total PROs',pros.length+' ('+activePROs.length+' active)')}
+    ${rpRow('Despatches',despatches.length+' DOs')}
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Recent Orders ${total>20?'(showing 20 of '+total+')':''}</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+  ${uniqueProducts.length?`<div style="border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;margin-bottom:12px">
+    <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Products Ordered (${uniqueProducts.length})</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">${uniqueProducts.map(p=>`<span style="background:var(--s1);border:1px solid var(--bdr);border-radius:4px;padding:2px 7px;font-size:11px">${tr(p,30)}</span>`).join('')}</div>
+  </div>`:''}
+  <div class="dp-sec-title">Orders (${total}) ${total>20?'· showing latest 20':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:var(--s1)">
         <th style="font-size:10px;padding:4px 8px;text-align:left">Order ID</th>
@@ -3238,6 +3285,31 @@ function selCust(e,cid,cname){
         <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
       </tr></thead>
       <tbody>${orderRows}</tbody>
+    </table>
+  </div>
+  <div class="dp-sec-title">Active PROs (${activePROs.length})</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">PRO ID</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Product</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${activePRORows}</tbody>
+    </table>
+  </div>
+  <div class="dp-sec-title">Despatches (${despatches.length}) ${despatches.length>10?'· showing latest 10':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">DO ID</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Order</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Value</th>
+      </tr></thead>
+      <tbody>${deспRows}</tbody>
     </table>
   </div>`;
   openRP(html,'👤 '+cname);
@@ -3718,33 +3790,105 @@ R.machines=function(){
 };
 
 function selVendor(e,vid,vname){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const ve=D.ve.find(x=>x[0]===vid)||[];
+  const vtype=ve[3]||'vendor';
   const pos=D.pos.filter(p=>p[3]===vname);
-  const rmMap={};D.rm_list.forEach(r=>{rmMap[r[0]]=r[5]||r[1]||r[0];});
+  const pendingPOs=pos.filter(p=>p[7]==='pending'||!p[7]);
+  const completedPOs=pos.filter(p=>p[7]==='complete');
+  // Build rm name map
+  const rmMap={};D.rm_list.forEach(r=>{rmMap[r[0]]={name:r[4]||r[3]||r[0],brand:r[5]||''};});
+  // Total spend across all POs
+  const totalSpend=pos.reduce((s,p)=>s+(p[4]&&p[6]?p[4]*p[6]:0),0);
+  const totalQtyOrdered=pos.reduce((s,p)=>s+(Number(p[4])||0),0);
+  // GRNs for this vendor
+  const grns=D.rm_in.filter(g=>(g[3]===vname||g[4]===vname));
+  const totalQtyReceived=grns.reduce((s,g)=>s+(Number(g[5])||0),0);
+  // Process steps done by this vendor (from procs_raw)
+  const vendorProcs=(D.procs_raw||[]).filter(p=>p.vendor_id===vid||p.vendor_name===vname);
+  // Unique materials supplied
+  const uniqueRMs=[...new Set(pos.map(p=>p[2]).filter(Boolean))];
+  const uniqueRMNames=[...new Set(uniqueRMs.map(id=>{const r=rmMap[id];return r?r.name:id;}))];
+  // PO rows
   const poRows=pos.slice(0,15).map(p=>{
+    const rm=rmMap[p[2]]||{name:p[2]||'—',brand:''};
+    const matLabel=rm.name+(rm.brand?' ('+rm.brand+')':'');
     const amt=p[4]&&p[6]?'₹'+Math.round(p[4]*p[6]).toLocaleString():'—';
-    return `<tr>
+    const billRef=p[8]==='TRUE'||p[8]===true?'✓':'p[8]===FALSE'||p[8]===false?'✗':'—';
+    return `<tr onclick="selPO(event,${esc(p[0])})" style="cursor:pointer">
       <td style="padding:4px 8px;font-size:11px;font-family:monospace">${p[0]}</td>
       <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
-      <td style="padding:4px 8px;font-size:11px">${tr(rmMap[p[2]]||p[2]||'—',20)}</td>
+      <td style="padding:4px 8px;font-size:11px">${tr(matLabel,22)}</td>
       <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'} ${p[5]||''}</td>
       <td style="padding:4px 8px;font-size:11px;text-align:right">${amt}</td>
       <td style="padding:4px 8px">${badge(p[7]||'pending')}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="6" style="padding:8px;font-size:11px;color:var(--t3)">No POs</td></tr>';
+  // GRN rows (latest 10)
+  const grnRows=grns.slice(0,10).map(g=>{
+    const rmRec=D.rm_list.find(r=>r[0]===g[2])||[];
+    const matName=rmRec[4]||rmRec[3]||g[2]||'—';
+    return `<tr onclick="selGRN(event,${esc(g[0])})" style="cursor:pointer">
+      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${g[0]}</td>
+      <td style="padding:4px 8px;font-size:11px">${g[1]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px">${tr(matName,20)}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${g[5]?Number(g[5]).toLocaleString():g[4]?Number(g[4]).toLocaleString():'—'}</td>
+      <td style="padding:4px 8px">${g[6]?badge('verified'):badge('pending')}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs found</td></tr>';
+  // Process steps section (only for job/process vendors)
+  const procSection=vendorProcs.length?`
+  <div class="dp-sec-title">Process Steps Done (${vendorProcs.length})</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Step</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Process</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">PRO</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${vendorProcs.slice(0,15).map(p=>`<tr>
+        <td style="padding:4px 8px;font-size:11px">${tr(p.step_name||p.name||'—',22)}</td>
+        <td style="padding:4px 8px;font-size:11px">${tr(p.process_name||'—',18)}</td>
+        <td style="padding:4px 8px;font-size:11px;font-family:monospace;cursor:pointer" onclick="selPR(event,${esc(p.pro_id)})">${p.pro_id||'—'}</td>
+        <td style="padding:4px 8px">${badge(p.status||'pending')}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`:'';
   const html=`
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700">${pos.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">POs</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--org)">${grns.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">GRNs</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:#22c55e">${uniqueRMs.length}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Materials</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:14px;font-weight:700;color:var(--acc)">${totalSpend?'₹'+Math.round(totalSpend/1000)+'K':'—'}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Total Spend</div>
+    </div>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('Ref',`<span class="mono">${ve[0]||'—'}</span>`)}
     ${rpRow('Name',ve[1]||'—')}
     ${rpRow('Alias',ve[2]||'—')}
     ${rpRow('Type',badge(ve[3]))}
-    ${rpRow('Total POs',pos.length)}
+    ${rpRow('Total POs',pos.length+' · Pending: '+pendingPOs.length+' · Complete: '+completedPOs.length)}
+    ${rpRow('Total Qty Ordered',totalQtyOrdered?Number(totalQtyOrdered).toLocaleString()+' units':'—')}
+    ${rpRow('Total Qty Received',totalQtyReceived?Number(totalQtyReceived).toLocaleString()+' units':'—')}
+    ${rpRow('Total Spend',totalSpend?'₹'+Math.round(totalSpend).toLocaleString():'—')}
+    ${uniqueRMNames.length?rpRow('Materials Supplied',uniqueRMNames.slice(0,5).map(n=>tr(n,25)).join(', ')+(uniqueRMNames.length>5?' +more':'')):''}
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Purchase Orders ${pos.length>15?'(showing 15 of '+pos.length+')':''}</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+  <div class="dp-sec-title">Purchase Orders (${pos.length}) ${pos.length>15?'· showing latest 15':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:var(--s1)">
         <th style="font-size:10px;padding:4px 8px;text-align:left">PO ID</th>
@@ -3756,7 +3900,21 @@ function selVendor(e,vid,vname){
       </tr></thead>
       <tbody>${poRows}</tbody>
     </table>
-  </div>`;
+  </div>
+  <div class="dp-sec-title">GRNs / Receipts (${grns.length}) ${grns.length>10?'· showing latest 10':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">GRN ID</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Material</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${grnRows}</tbody>
+    </table>
+  </div>
+  ${procSection}`;
   openRP(html,'🏭 '+vname);
 }
 
@@ -4123,7 +4281,7 @@ R.despatch_live=function(p){
 };
 
 function selRM(e,rmid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const rm=D.rm_list.find(x=>x[0]===rmid)||[];
@@ -4131,188 +4289,422 @@ function selRM(e,rmid){
   const issues=D.rm_out.filter(x=>x[2]===rmid);
   const pos=D.pos.filter(p=>p[2]===rmid);
   const totalIn=grns.reduce((s,g)=>s+(Number(g[5])||0),0);
-  const totalOut=issues.reduce((s,o)=>s+(Number(o[4])||0),0);
-  const grnRows=grns.slice(0,10).map(g=>`<tr>
+  const totalOut=issues.reduce((s,o)=>s+(Number(o[5])||0),0); // o[5] is qty, o[4] is purpose string
+  const totalWastage=grns.reduce((s,g)=>s+(Number(g[11])||0),0);
+  const netStock=totalIn-totalOut-totalWastage;
+  const unit=grns[0]?grns[0][6]||'':pos[0]?pos[0][5]||'':'';
+  const pendingPOs=pos.filter(p=>p[7]==='pending'||p[7]==='sent'||!p[7]);
+  const totalPOQty=pos.reduce((s,p)=>s+(Number(p[4])||0),0);
+  const totalPOAmt=pos.reduce((s,p)=>s+(p[4]&&p[6]?p[4]*p[6]:0),0);
+
+  const grnRows=grns.slice(0,15).map(g=>`<tr onclick="selGRN(event,${esc(g[0])})" style="cursor:pointer">
     <td style="padding:3px 6px;font-size:11px;font-family:monospace">${g[0]}</td>
     <td style="padding:3px 6px;font-size:11px">${g[1]||'—'}</td>
-    <td style="padding:3px 6px;font-size:11px">${g[3]||'—'}</td>
+    <td style="padding:3px 6px;font-size:11px">${g[3]||g[4]||'—'}</td>
     <td style="padding:3px 6px;font-size:11px;text-align:right">${g[5]?Number(g[5]).toLocaleString():'—'} ${g[6]||''}</td>
+    <td style="padding:3px 6px;font-size:11px;text-align:right;color:var(--t3)">${g[11]?'-'+Number(g[11]).toLocaleString():''}</td>
     <td style="padding:3px 6px">${badge(g[8]||'pending')}</td>
-  </tr>`).join('')||'<tr><td colspan="5" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs</td></tr>';
+  </tr>`).join('')||'<tr><td colspan="6" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs</td></tr>';
+
+  const issueRows=issues.slice(0,15).map(o=>{
+    const proc=D.procs_raw.find(x=>x.id===o[3]);
+    const pro=proc?D.pr.find(x=>x[0]===proc.prod_order_id):null;
+    return `<tr onclick="selRMOut(event,${esc(o[0])})" style="cursor:pointer">
+      <td style="padding:3px 6px;font-size:11px;font-family:monospace">${o[0]}</td>
+      <td style="padding:3px 6px;font-size:11px">${o[1]||'—'}</td>
+      <td style="padding:3px 6px;font-size:11px">${proc?PROC_LABEL[proc.process_name]||proc.process_name||'—':'—'}</td>
+      <td style="padding:3px 6px;font-size:11px">${pro?tr(pro[2]||'—',18):'—'}</td>
+      <td style="padding:3px 6px;font-size:11px;text-align:right">${o[5]?Number(o[5]).toLocaleString():'—'} ${unit}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" style="padding:6px;font-size:11px;color:var(--t3)">No issues</td></tr>';
+
+  const poRows=pos.slice(0,10).map(p=>{
+    const amt=p[4]&&p[6]?'₹'+Math.round(p[4]*p[6]).toLocaleString():'—';
+    return `<tr onclick="selPO(event,${esc(p[0])})" style="cursor:pointer">
+      <td style="padding:3px 6px;font-size:11px;font-family:monospace">${p[0]}</td>
+      <td style="padding:3px 6px;font-size:11px">${p[1]||'—'}</td>
+      <td style="padding:3px 6px;font-size:11px">${tr(p[3]||'—',20)}</td>
+      <td style="padding:3px 6px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'} ${p[5]||''}</td>
+      <td style="padding:3px 6px;font-size:11px;text-align:right">${amt}</td>
+      <td style="padding:3px 6px">${badge(p[7]||'pending')}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="padding:6px;font-size:11px;color:var(--t3)">No POs</td></tr>';
+
   const html=`
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:#22c55e">${totalIn?Number(totalIn).toLocaleString():'0'}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Received ${unit}</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--org)">${totalOut?Number(totalOut).toLocaleString():'0'}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Issued ${unit}</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:${netStock>0?'var(--acc)':'var(--red)'}">${Number(netStock).toLocaleString()}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Est. Stock ${unit}</div>
+    </div>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('RM ID',`<span class="mono">${rm[0]||'—'}</span>`)}
-    ${rpRow('Description',rm[5]||rm[1]||'—')}
+    ${rpRow('Supplier / Brand',rm[5]||'—')}
     ${rpRow('Category',rm[3]||'—')}
     ${rpRow('Sub-category',rm[4]||'—')}
-    ${rpRow('Total GRNs',grns.length+' ('+totalIn.toLocaleString()+' received)')}
-    ${rpRow('Issues',issues.length+' ('+totalOut.toLocaleString()+' issued)')}
-    ${rpRow('POs',pos.length)}
+    ${rpRow('Total GRNs',grns.length+' receipts · '+totalIn.toLocaleString()+' '+unit+' in')}
+    ${rpRow('Total Wastage',totalWastage.toLocaleString()+' '+unit)}
+    ${rpRow('Total Issues',issues.length+' issues · '+totalOut.toLocaleString()+' '+unit+' out')}
+    ${rpRow('Purchase Orders',pos.length+' POs ('+pendingPOs.length+' pending) · ₹'+Math.round(totalPOAmt).toLocaleString())}
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">GRN History ${grns.length>10?'(latest 10)':''}</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+  <div class="dp-sec-title">GRN Receipt History (${grns.length}) ${grns.length>15?'· showing latest 15':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:var(--s1)">
         <th style="font-size:10px;padding:3px 6px;text-align:left">GRN ID</th>
         <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
         <th style="font-size:10px;padding:3px 6px;text-align:left">Vendor</th>
-        <th style="font-size:10px;padding:3px 6px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Qty Received</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Wastage</th>
         <th style="font-size:10px;padding:3px 6px;text-align:left">Status</th>
       </tr></thead>
       <tbody>${grnRows}</tbody>
     </table>
+  </div>
+  <div class="dp-sec-title">Issue History (${issues.length}) ${issues.length>15?'· showing latest 15':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Issue ID</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Process</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Product</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Qty</th>
+      </tr></thead>
+      <tbody>${issueRows}</tbody>
+    </table>
+  </div>
+  <div class="dp-sec-title">Purchase Orders (${pos.length}) ${pos.length>10?'· showing latest 10':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:3px 6px;text-align:left">PO ID</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Vendor</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Amount</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${poRows}</tbody>
+    </table>
   </div>`;
-  openRP(html,'📦 '+rmid);
+  openRP(html,'📦 RM: '+(rm[4]||rm[3]||rmid));
 }
 
 function selGRN(e,grnid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
   const g=D.rm_in.find(x=>x[0]===grnid)||[];
   const rmRec=D.rm_list.find(x=>x[0]===g[2])||[];
   const po=g[9]?D.pos.find(x=>x[0]===g[9]):null;
+  // Vendor field inconsistency: sometimes [3], sometimes [4]
+  const vendor=g[3]||g[4]||'—';
+  const dcNo=g[4]&&g[3]?g[4]:(g[4]||'—'); // DC is usually [4] when vendor is in [3]
+  const matName=rmRec[4]||rmRec[3]||g[2]||'—'; // subcategory then category
+  const matBrand=rmRec[5]||''; // supplier/brand
+  const qtyReceived=Number(g[5])||0;
+  const wastage=Number(g[11])||0;
+  const netQty=qtyReceived-wastage;
+  // Other GRNs for this RM
+  const siblingGRNs=D.rm_in.filter(x=>x[2]===g[2]&&x[0]!==grnid);
+  const totalForRM=D.rm_in.filter(x=>x[2]===g[2]).reduce((s,x)=>s+(Number(x[5])||0),0);
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('GRN ID',`<span class="mono">${g[0]||'—'}</span>`)}
     ${rpRow('Date',g[1]||'—')}
-    ${rpRow('Material',rmRec[5]||rmRec[1]||g[2]||'—')}
-    ${rpRow('RM ID',`<span class="mono">${g[2]||'—'}</span>`)}
-    ${rpRow('Vendor',g[3]||'—')}
-    ${rpRow('DC No',g[4]||'—')}
-    ${rpRow('Qty Received',g[5]?Number(g[5]).toLocaleString()+' '+(g[6]||''):'—')}
-    ${rpRow('Wastage',g[11]?Number(g[11]).toLocaleString():'0')}
-    ${rpRow('PO Ref',g[9]?`<span class="mono">${g[9]}</span>`:'—')}
+    ${rpRow('Material',matName+(matBrand?' · <span style="color:var(--t3)">'+matBrand+'</span>':''))}
+    ${rpRow('RM ID',`<span class="mono" onclick="selRM(null,${esc(g[2])})" style="cursor:pointer;color:var(--acc)">${g[2]||'—'}</span>`)}
+    ${rpRow('Category',rmRec[3]||'—')}
+    ${rpRow('Vendor',vendor)}
+    ${rpRow('DC / Ref No',dcNo)}
+    ${rpRow('Qty Received',qtyReceived?Number(qtyReceived).toLocaleString()+' '+(g[6]||''):'—')}
+    ${rpRow('Wastage',wastage?'-'+Number(wastage).toLocaleString()+' '+(g[6]||''):'None')}
+    ${rpRow('Net Qty',netQty?'<strong>'+Number(netQty).toLocaleString()+' '+(g[6]||'')+'</strong>':'0')}
+    ${rpRow('PO Ref',g[9]?`<span class="mono" onclick="selPO(null,${esc(g[9])})" style="cursor:pointer;color:var(--acc)">${g[9]}</span>`:'—')}
     ${rpRow('Status',badge(g[8]||'pending'))}
-    ${po?rpRow('PO Vendor',po[3]||'—'):''}
-    ${po?rpRow('PO Rate','₹'+(po[6]||0)+'/'+po[5]):''}
+  </div>
+  ${po?`<div style="border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    <div class="dp-sec-title" style="margin:0;border-radius:0;border-bottom:1px solid var(--bdr)">Linked Purchase Order</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      ${rpRow('PO ID',`<span class="mono">${po[0]}</span>`)}
+      ${rpRow('PO Date',po[1]||'—')}
+      ${rpRow('Vendor',po[3]||'—')}
+      ${rpRow('PO Qty',po[4]?Number(po[4]).toLocaleString()+' '+(po[5]||''):'—')}
+      ${rpRow('Rate','₹'+(po[6]||0)+' / '+(po[5]||'unit'))}
+      ${rpRow('Amount',po[4]&&po[6]?'₹'+Math.round(po[4]*po[6]).toLocaleString():'—')}
+      ${rpRow('Status',badge(po[7]||'pending'))}
+    </div>
+  </div>`:''}
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--t2)">
+    <span style="font-weight:600">Total for this RM:</span> ${D.rm_in.filter(x=>x[2]===g[2]).length} GRNs · ${Number(totalForRM).toLocaleString()} ${g[6]||''} received all time
+    ${siblingGRNs.length?` · <span style="color:var(--acc);cursor:pointer" onclick="selRM(null,${esc(g[2])})">View all →</span>`:''}
   </div>`;
   openRP(html,'📋 GRN: '+grnid);
 }
 
 function selRMOut(e,oid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
+  // D.rm_out: [id, date, rm_id, process_id, purpose_string, qty_number]
   const o=D.rm_out.find(x=>x[0]===oid)||[];
   const rmRec=D.rm_list.find(x=>x[0]===o[2])||[];
-  const proc=D.procs_raw.find(x=>(x.id||x[0])===o[3]);
+  const proc=D.procs_raw.find(x=>x.id===o[3]);
   const pro=proc?D.pr.find(x=>x[0]===proc.prod_order_id):null;
+  const order=pro&&pro[7]?D.o.find(x=>x[0]===pro[7]):null;
+  const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
+  const vendor=proc&&proc.vendor_id?veMap[proc.vendor_id]||proc.vendor_id:'—';
+  // Find the GRN record for this RM to get unit
+  const grnRec=D.rm_in.find(x=>x[2]===o[2]);
+  const unit=grnRec?grnRec[6]||'':rmRec[5]?'':'';
+  const qtyIssued=Number(o[5])||0; // o[5] is qty number, NOT o[4]
+  const purpose=o[4]||'Production';   // o[4] is purpose string
+  // Other issues from same RM
+  const allIssuesForRM=D.rm_out.filter(x=>x[2]===o[2]);
+  const totalIssuedForRM=allIssuesForRM.reduce((s,x)=>s+(Number(x[5])||0),0);
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('Issue ID',`<span class="mono">${o[0]||'—'}</span>`)}
     ${rpRow('Date',o[1]||'—')}
-    ${rpRow('Material',rmRec[5]||rmRec[1]||o[2]||'—')}
-    ${rpRow('RM ID',`<span class="mono">${o[2]||'—'}</span>`)}
+    ${rpRow('Material',rmRec[4]||rmRec[3]||o[2]||'—')}
+    ${rpRow('Supplier / Brand',rmRec[5]||'—')}
+    ${rpRow('RM ID',`<span class="mono" onclick="selRM(null,${esc(o[2])})" style="cursor:pointer;color:var(--acc)">${o[2]||'—'}</span>`)}
+    ${rpRow('Qty Issued','<strong>'+(qtyIssued?Number(qtyIssued).toLocaleString()+' '+unit:'—')+'</strong>')}
+    ${rpRow('Purpose',purpose)}
     ${rpRow('Process ID',`<span class="mono">${o[3]||'—'}</span>`)}
-    ${rpRow('Purpose',o[4]||'Production')}
-    ${rpRow('Qty Issued',o[4]?Number(o[4]).toLocaleString():'—')}
-    ${proc?rpRow('Process',PROC_LABEL[proc.process_name]||proc.process_name||'—'):''}
-    ${pro?rpRow('PRO',`<span class="mono">${pro[0]||'—'}</span>`):''}
-    ${pro?rpRow('Product',pro[2]||'—'):''}
+  </div>
+  ${proc?`<div style="border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    <div class="dp-sec-title" style="margin:0;border-radius:0;border-bottom:1px solid var(--bdr)">Process Step</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      ${rpRow('Process',PROC_LABEL[proc.process_name]||proc.process_name||'—')}
+      ${rpRow('Machine',proc.machine||'—')}
+      ${rpRow('Vendor',vendor)}
+      ${rpRow('Status',badge(proc.process_status||proc.step_status||'pending'))}
+      ${proc.qty_out?rpRow('Qty Out',Number(proc.qty_out).toLocaleString()):''}
+      ${proc.wastage?rpRow('Process Wastage',Number(proc.wastage).toLocaleString()):''}
+    </div>
+  </div>`:''}
+  ${pro?`<div style="border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    <div class="dp-sec-title" style="margin:0;border-radius:0;border-bottom:1px solid var(--bdr)">Production Order</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      ${rpRow('PRO ID',`<span class="mono" onclick="selPR(null,${esc(pro[0])})" style="cursor:pointer;color:var(--acc)">${pro[0]}</span>`)}
+      ${rpRow('Product',pro[2]||'—')}
+      ${rpRow('Customer',pro[3]||'—')}
+      ${rpRow('PRO Qty',pro[4]?Number(pro[4]).toLocaleString()+' pcs':'—')}
+      ${rpRow('PRO Status',proSubStatus(pro))}
+      ${order?rpRow('Order',`<span class="mono" onclick="selO(null,${esc(order[0])})" style="cursor:pointer;color:var(--acc)">${order[0]}</span>`):''}
+    </div>
+  </div>`:''}
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--t2)">
+    <span style="font-weight:600">Total issued for this RM:</span> ${allIssuesForRM.length} issues · ${Number(totalIssuedForRM).toLocaleString()} ${unit}
+    <span style="color:var(--acc);cursor:pointer;margin-left:6px" onclick="selRM(null,${esc(o[2])})">View RM →</span>
   </div>`;
   openRP(html,'🔧 Issue: '+oid);
 }
 
 function selPO(e,poid){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
+  // D.pos: [po_id, date, rm_id, vendor_name, qty, unit, rate, status, bill_ref]
   const po=D.pos.find(x=>x[0]===poid)||[];
   const rmRec=D.rm_list.find(x=>x[0]===po[2])||[];
   const grns=D.rm_in.filter(x=>x[9]===poid);
   const amt=po[4]&&po[6]?'₹'+Math.round(po[4]*po[6]).toLocaleString():'—';
-  const grnRows=grns.map(g=>`<tr>
+  const totalReceived=grns.reduce((s,g)=>s+(Number(g[5])||0),0);
+  const totalWastage=grns.reduce((s,g)=>s+(Number(g[11])||0),0);
+  const pctFulfilled=po[4]?Math.min(100,Math.round(totalReceived/po[4]*100)):0;
+  // Fix bill_ref "TRUE" from Google Sheets boolean
+  const billRef=po[8]==='TRUE'||po[8]===true?'✓ Received':po[8]===false||po[8]==='FALSE'?'✗ Pending':po[8]||'—';
+  // Material: show subcategory + category + brand
+  const matName=rmRec[4]||rmRec[3]||'';
+  const matBrand=rmRec[5]||'';
+  const matDisplay=matName+(matBrand?' · '+matBrand:'')||po[2]||'—';
+  // Other POs for same vendor
+  const vendorPOs=D.pos.filter(x=>x[3]===po[3]&&x[0]!==poid);
+  const grnRows=grns.map(g=>`<tr onclick="selGRN(event,${esc(g[0])})" style="cursor:pointer">
     <td style="padding:3px 6px;font-size:11px;font-family:monospace">${g[0]}</td>
     <td style="padding:3px 6px;font-size:11px">${g[1]||'—'}</td>
+    <td style="padding:3px 6px;font-size:11px">${g[3]||g[4]||'—'}</td>
     <td style="padding:3px 6px;font-size:11px;text-align:right">${g[5]?Number(g[5]).toLocaleString():'—'} ${g[6]||''}</td>
+    <td style="padding:3px 6px;font-size:11px;text-align:right;color:var(--t3)">${g[11]?'-'+g[11]:''}</td>
     <td style="padding:3px 6px">${badge(g[8]||'pending')}</td>
-  </tr>`).join('')||'<tr><td colspan="4" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs yet</td></tr>';
+  </tr>`).join('')||'<tr><td colspan="6" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs yet</td></tr>';
   const html=`
+  ${po[4]?`<div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+      <span style="color:var(--t2)">Fulfilment</span>
+      <span style="font-weight:700">${Number(totalReceived).toLocaleString()} / ${Number(po[4]).toLocaleString()} ${po[5]||''} (${pctFulfilled}%)</span>
+    </div>
+    <div style="height:6px;background:var(--s1);border-radius:3px;overflow:hidden;border:1px solid var(--bdr)"><div style="height:100%;background:${pctFulfilled>=100?'#22c55e':'var(--acc)'};width:${pctFulfilled}%;border-radius:3px"></div></div>
+  </div>`:''}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('PO ID',`<span class="mono">${po[0]||'—'}</span>`)}
     ${rpRow('Date',po[1]||'—')}
-    ${rpRow('Material',rmRec[5]||rmRec[1]||po[2]||'—')}
+    ${rpRow('Material',matDisplay)}
+    ${rpRow('RM ID',`<span class="mono" onclick="selRM(null,${esc(po[2])})" style="cursor:pointer;color:var(--acc)">${po[2]||'—'}</span>`)}
     ${rpRow('Vendor',po[3]||'—')}
-    ${rpRow('Qty',po[4]?Number(po[4]).toLocaleString()+' '+(po[5]||''):'—')}
+    ${rpRow('PO Qty',po[4]?Number(po[4]).toLocaleString()+' '+(po[5]||''):'—')}
     ${rpRow('Rate','₹'+(po[6]||0)+' / '+(po[5]||'unit'))}
-    ${rpRow('Amount',amt)}
-    ${rpRow('Bill / DC Ref',po[8]||'—')}
+    ${rpRow('Total Amount',amt)}
+    ${rpRow('Qty Received',totalReceived?Number(totalReceived).toLocaleString()+' '+(po[5]||''):'None yet')}
+    ${totalWastage?rpRow('Total Wastage',Number(totalWastage).toLocaleString()+' '+(po[5]||'')):''}
+    ${rpRow('Bill / DC Ref',billRef)}
     ${rpRow('Status',badge(po[7]||'pending'))}
-    ${rpRow('GRNs Received',grns.length)}
+    ${rpRow('GRNs Received',grns.length+' receipts')}
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">GRNs Against This PO</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+  <div class="dp-sec-title">GRNs Against This PO (${grns.length})</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:var(--s1)">
         <th style="font-size:10px;padding:3px 6px;text-align:left">GRN ID</th>
         <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Vendor / DC</th>
         <th style="font-size:10px;padding:3px 6px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Wastage</th>
         <th style="font-size:10px;padding:3px 6px;text-align:left">Status</th>
       </tr></thead>
       <tbody>${grnRows}</tbody>
     </table>
-  </div>`;
+  </div>
+  ${vendorPOs.length?`<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--t2)">
+    <span style="font-weight:600">Other POs for ${tr(po[3]||'this vendor',20)}:</span> ${vendorPOs.length} more POs
+    <span style="color:var(--acc);cursor:pointer;margin-left:6px" onclick="selVendor(null,'',${esc(po[3])})">View vendor →</span>
+  </div>`:''}`;
   openRP(html,'🛒 PO: '+poid);
 }
 
 function selFG(e,batchId){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
+  // D.fg: [seq,date,pro_id,batch_id,total_pkts,qty,unit,prod_name,cust_name,wastage,desp_date,design_no,ups,sheets,status,pkts_in_stock]
   const r=D.fg.find(x=>(x[3]||x[0])===batchId)||[];
-  const upsSheets=(r[12]&&r[13])?r[12]+'×'+r[13]:'—';
+  const upsSheets=(r[12]&&r[13])?r[12]+' ups × '+r[13]+' sheets':'—';
+  const pro=r[2]?D.pr.find(x=>x[0]===r[2]):null;
+  const order=pro&&pro[7]?D.o.find(x=>x[0]===pro[7]):null;
+  // Despatch history: find do_items with this batch's inv_batch_id
+  const despItems=D.do_items.filter(i=>i.inv_batch_id===r[3]);
+  const despRows=despItems.length?despItems.map(i=>{
+    const doRec=D.dos.find(d=>d[0]===i.delivery_order_id)||[];
+    return `<tr onclick="selDO(event,${esc(i.delivery_order_id)})" style="cursor:pointer">
+      <td style="padding:3px 6px;font-size:11px;font-family:monospace">${i.delivery_order_id||'—'}</td>
+      <td style="padding:3px 6px;font-size:11px">${doRec[1]||'—'}</td>
+      <td style="padding:3px 6px;font-size:11px">${doRec[3]||'—'}</td>
+      <td style="padding:3px 6px;font-size:11px;text-align:right">${i.packet_qty||'—'} pkts</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="4" style="padding:6px;font-size:11px;color:var(--t3)">Not yet despatched</td></tr>';
+  const pktsDespatched=despItems.reduce((s,i)=>s+(Number(i.packet_qty)||0),0);
+  const pktsInStock=Number(r[15])||0;
+  const pctDesp=r[4]?Math.round(pktsDespatched/r[4]*100):0;
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700">${r[4]||0}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Total Pkts</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:${pktsInStock>0?'var(--acc)':'var(--t3)'}">${pktsInStock}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">In Stock</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:#22c55e">${pktsDespatched}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Despatched</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('Batch ID',`<span class="mono">${r[3]||r[0]||'—'}</span>`)}
     ${rpRow('Date',r[1]||'—')}
+    ${rpRow('Despatch Date',r[10]||'—')}
     ${rpRow('Product',r[7]||'—')}
     ${rpRow('Customer',r[8]||'—')}
-    ${rpRow('PRO',r[2]?`<span class="mono">${r[2]}</span>`:'—')}
     ${rpRow('Design No',r[11]||'—')}
+    ${rpRow('PRO',r[2]?`<span class="mono" onclick="selPR(null,${esc(r[2])})" style="cursor:pointer;color:var(--acc)">${r[2]}</span>`:'—')}
+    ${rpRow('PRO Status',pro?proSubStatus(pro):'—')}
+    ${order?rpRow('Order',`<span class="mono" onclick="selO(null,${esc(order[0])})" style="cursor:pointer;color:var(--acc)">${order[0]}</span>`):''}
     ${rpRow('Ups × Sheets',upsSheets)}
     ${rpRow('Total Packets',r[4]||0)}
-    ${rpRow('Packets In Stock',r[15]||0)}
-    ${rpRow('Qty',r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):0)}
-    ${rpRow('Wastage',r[9]||0)}
+    ${rpRow('Packets In Stock',pktsInStock)}
+    ${rpRow('Qty',r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):'0')}
+    ${rpRow('Wastage',r[9]?Number(r[9]).toLocaleString():0)}
     ${rpRow('Status',badge(r[14]||'—'))}
+  </div>
+  <div class="dp-sec-title">Despatch History (${despItems.length} DOs · ${pktsDespatched} pkts · ${pctDesp}%)</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:3px 6px;text-align:left">DO ID</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Customer</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Packets</th>
+      </tr></thead>
+      <tbody>${despRows}</tbody>
+    </table>
   </div>`;
-  openRP(html,'📦 '+batchId);
+  openRP(html,'📦 Batch: '+batchId);
 }
 
 function selDO(e,did){
-  const tr2=e.target.closest('tr');
+  const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
+  // D.dos: [id, date, order_id, cust_name, price_in_lakhs, tax_rate, item_count]
   const r=D.dos.find(x=>x[0]===did);
   if(!r)return;
   const items=D.do_items.filter(i=>i.delivery_order_id===did);
   const fgMap={};D.fg.forEach(f=>{fgMap[f[3]]=f;});
+  const order=r[2]?D.o.find(x=>x[0]===r[2]):null;
+  const totalPkts=items.reduce((s,i)=>s+(Number(i.packet_qty)||0),0);
+  // Unique products in this DO
+  const uniqueProds=[...new Set(items.map(i=>{const fg=fgMap[i.inv_batch_id];return fg?fg[7]:'';}).filter(Boolean))];
+  // Price: dos[4] is in lakhs (e.g. 0.31 = ₹31,000)
+  const priceRaw=Number(r[4])||0;
+  const priceDisplay=priceRaw?'₹'+Math.round(priceRaw*100000).toLocaleString()+' (₹'+priceRaw+'L)':'—';
+  // Tax: dos[5] is rate (e.g. 0.18 = 18%)
+  const taxRaw=Number(r[5])||0;
+  const taxDisplay=taxRaw?(taxRaw*100).toFixed(0)+'%  (₹'+Math.round(priceRaw*100000*taxRaw).toLocaleString()+')':'—';
+  const totalWithTax=priceRaw?'₹'+Math.round(priceRaw*100000*(1+taxRaw)).toLocaleString():'—';
   const itemRows=items.length?items.map(i=>{
     const fg=fgMap[i.inv_batch_id]||[];
-    return `<tr>
-      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${i.inv_batch_id||'-'}</td>
-      <td style="padding:4px 8px;font-size:11px">${fg[7]||'-'}</td>
-      <td style="padding:4px 8px;font-size:11px;text-align:right">${i.packet_qty||'-'} pkts</td>
+    return `<tr onclick="selFG(event,${esc(i.inv_batch_id)})" style="cursor:pointer">
+      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${i.inv_batch_id||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px">${fg[7]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px">${fg[11]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${i.packet_qty||'—'} pkts</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right;color:var(--t3)">${fg[5]?Number(fg[5]).toLocaleString()+' '+(fg[6]||''):''}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="3" style="padding:8px;font-size:11px;color:var(--t3)">No items</td></tr>';
+  }).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No items</td></tr>';
   const html=`
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
-    ${rpRow('DO ID',`<span class="mono">${r[0]}</span>`)}
-    ${rpRow('Date',r[1]||'-')}
-    ${rpRow('Customer',r[3]||'-')}
-    ${rpRow('Order',r[2]?`<span class="mono">${r[2]}</span>`:'-')}
-    ${rpRow('Items',r[6]||0)}
-    ${rpRow('Price',r[4]?'Rs.'+Number(r[4]).toLocaleString():'-')}
-    ${rpRow('Taxation',r[5]||'-')}
+    ${rpRow('DO / DC ID',`<span class="mono">${r[0]}</span>`)}
+    ${rpRow('Date',r[1]||'—')}
+    ${rpRow('Customer',r[3]||'—')}
+    ${rpRow('Order',r[2]?`<span class="mono" onclick="${order?`selO(null,${esc(r[2])})`:''}event.stopPropagation()" style="${order?'cursor:pointer;color:var(--acc)':''}">${r[2]}</span>`:'—')}
+    ${rpRow('Products',uniqueProds.length?uniqueProds.map(p=>tr(p,20)).join(', '):'—')}
+    ${rpRow('Line Items',r[6]||0)}
+    ${rpRow('Total Packets',totalPkts.toLocaleString())}
+    ${rpRow('Basic Price',priceDisplay)}
+    ${rpRow('GST Rate',taxDisplay)}
+    ${rpRow('Total with GST',totalWithTax)}
   </div>
-  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Items Despatched</div>
+  <div class="dp-sec-title">Items Despatched (${items.length})</div>
   <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:var(--s1)">
         <th style="font-size:10px;padding:4px 8px;text-align:left">Batch ID</th>
         <th style="font-size:10px;padding:4px 8px;text-align:left">Product</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Packets</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Design No</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Packets</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Qty</th>
       </tr></thead>
       <tbody>${itemRows}</tbody>
     </table>
