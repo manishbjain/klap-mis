@@ -4344,7 +4344,7 @@ R.fg_instock=function(p){
   const q=(document.getElementById('fgis-q')?.value||'').toLowerCase();
   const custF=(document.getElementById('fgis-cust')?.value||'');
   const prodF=(document.getElementById('fgis-prod')?.value||'');
-  // Populate customer/product dropdowns once
+  // Populate customer dropdown once; always cascade product dropdown from selected customer
   const custSel=document.getElementById('fgis-cust');
   const prodSel=document.getElementById('fgis-prod');
   if(custSel&&custSel.options.length<=1){
@@ -4352,10 +4352,14 @@ R.fg_instock=function(p){
     custs.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;custSel.appendChild(o);});
     if(custF)custSel.value=custF;
   }
-  if(prodSel&&prodSel.options.length<=1){
-    const prods=[...new Set(D.fg.map(r=>r[7]).filter(Boolean))].sort();
+  // Always repopulate product dropdown based on selected customer (cascade)
+  if(prodSel){
+    const srcItems=custF?D.fg.filter(r=>r[8]===custF):D.fg;
+    const prods=[...new Set(srcItems.map(r=>r[7]).filter(Boolean))].sort();
+    const prevProd=prodF;
+    while(prodSel.options.length>1)prodSel.remove(1);
     prods.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=tr(c,40);prodSel.appendChild(o);});
-    if(prodF)prodSel.value=prodF;
+    if(prods.includes(prevProd))prodSel.value=prevProd;
   }
   const despMap=_fgDespMap();
   // Only items with stock
