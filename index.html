@@ -3202,13 +3202,54 @@ function selPD(e,code){try{
 }catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selPD ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
 }
 
+function selCust(e,cid,cname){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const cu=D.cu.find(x=>x[0]===cid)||[];
+  const orders=D.o.filter(o=>o[2]===cname);
+  const total=orders.length;
+  const complete=orders.filter(o=>o[5]==='complete').length;
+  const active=orders.filter(o=>o[5]==='active'||o[5]==='in_production').length;
+  const orderRows=orders.slice(0,20).map(o=>`<tr>
+    <td style="padding:4px 8px;font-size:11px;font-family:monospace;cursor:pointer" onclick="showNav('orders');setTimeout(()=>{const el=document.getElementById('o-q');if(el){el.value=${esc(o[0])};R.orders();}},200)">${o[0]}</td>
+    <td style="padding:4px 8px;font-size:11px">${o[1]||'—'}</td>
+    <td style="padding:4px 8px;font-size:11px">${tr(o[3]||'—',22)}</td>
+    <td style="padding:4px 8px;font-size:11px;text-align:right">${o[4]?Number(o[4]).toLocaleString():'—'}</td>
+    <td style="padding:4px 8px">${badge(o[5])}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No orders</td></tr>';
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    ${rpRow('Ref',`<span class="mono">${cu[0]||'—'}</span>`)}
+    ${rpRow('Name',cu[1]||'—')}
+    ${rpRow('Brand',cu[2]||'—')}
+    ${rpRow('Alias',cu[3]||'—')}
+    ${rpRow('Total Orders',total)}
+    ${rpRow('Complete',complete+' / Active: '+active)}
+  </div>
+  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Recent Orders ${total>20?'(showing 20 of '+total+')':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Order ID</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Product</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${orderRows}</tbody>
+    </table>
+  </div>`;
+  openRP(html,'👤 '+cname);
+}
+
 R.customers=function(p){
   if(p)pp.customers=p;
   const q=(document.getElementById('cu-q')?.value||'').toLowerCase();
   let items=D.cu.filter(x=>(!q||[x[0],x[1],x[2],x[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('customers',items);
   const slice=pgr(items,'customers','R.customers','cu-pg','cu-cnt');
-  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="openRP(dpGrid(dpSec('Customer'),dpRow('Ref',${esc(a[0])}),dpRow('Name',${esc(a[1])}),dpRow('Brand',${esc(a[2]||'—')}),dpRow('Alias',${esc(a[3]||'—')})),${esc(a[1])})">
+  document.getElementById('cu-body').innerHTML=slice.map(a=>`<tr onclick="selCust(event,${esc(a[0])},${esc(a[1])})" style="cursor:pointer">
     <td class="mono">${a[0]||'—'}</td><td title="${(a[1]||'').replace(/"/g,'&quot;')}">${tr(a[1],26)}</td><td>${a[2]||'—'}</td><td>${a[3]||'—'}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No customers</td></tr>';
 };
@@ -3676,6 +3717,49 @@ R.machines=function(){
   document.getElementById('ma-body').innerHTML=D.ma.map(m=>`<tr><td>${m[0]}</td><td>${badge(m[1])}</td></tr>`).join('');
 };
 
+function selVendor(e,vid,vname){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const ve=D.ve.find(x=>x[0]===vid)||[];
+  const pos=D.pos.filter(p=>p[3]===vname);
+  const rmMap={};D.rm_list.forEach(r=>{rmMap[r[0]]=r[5]||r[1]||r[0];});
+  const poRows=pos.slice(0,15).map(p=>{
+    const amt=p[4]&&p[6]?'₹'+Math.round(p[4]*p[6]).toLocaleString():'—';
+    return `<tr>
+      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${p[0]}</td>
+      <td style="padding:4px 8px;font-size:11px">${p[1]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px">${tr(rmMap[p[2]]||p[2]||'—',20)}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${p[4]?Number(p[4]).toLocaleString():'—'} ${p[5]||''}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${amt}</td>
+      <td style="padding:4px 8px">${badge(p[7]||'pending')}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="padding:8px;font-size:11px;color:var(--t3)">No POs</td></tr>';
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    ${rpRow('Ref',`<span class="mono">${ve[0]||'—'}</span>`)}
+    ${rpRow('Name',ve[1]||'—')}
+    ${rpRow('Alias',ve[2]||'—')}
+    ${rpRow('Type',badge(ve[3]))}
+    ${rpRow('Total POs',pos.length)}
+  </div>
+  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Purchase Orders ${pos.length>15?'(showing 15 of '+pos.length+')':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:4px 8px;text-align:left">PO ID</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Material</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:right">Amount</th>
+        <th style="font-size:10px;padding:4px 8px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${poRows}</tbody>
+    </table>
+  </div>`;
+  openRP(html,'🏭 '+vname);
+}
+
 R.vendors=function(p){
   if(p)pp.vendors=p;
   const vtype=document.getElementById('ve-type')?.value||'';
@@ -3683,7 +3767,7 @@ R.vendors=function(p){
   let items=D.ve.filter(x=>(!vtype||x[3]===vtype)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('vendors',items);
   const slice=pgr(items,'vendors','R.vendors','ve-pg','ve-cnt');
-  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="openRP(rf('Ref',${esc(a[0])})+rf('Name',${esc(a[1])})+rf('Alias',${esc(a[2]||'—')})+rf('Type',badge(${esc(a[3])})),${esc(a[1])})">
+  document.getElementById('ve-body').innerHTML=slice.map(a=>`<tr onclick="selVendor(event,${esc(a[0])},${esc(a[1])})" style="cursor:pointer">
     <td class="mono">${a[0]||'—'}</td><td>${tr(a[1],28)}</td><td>${a[2]||'—'}</td><td>${badge(a[3])}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--t3)">No vendors</td></tr>';
 };
@@ -3801,12 +3885,12 @@ R.despatched=function(p){
   const slice=pgr(items,'despatched','R.despatched','wdep-done-pg','wdep-done-cnt');
   document.getElementById('wdep-done-body').innerHTML=slice.map(r=>{
     const taxBadge=r[5]?`<span class="b" style="font-size:9px;background:var(--s1);color:var(--t2);margin-left:4px">${r[5]}</span>`:'';
-    return `<tr>
+    return `<tr onclick="selDO(event,${esc(r[0])})" style="cursor:pointer">
       <td class="mono">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
       <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
       <td style="text-align:right">${r[6]||0} items</td>
       <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
-      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>DC ${r[0]}</h3><table class=dtl><tr><td>DO ID</td><td class=mono>${r[0]}</td></tr><tr><td>Date</td><td>${r[1]||'—'}</td></tr><tr><td>Customer</td><td>${r[3]||'—'}</td></tr><tr><td>Order</td><td class=mono>${r[2]||'—'}</td></tr><tr><td>Items</td><td>${r[6]||0} batches</td></tr><tr><td>Price</td><td>${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}</td></tr><tr><td>Taxation</td><td>${r[5]||'—'}</td></tr></table></div>','📄 DC ${r[0]}')">📄 View DC</button></td>
+      <td><button class="ab ab-g" onclick="event.stopPropagation();selDO(event,${esc(r[0])})">📄 View DC</button></td>
     </tr>`;
   }).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No despatched orders</td></tr>';
 };
@@ -3925,7 +4009,7 @@ R.rm_list=function(p){
   items=applyFDFilters('rm-master',items);
   const slice=pgr(items,'rm_list','R.rm_list','rmi-pg','');
   const el=document.getElementById('rmi-body');if(!el)return;
-  el.innerHTML=slice.map(r=>`<tr>
+  el.innerHTML=slice.map(r=>`<tr onclick="selRM(event,${esc(r[0])})" style="cursor:pointer">
     <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td><td>${r[2]||'—'}</td>
     <td>${r[3]||'—'}</td><td>${r[4]||'—'}</td><td>${tr(r[5]||'—',20)}</td>
   </tr>`).join('');
@@ -3942,7 +4026,7 @@ R.rm_in=function(p){
   items=applyFDFilters('rm-grn',items);
   const slice=pgr(items,'rm_in','R.rm_in','rmin-pg','rmin-cnt');
   const el=document.getElementById('rmin-body');if(!el)return;
-  el.innerHTML=slice.map(r=>`<tr>
+  el.innerHTML=slice.map(r=>`<tr onclick="selGRN(event,${esc(r[0])})" style="cursor:pointer">
     <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td><td>${tr(r[2]||'—',20)}</td>
     <td>${r[3]||'—'}</td><td>${tr(r[4]||'—',18)}</td>
     <td>${r[5]?Number(r[5]).toLocaleString():'—'}</td><td>${r[6]||'—'}</td>
@@ -3958,7 +4042,7 @@ R.rm_out=function(p){
   items=applyFDFilters('rm-out',items);
   const slice=pgr(items,'rm_out','R.rm_out','rmout-pg','rmout-cnt');
   const el=document.getElementById('rmout-body');if(!el)return;
-  el.innerHTML=slice.map(r=>`<tr>
+  el.innerHTML=slice.map(r=>`<tr onclick="selRMOut(event,${esc(r[0])})" style="cursor:pointer">
     <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td>
     <td class="mono">${r[2]||'—'}</td><td class="mono">${r[3]||'—'}</td>
     <td>${r[4]?Number(r[4]).toLocaleString():'—'}</td><td>${r[5]||'—'}</td>
@@ -3980,7 +4064,7 @@ R.po_list=function(p){
   const el=document.getElementById('po-body');if(!el)return;
   el.innerHTML=slice.map(r=>{
     const amt=r[4]&&r[6]?Math.round(r[4]*r[6]).toLocaleString():'—';
-    return `<tr>
+    return `<tr onclick="selPO(event,${esc(r[0])})" style="cursor:pointer">
       <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td>
       <td>${tr(r[2]||'—',20)}</td><td>${tr(r[3]||'—',18)}</td>
       <td>${r[4]?Number(r[4]).toLocaleString():'—'}</td><td>${r[5]||'—'}</td>
@@ -4002,7 +4086,7 @@ R.fg_inventory=function(p){
     const stBadge=isRecent?'<span class="b bg" style="font-size:10px">Recent</span>':'<span class="b" style="font-size:10px;background:var(--s1);color:var(--t2)">Stored</span>';
     const upsSheets=(r[12]&&r[13])?r[12]+'×'+r[13]:'—';
     const pktsInStockDisplay=r[15]>0?'<span style="color:var(--grn);font-weight:600">'+r[15]+'</span>':'<span style="color:var(--red)">0</span>';
-    return `<tr>
+    return `<tr onclick="selFG(event,${esc(r[3]||r[0])})" style="cursor:pointer">
       <td class="mono">${r[3]||r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
       <td title="${r[7]||''}">${tr(r[7]||'—',22)}</td>
       <td>${tr(r[8]||'—',16)}</td>
@@ -4011,7 +4095,7 @@ R.fg_inventory=function(p){
       <td style="text-align:right">${r[4]||0}</td>
       <td style="text-align:right">${pktsInStockDisplay}</td>
       <td>${stBadge}${r[9]?'&nbsp;<span style="color:var(--ylw);font-size:10px">⚠ '+Number(r[9]).toLocaleString()+'w</span>':''}</td>
-      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>${r[3]||r[0]}</h3><table class=dtl><tr><td>Batch</td><td>${r[3]||r[0]}</td></tr><tr><td>Date</td><td>${r[1]||'—'}</td></tr><tr><td>Product</td><td>${r[7]||'—'}</td></tr><tr><td>Customer</td><td>${r[8]||'—'}</td></tr><tr><td>PRO</td><td>${r[2]||'—'}</td></tr><tr><td>D No</td><td>${r[11]||'—'}</td></tr><tr><td>Ups×Sheets</td><td>${upsSheets}</td></tr><tr><td>Total Pkts</td><td>${r[4]||0}</td></tr><tr><td>Pkts In Stock</td><td>${r[15]||0}</td></tr><tr><td>Qty</td><td>${r[5]?Number(r[5]).toLocaleString():0} ${r[6]||''}</td></tr><tr><td>Wastage</td><td>${r[9]||0}</td></tr><tr><td>Status</td><td>${r[14]||'—'}</td></tr></table></div>','📦 ${r[3]||r[0]}')">📦 View</button></td>
+      <td><button class="ab ab-g" onclick="event.stopPropagation();selFG(event,${esc(r[3]||r[0])})">📦 View</button></td>
     </tr>`;
   }).join('');
   const s=document.getElementById('winv-s');if(s)s.textContent=D.fg.length;
@@ -4027,16 +4111,174 @@ R.despatch_live=function(p){
   const el=document.getElementById('wdep-body');if(!el)return;
   el.innerHTML=slice.map(r=>{
     const taxBadge=r[5]?`<span class="b" style="font-size:9px;background:var(--s1);color:var(--t2);margin-left:4px">${r[5]}</span>`:'';
-    return `<tr>
+    return `<tr onclick="selDO(event,${esc(r[0])})" style="cursor:pointer">
       <td class="mono">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
       <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
       <td style="text-align:right">${r[6]||0} items</td>
       <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
-      <td><button class="ab ab-g" onclick="selDO(event,${esc(r[0])})">📄 View DC</button></td>
+      <td><button class="ab ab-g" onclick="event.stopPropagation();selDO(event,${esc(r[0])})">📄 View DC</button></td>
     </tr>`;
   }).join('');
   const rv=document.getElementById('wdep-r');if(rv)rv.textContent=D.dos.length;
 };
+
+function selRM(e,rmid){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const rm=D.rm_list.find(x=>x[0]===rmid)||[];
+  const grns=D.rm_in.filter(x=>x[2]===rmid);
+  const issues=D.rm_out.filter(x=>x[2]===rmid);
+  const pos=D.pos.filter(p=>p[2]===rmid);
+  const totalIn=grns.reduce((s,g)=>s+(Number(g[5])||0),0);
+  const totalOut=issues.reduce((s,o)=>s+(Number(o[4])||0),0);
+  const grnRows=grns.slice(0,10).map(g=>`<tr>
+    <td style="padding:3px 6px;font-size:11px;font-family:monospace">${g[0]}</td>
+    <td style="padding:3px 6px;font-size:11px">${g[1]||'—'}</td>
+    <td style="padding:3px 6px;font-size:11px">${g[3]||'—'}</td>
+    <td style="padding:3px 6px;font-size:11px;text-align:right">${g[5]?Number(g[5]).toLocaleString():'—'} ${g[6]||''}</td>
+    <td style="padding:3px 6px">${badge(g[8]||'pending')}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs</td></tr>';
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    ${rpRow('RM ID',`<span class="mono">${rm[0]||'—'}</span>`)}
+    ${rpRow('Description',rm[5]||rm[1]||'—')}
+    ${rpRow('Category',rm[3]||'—')}
+    ${rpRow('Sub-category',rm[4]||'—')}
+    ${rpRow('Total GRNs',grns.length+' ('+totalIn.toLocaleString()+' received)')}
+    ${rpRow('Issues',issues.length+' ('+totalOut.toLocaleString()+' issued)')}
+    ${rpRow('POs',pos.length)}
+  </div>
+  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">GRN History ${grns.length>10?'(latest 10)':''}</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:3px 6px;text-align:left">GRN ID</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Vendor</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${grnRows}</tbody>
+    </table>
+  </div>`;
+  openRP(html,'📦 '+rmid);
+}
+
+function selGRN(e,grnid){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const g=D.rm_in.find(x=>x[0]===grnid)||[];
+  const rmRec=D.rm_list.find(x=>x[0]===g[2])||[];
+  const po=g[9]?D.pos.find(x=>x[0]===g[9]):null;
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+    ${rpRow('GRN ID',`<span class="mono">${g[0]||'—'}</span>`)}
+    ${rpRow('Date',g[1]||'—')}
+    ${rpRow('Material',rmRec[5]||rmRec[1]||g[2]||'—')}
+    ${rpRow('RM ID',`<span class="mono">${g[2]||'—'}</span>`)}
+    ${rpRow('Vendor',g[3]||'—')}
+    ${rpRow('DC No',g[4]||'—')}
+    ${rpRow('Qty Received',g[5]?Number(g[5]).toLocaleString()+' '+(g[6]||''):'—')}
+    ${rpRow('Wastage',g[11]?Number(g[11]).toLocaleString():'0')}
+    ${rpRow('PO Ref',g[9]?`<span class="mono">${g[9]}</span>`:'—')}
+    ${rpRow('Status',badge(g[8]||'pending'))}
+    ${po?rpRow('PO Vendor',po[3]||'—'):''}
+    ${po?rpRow('PO Rate','₹'+(po[6]||0)+'/'+po[5]):''}
+  </div>`;
+  openRP(html,'📋 GRN: '+grnid);
+}
+
+function selRMOut(e,oid){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const o=D.rm_out.find(x=>x[0]===oid)||[];
+  const rmRec=D.rm_list.find(x=>x[0]===o[2])||[];
+  const proc=D.procs_raw.find(x=>(x.id||x[0])===o[3]);
+  const pro=proc?D.pr.find(x=>x[0]===proc.prod_order_id):null;
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+    ${rpRow('Issue ID',`<span class="mono">${o[0]||'—'}</span>`)}
+    ${rpRow('Date',o[1]||'—')}
+    ${rpRow('Material',rmRec[5]||rmRec[1]||o[2]||'—')}
+    ${rpRow('RM ID',`<span class="mono">${o[2]||'—'}</span>`)}
+    ${rpRow('Process ID',`<span class="mono">${o[3]||'—'}</span>`)}
+    ${rpRow('Purpose',o[4]||'Production')}
+    ${rpRow('Qty Issued',o[4]?Number(o[4]).toLocaleString():'—')}
+    ${proc?rpRow('Process',PROC_LABEL[proc.process_name]||proc.process_name||'—'):''}
+    ${pro?rpRow('PRO',`<span class="mono">${pro[0]||'—'}</span>`):''}
+    ${pro?rpRow('Product',pro[2]||'—'):''}
+  </div>`;
+  openRP(html,'🔧 Issue: '+oid);
+}
+
+function selPO(e,poid){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const po=D.pos.find(x=>x[0]===poid)||[];
+  const rmRec=D.rm_list.find(x=>x[0]===po[2])||[];
+  const grns=D.rm_in.filter(x=>x[9]===poid);
+  const amt=po[4]&&po[6]?'₹'+Math.round(po[4]*po[6]).toLocaleString():'—';
+  const grnRows=grns.map(g=>`<tr>
+    <td style="padding:3px 6px;font-size:11px;font-family:monospace">${g[0]}</td>
+    <td style="padding:3px 6px;font-size:11px">${g[1]||'—'}</td>
+    <td style="padding:3px 6px;font-size:11px;text-align:right">${g[5]?Number(g[5]).toLocaleString():'—'} ${g[6]||''}</td>
+    <td style="padding:3px 6px">${badge(g[8]||'pending')}</td>
+  </tr>`).join('')||'<tr><td colspan="4" style="padding:6px;font-size:11px;color:var(--t3)">No GRNs yet</td></tr>';
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
+    ${rpRow('PO ID',`<span class="mono">${po[0]||'—'}</span>`)}
+    ${rpRow('Date',po[1]||'—')}
+    ${rpRow('Material',rmRec[5]||rmRec[1]||po[2]||'—')}
+    ${rpRow('Vendor',po[3]||'—')}
+    ${rpRow('Qty',po[4]?Number(po[4]).toLocaleString()+' '+(po[5]||''):'—')}
+    ${rpRow('Rate','₹'+(po[6]||0)+' / '+(po[5]||'unit'))}
+    ${rpRow('Amount',amt)}
+    ${rpRow('Bill / DC Ref',po[8]||'—')}
+    ${rpRow('Status',badge(po[7]||'pending'))}
+    ${rpRow('GRNs Received',grns.length)}
+  </div>
+  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">GRNs Against This PO</div>
+  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--s1)">
+        <th style="font-size:10px;padding:3px 6px;text-align:left">GRN ID</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Date</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:right">Qty</th>
+        <th style="font-size:10px;padding:3px 6px;text-align:left">Status</th>
+      </tr></thead>
+      <tbody>${grnRows}</tbody>
+    </table>
+  </div>`;
+  openRP(html,'🛒 PO: '+poid);
+}
+
+function selFG(e,batchId){
+  const tr2=e.target.closest('tr');
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  if(tr2)tr2.classList.add('sel');
+  const r=D.fg.find(x=>(x[3]||x[0])===batchId)||[];
+  const upsSheets=(r[12]&&r[13])?r[12]+'×'+r[13]:'—';
+  const html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden">
+    ${rpRow('Batch ID',`<span class="mono">${r[3]||r[0]||'—'}</span>`)}
+    ${rpRow('Date',r[1]||'—')}
+    ${rpRow('Product',r[7]||'—')}
+    ${rpRow('Customer',r[8]||'—')}
+    ${rpRow('PRO',r[2]?`<span class="mono">${r[2]}</span>`:'—')}
+    ${rpRow('Design No',r[11]||'—')}
+    ${rpRow('Ups × Sheets',upsSheets)}
+    ${rpRow('Total Packets',r[4]||0)}
+    ${rpRow('Packets In Stock',r[15]||0)}
+    ${rpRow('Qty',r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):0)}
+    ${rpRow('Wastage',r[9]||0)}
+    ${rpRow('Status',badge(r[14]||'—'))}
+  </div>`;
+  openRP(html,'📦 '+batchId);
+}
 
 function selDO(e,did){
   const tr2=e.target.closest('tr');
