@@ -831,7 +831,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         </div>
       </div>
       <div class="fd-active-bar" id="fd-bar-rm-grn"><span id="fd-bar-rm-grn-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('rm-grn')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>GRN ID</th><th>Date</th><th>Material</th><th>Brand</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Bill Ref</th></tr></thead><tbody id="rmin-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>GRN ID</th><th>Date</th><th>Material</th><th>Brand</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Vendor Ref</th><th>Status</th></tr></thead><tbody id="rmin-body"></tbody></table></div>
       <div class="pg-bar" id="rmin-pg"></div>
     </div>
   </div>
@@ -945,7 +945,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-fg-inv"><span id="fd-bar-fg-inv-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('fg-inv')">Clear all</button></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Inventory ID</th><th>Date</th><th>Product</th><th>Customer</th><th>PRO</th><th>Packets</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead><tbody id="winv-body"></tbody></table></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Batch ID</th><th>Date</th><th>Product</th><th>Customer</th><th>D No</th><th>Ups×Sheets</th><th>Total Pkts</th><th>In Stock</th><th>Status</th><th>Action</th></tr></thead><tbody id="winv-body"></tbody></table></div>
     <div class="pg-bar" id="winv-pg"></div>
   </div>
 </div>
@@ -970,7 +970,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         </div>
       </div>
       <div class="fd-active-bar" id="fd-bar-despatch"><span id="fd-bar-despatch-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatch')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Customer</th><th>Product</th><th>Qty</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>DO #</th><th>Date</th><th>Customer</th><th>Order</th><th>Items</th><th>Price / Tax</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-pg"></div>
     </div>
   </div>
@@ -983,7 +983,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         </div>
       </div>
       <div class="fd-active-bar" id="fd-bar-despatched"><span id="fd-bar-despatched-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatched')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>OID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>DC</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>DO #</th><th>Date</th><th>Customer</th><th>Order</th><th>Items</th><th>Price / Tax</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-done-pg"></div>
     </div>
   </div>
@@ -2014,26 +2014,36 @@ async function loadData(){
     });
 
     // D.rm_in / D.rm_out
+    // D.rm_in: [0]rm_in_id [1]date [2]rm_alias [3]rm_brand [4]vendor_name [5]qty [6]qty_units [7]vendor_ref [8]status [9]purchase_id [10]recd_date [11]freight_amt [12]carton_no
     D.rm_in=rm_in.map(r=>{
       const rm=D.rm_list.find(m=>m[0]===r.rm_item_id)||[];
       const ven=accounts.find(a=>a.id===r.vendor_id);
-      return [r.rm_in_id,r.date,rm[1]||r.rm_item_id||'',rm[2]||'',ven?.name||r.vendor_id||'',r.qty||0,r.qty_units||'',r.vendor_ref||'',r.status||''];
+      return [r.rm_in_id,r.date,rm[1]||r.rm_item_id||'',rm[2]||'',ven?.name||r.vendor_id||'',r.qty||0,r.qty_units||'',r.vendor_ref||'',r.status||'',r.purchase_id||'',r.recd_date||'',r.freight_amt||0,r.carton_no||''];
     });
     D.rm_out=rm_out.map(r=>[r.id,r.date,r.rm_in_id,r.prod_proc_id,r.out_for||'',r.qty||0]);
 
-    // D.fg: [id, date, prod_order_id, inv_batch_id, packets, qty, qty_units, product_name, customer_name]
+    // Build despatch map: inv_batch_id → total packets despatched
+    const despatchedMap={};
+    do_items.forEach(i=>{
+      if(i.inv_batch_id)despatchedMap[i.inv_batch_id]=(despatchedMap[i.inv_batch_id]||0)+(i.packet_qty||0);
+    });
+
+    // D.fg: [0]id [1]date [2]prod_order_id [3]inv_batch_id [4]packets [5]qty [6]qty_units [7]pname [8]cname [9]qty_wastage [10]last_entry [11]d_no [12]ups [13]sheets [14]fg_status [15]pkts_in_stock
     D.fg=fg_inv.map(r=>{
       const pro=pros.find(p=>p.id===r.prod_order_id)||{};
       const pname=prodMap[pro.product_id]?.product_name||pro.job_name||r.prod_order_id||'';
       const cname=prodMap[pro.product_id]?.customer_name||'';
-      return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry];
+      const pktsDespatched=despatchedMap[r.inv_batch_id]||0;
+      const pktsInStock=Math.max(0,(r.packets||0)-pktsDespatched);
+      return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry,r.d_no||'',r.ups||0,r.sheets||0,r.fg_status||'',pktsInStock];
     });
 
-    // D.dos: delivery orders [id, date, order_id, customer_name, price]
+    // D.dos: delivery orders [0]id [1]date [2]order_id [3]customer_name [4]price [5]taxation [6]item_count
     D.dos=dos.map(r=>{
       const ord=orders.find(o=>o.id===r.order_id)||{};
       const cname=accMap[ord.customer_id]?.name||'';
-      return [r.id,r.date,r.order_id,cname,r.price||0];
+      const itemCount=do_items.filter(i=>i.delivery_order_id===r.id).length;
+      return [r.id,r.date,r.order_id,cname,r.price||0,r.taxation||'',itemCount];
     });
     D.do_items=do_items;
 
@@ -3770,15 +3780,19 @@ R.despatch=function(p){
 R.despatched=function(p){
   if(p)pp.despatched=p;
   const q=(document.getElementById('wdep-dq')?.value||'').toLowerCase();
-  let items=D.o.filter(o=>o[5]==='complete'&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.dos.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
   items=applyFDFilters('despatched',items);
   const slice=pgr(items,'despatched','R.despatched','wdep-done-pg','wdep-done-cnt');
-  document.getElementById('wdep-done-body').innerHTML=slice.map(o=>`<tr>
-    <td class="mono">${o[0]}</td><td>${o[1]||'—'}</td><td>${tr(o[2],20)}</td>
-    <td>${tr(o[3],24)}</td><td>${o[4]?Number(o[4]).toLocaleString():'—'}</td>
-    <td class="mono">DC-${o[0]}</td>
-    <td><button class="ab ab-g" onclick="toast('Viewing DC-${o[0]} 📄')">📄 View</button></td>
-  </tr>`).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No despatched orders</td></tr>';
+  document.getElementById('wdep-done-body').innerHTML=slice.map(r=>{
+    const taxBadge=r[5]?`<span class="b" style="font-size:9px;background:var(--s1);color:var(--t2);margin-left:4px">${r[5]}</span>`:'';
+    return `<tr>
+      <td class="mono">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
+      <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
+      <td style="text-align:right">${r[6]||0} items</td>
+      <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
+      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>DC ${r[0]}</h3><table class=dtl><tr><td>DO ID</td><td class=mono>${r[0]}</td></tr><tr><td>Date</td><td>${r[1]||'—'}</td></tr><tr><td>Customer</td><td>${r[3]||'—'}</td></tr><tr><td>Order</td><td class=mono>${r[2]||'—'}</td></tr><tr><td>Items</td><td>${r[6]||0} batches</td></tr><tr><td>Price</td><td>${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}</td></tr><tr><td>Taxation</td><td>${r[5]||'—'}</td></tr></table></div>','📄 DC ${r[0]}')">📄 View DC</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No despatched orders</td></tr>';
 };
 
 
@@ -3911,7 +3925,7 @@ R.rm_in=function(p){
     <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td><td>${tr(r[2]||'—',20)}</td>
     <td>${r[3]||'—'}</td><td>${tr(r[4]||'—',18)}</td>
     <td>${r[5]?Number(r[5]).toLocaleString():'—'}</td><td>${r[6]||'—'}</td>
-    <td>₹${r[7]||0}</td><td class="mono">${r[8]||'—'}</td>
+    <td class="mono">${r[7]||'—'}</td><td>${badge(r[8]||'pending')}</td>
   </tr>`).join('');
   const grn=document.getElementById('rmi-grn');if(grn)grn.textContent=D.rm_in.length;
 };
@@ -3958,21 +3972,25 @@ R.po_list=function(p){
 R.fg_inventory=function(p){
   if(p)pp.fg_inventory=p;
   const q=(document.getElementById('winv-q')?.value||'').toLowerCase();
-  let items=D.fg.filter(r=>!q||[r[0],r[2],r[7],r[8],r[3]].join(' ').toLowerCase().includes(q));
+  let items=D.fg.filter(r=>!q||[r[0],r[2],r[7],r[8],r[3],r[11]].join(' ').toLowerCase().includes(q));
   items=applyFDFilters('fg-inv',items);
   const slice=pgr(items,'fg_inventory','R.fg_inventory','winv-pg','winv-cnt');
   const el=document.getElementById('winv-body');if(!el)return;
   el.innerHTML=slice.map(r=>{
     const isRecent=r[10]&&(new Date()-new Date(r[10]))<7*86400000;
     const stBadge=isRecent?'<span class="b bg" style="font-size:10px">Recent</span>':'<span class="b" style="font-size:10px;background:var(--s1);color:var(--t2)">Stored</span>';
+    const upsSheets=(r[12]&&r[13])?r[12]+'×'+r[13]:'—';
+    const pktsInStockDisplay=r[15]>0?'<span style="color:var(--grn);font-weight:600">'+r[15]+'</span>':'<span style="color:var(--red)">0</span>';
     return `<tr>
       <td class="mono">${r[3]||r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
       <td title="${r[7]||''}">${tr(r[7]||'—',22)}</td>
-      <td>${tr(r[8]||'—',16)}</td><td class="mono">${r[2]||'—'}</td>
-      <td style="text-align:right">${r[4]||0} pkts</td>
-      <td style="text-align:right">${r[5]?Number(r[5]).toLocaleString()+' '+(r[6]||''):'—'}</td>
+      <td>${tr(r[8]||'—',16)}</td>
+      <td class="mono">${r[11]||'—'}</td>
+      <td style="text-align:center">${upsSheets}</td>
+      <td style="text-align:right">${r[4]||0}</td>
+      <td style="text-align:right">${pktsInStockDisplay}</td>
       <td>${stBadge}${r[9]?'&nbsp;<span style="color:var(--ylw);font-size:10px">⚠ '+Number(r[9]).toLocaleString()+'w</span>':''}</td>
-      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>${r[3]||r[0]}</h3><table class=dtl><tr><td>Batch</td><td>${r[3]||r[0]}</td></tr><tr><td>Date</td><td>${r[1]||'—'}</td></tr><tr><td>Product</td><td>${r[7]||'—'}</td></tr><tr><td>Customer</td><td>${r[8]||'—'}</td></tr><tr><td>PRO</td><td>${r[2]||'—'}</td></tr><tr><td>Packets</td><td>${r[4]||0}</td></tr><tr><td>Qty</td><td>${r[5]?Number(r[5]).toLocaleString():0} ${r[6]||''}</td></tr><tr><td>Wastage</td><td>${r[9]||0}</td></tr></table></div>','📦 ${r[3]||r[0]}')">📦 View</button></td>
+      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>${r[3]||r[0]}</h3><table class=dtl><tr><td>Batch</td><td>${r[3]||r[0]}</td></tr><tr><td>Date</td><td>${r[1]||'—'}</td></tr><tr><td>Product</td><td>${r[7]||'—'}</td></tr><tr><td>Customer</td><td>${r[8]||'—'}</td></tr><tr><td>PRO</td><td>${r[2]||'—'}</td></tr><tr><td>D No</td><td>${r[11]||'—'}</td></tr><tr><td>Ups×Sheets</td><td>${upsSheets}</td></tr><tr><td>Total Pkts</td><td>${r[4]||0}</td></tr><tr><td>Pkts In Stock</td><td>${r[15]||0}</td></tr><tr><td>Qty</td><td>${r[5]?Number(r[5]).toLocaleString():0} ${r[6]||''}</td></tr><tr><td>Wastage</td><td>${r[9]||0}</td></tr><tr><td>Status</td><td>${r[14]||'—'}</td></tr></table></div>','📦 ${r[3]||r[0]}')">📦 View</button></td>
     </tr>`;
   }).join('');
   const s=document.getElementById('winv-s');if(s)s.textContent=D.fg.length;
@@ -3986,12 +4004,16 @@ R.despatch_live=function(p){
   items=applyFDFilters('despatch',items);
   const slice=pgr(items,'despatch_live','R.despatch_live','wdep-pg','wdep-cnt');
   const el=document.getElementById('wdep-body');if(!el)return;
-  el.innerHTML=slice.map(r=>`<tr>
-    <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td>
-    <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
-    <td>₹${r[4]?Number(r[4]).toLocaleString():'—'}</td>
-    <td><button class="ab ab-g" onclick="toast('DC ${r[0]} 📄')">📄 View DC</button></td>
-  </tr>`).join('');
+  el.innerHTML=slice.map(r=>{
+    const taxBadge=r[5]?`<span class="b" style="font-size:9px;background:var(--s1);color:var(--t2);margin-left:4px">${r[5]}</span>`:'';
+    return `<tr>
+      <td class="mono">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
+      <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
+      <td style="text-align:right">${r[6]||0} items</td>
+      <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
+      <td><button class="ab ab-g" onclick="openRP('<div style=padding:16px><h3>DC ${r[0]}</h3><table class=dtl><tr><td>DO ID</td><td class=mono>${r[0]}</td></tr><tr><td>Date</td><td>${r[1]||\'—\'}</td></tr><tr><td>Customer</td><td>${r[3]||\'—\'}</td></tr><tr><td>Order</td><td class=mono>${r[2]||\'—\'}</td></tr><tr><td>Items</td><td>${r[6]||0} batches</td></tr><tr><td>Price</td><td>${r[4]?\'₹\'+Number(r[4]).toLocaleString():\'—\'}</td></tr><tr><td>Taxation</td><td>${r[5]||\'—\'}</td></tr></table></div>',\'📄 DC ${r[0]}\')">📄 View DC</button></td>
+    </tr>`;
+  }).join('');
   const rv=document.getElementById('wdep-r');if(rv)rv.textContent=D.dos.length;
 };
 
