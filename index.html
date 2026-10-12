@@ -5485,17 +5485,17 @@ function closeNewOrderForm(){
 // ── KANBAN ────────────────────────────────────────────────
 let KB=D.kb;
 const KB_COLS=[
-  {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c0', nav:'wflow-design',
+  {key:'in_design',    label:'In Design',         ic:'✏️', cls:'kb-c0', nav:'design-sec',
    actions:['design','assign']},
-  {key:'to_create_pro',label:'To Create Production Order', ic:'📋', cls:'kb-c1', nav:'wflow-prod',
+  {key:'to_create_pro',label:'To Create Production Order', ic:'📋', cls:'kb-c1', nav:'production-sec',
    actions:['create_pro','production']},
-  {key:'in_production',label:'In Production',     ic:'⚙️', cls:'kb-c2', nav:'wflow-prod',
+  {key:'in_production',label:'In Production',     ic:'⚙️', cls:'kb-c2', nav:'production-sec',
    actions:['production','pro']},
-  {key:'in_packing',   label:'In Packing',        ic:'📦', cls:'kb-c3', nav:'wpk',
+  {key:'in_packing',   label:'In Packing',        ic:'📦', cls:'kb-c3', nav:'packing-sec',
    actions:['slip','packing']},
-  {key:'to_despatch',  label:'To Despatch',       ic:'🚚', cls:'kb-c4', nav:'wdep',
+  {key:'to_despatch',  label:'To Despatch',       ic:'🚚', cls:'kb-c4', nav:'despatch-sec',
    actions:['despatch','dc']},
-  {key:'despatched',   label:'Dispatched',        ic:'✅', cls:'kb-c5', nav:'wdep', tab:'done',
+  {key:'despatched',   label:'Dispatched',        ic:'✅', cls:'kb-c5', nav:'despatch-sec', tab:'done',
    actions:['viewdc','wa']},
 ];
 const KB_ACTION_LABELS={
@@ -5637,7 +5637,7 @@ function kbAct(action,oid,nav){
     // View linked PRO: find the first PRO for this order and open it
     const linkedPro=D.pr.find(p=>p[7]===oid&&!p[5]&&!p[6]);
     if(linkedPro){
-      document.querySelector('.ni[data-p="wflow-prod"]')?.click();
+      document.querySelector('.ni[data-p="production-sec"]')?.click();
       setTimeout(()=>selPR(null,linkedPro[0]),350);
     } else {
       toast('No active PRO found for '+oid+' — create one first');
