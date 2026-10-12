@@ -5070,7 +5070,8 @@ const confBadge={high:'<span class="b bg" style="font-size:9px">🟢 High</span>
 function owRenderCaptured(){
   const q=(document.getElementById('owc-q')?.value||'').toLowerCase();
   const items=CAPTURES.filter(c=>!q||[c.cust,c.prod,c.raw].join(' ').toLowerCase().includes(q));
-  document.getElementById('owc-body').innerHTML=items.length ? items.map(c=>`<tr>
+  const owcBody=document.getElementById('owc-body');if(!owcBody)return;
+  owcBody.innerHTML=items.length ? items.map(c=>`<tr>
     <td>${srcIcon[c.src]||c.src}</td>
     <td style="font-size:11px;color:var(--t2);white-space:nowrap">${c.ts}</td>
     <td><div style="font-weight:600;font-size:12px">${c.cust==='unknown'?'<span style="color:var(--red)">⚠ Unknown</span>':c.cust}</div></td>
