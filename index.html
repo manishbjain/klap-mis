@@ -550,7 +550,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Jobs</h3><span class="tc-cnt" id="jo-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All Types</option><option value="Sheet">Sheet</option><option value="Machine">Machine</option><option value="Direct">Direct</option></select>
+        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All Types</option><option value="Sheet">Sheet</option><option value="Machine">Machine</option><option value="Tupax">Tupax</option><option value="Direct">Direct</option></select>
         <input class="f" id="jo-q" placeholder="Search job ID / name…" oninput="R.jobs(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-jobs" onclick="openFD('jobs')">⚙ Filters</button>
       </div>
@@ -671,8 +671,8 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 
 <!-- STAT STRIP -->
 <div class="sg" style="grid-template-columns:repeat(6,1fr);margin-bottom:14px">
-  <div class="sc" style="border-left:3px solid var(--acc)"><div class="l">📋 Active Jobs</div><div class="v" id="pw-s-jobs" style="color:var(--acc)">—</div><div class="s">in production</div></div>
-  <div class="sc" style="border-left:3px solid var(--org)"><div class="l">📄 Active PROs</div><div class="v" id="pw-s-pros" style="color:var(--org)">—</div></div>
+  <div class="sc" style="border-left:3px solid var(--acc)"><div class="l">📋 Live Jobs</div><div class="v" id="pw-s-jobs" style="color:var(--acc)">—</div><div class="s">until all processes done</div></div>
+  <div class="sc" style="border-left:3px solid var(--org)"><div class="l">📄 PROs in Live Jobs</div><div class="v" id="pw-s-pros" style="color:var(--org)">—</div></div>
   <div class="sc" style="border-left:3px solid #a855f7"><div class="l">🖨 PPC1 Flexo</div><div class="v" id="pw-s-ppc1" style="color:#a855f7">—</div><div class="s">in-house</div></div>
   <div class="sc" style="border-left:3px solid #3b82f6"><div class="l">🔄 PPC2 Hybrid</div><div class="v" id="pw-s-ppc2" style="color:#3b82f6">—</div></div>
   <div class="sc" style="border-left:3px solid #f59e0b"><div class="l">🧪 PPC3 TUPAX</div><div class="v" id="pw-s-ppc3" style="color:#f59e0b">—</div></div>
@@ -687,13 +687,16 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <div class="pw-vtog" id="pwv-table" onclick="pwView('table')" style="padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600">📄 PRO View</div>
   </div>
   <select class="f" id="pw-ppc" onchange="pwRender()">
-    <option value="">All Types</option>
+    <option value="">All PPC</option>
     <option value="Machine">PPC1 — Flexo</option>
-    <option value="Sheet">PPC2/3 — Sheet/Hybrid</option>
+    <option value="Sheet">PPC2 — Hybrid</option>
+    <option value="Tupax">PPC3 — TUPAX</option>
     <option value="Direct">PPC4/5 — Direct</option>
+    <option value="none">No PPC set</option>
   </select>
   <select class="f" id="pw-vendor" onchange="pwRender()"><option value="">All Vendors</option></select>
   <input class="f" id="pw-q" placeholder="Search job / product / customer…" oninput="pwRender()" style="width:200px">
+  <button class="btn" id="pw-old-btn" onclick="pwToggleOld()" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" title="Jobs older than 60 days that still have open steps or PROs — probably finished but never closed"></button>
   <button class="btn btn-p" style="margin-left:auto;font-size:12px" onclick="pwNewJob()">+ New Job</button>
 </div>
 
@@ -710,9 +713,9 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <!-- PRO VIEW — clean table of all active PROs -->
 <div id="pwv-table-panel" style="display:none">
   <div class="tc">
-    <div class="th"><h3>Active Production Orders</h3><span class="tc-cnt" id="pw-tbl-cnt"></span></div>
+    <div class="th"><h3>Production Orders in Live Jobs</h3><span class="tc-cnt" id="pw-tbl-cnt"></span></div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>PRO ID</th><th>Date</th><th>Job</th><th>Type</th><th>Product</th><th>Customer</th><th>Qty</th><th>Sheets</th><th>Material / Size</th><th>Current Step</th><th>Actions</th></tr></thead>
+      <thead><tr><th>PRO ID</th><th>Date</th><th>Job</th><th>PPC</th><th>Product</th><th>Customer</th><th>Qty (pcs)</th><th>Sheets</th><th>Material / Size</th><th>Current Step</th></tr></thead>
       <tbody id="pw-tbl-body"></tbody>
     </table></div>
     <div class="pg-bar" id="pw-tbl-pg"></div>
@@ -1978,12 +1981,15 @@ async function loadData(){
 
     // D.pr: [id, date, product_name, customer_name, qty, is_cancelled(bool), is_on_hold(bool), order_id, pro_status, job_id, product_id]
     // Active sub-status: to_process (no job_id), in_production, in_packing (packing), complete
+    // PRO quantity (pcs) = sheets × ups × blocks — production_orders.qty is not filled
+    const proQty=p=>{const sh=Number(p.sheet_qty)||0,u=Number(p.ups)||1,b=Number(p.blocks)||1;return sh?sh*u*b:(Number(p.qty)||0);};
+    window.proQty=proQty;
     D.pr=pros.map(p=>[
       p.id,           // 0
       p.date,         // 1
       prodMap[p.product_id]?.product_name||p.job_name||p.product_id||'—', // 2
       prodMap[p.product_id]?.customer_name||'—', // 3
-      p.qty||'',      // 4
+      proQty(p)||'',  // 4 qty pcs
       !!p.is_cancelled, // 5
       !!p.is_on_hold,   // 6
       p.order_id||'', // 7
@@ -2017,7 +2023,23 @@ async function loadData(){
     // D.pj: jobs with pro count (count how many active pros per job_id)
     const prosByJob={};
     pros.filter(p=>!p.is_cancelled&&!p.is_on_hold).forEach(p=>{if(p.job_id)prosByJob[p.job_id]=(prosByJob[p.job_id]||0)+1;});
-    D.pj=jobs.filter(j=>prosByJob[j.id]>0).sort((a,b)=>(prosByJob[b.id]||0)-(prosByJob[a.id]||0)).slice(0,30).map(j=>[j.id,j.date,j.job_type||'',j.job_name||'',(prosByJob[j.id]||0)]);
+    // D.pj: LIVE jobs — a job is live from creation until every process in it is complete.
+    // Live if: jobs.status planned/in_progress, OR any open PRO (planned/in_production/legacy) in it,
+    // OR any step of its PROs still pending/in_progress.
+    // [0]id [1]date [2]job_type [3]job_name [4]pro_count [5]is_old(>60d) [6]age_days
+    const openStepPro=new Set();
+    procs.forEach(s=>{if(s.prod_order_id&&(s.step_status==='pending'||s.step_status==='in_progress'))openStepPro.add(s.prod_order_id);});
+    const liveJob=new Set();
+    pros.forEach(p=>{
+      if(!p.job_id||p.is_cancelled) return;
+      if(['planned','in_production','legacy'].includes(p.pro_status)||openStepPro.has(p.id)) liveJob.add(p.job_id);
+    });
+    jobs.forEach(j=>{if(j.status==='planned'||j.status==='in_progress')liveJob.add(j.id);});
+    const _nowJ=Date.now();
+    D.pj=jobs.filter(j=>liveJob.has(j.id)).map(j=>{
+      const age=j.date?Math.max(0,Math.round((_nowJ-new Date(j.date))/86400000)):0;
+      return [j.id,j.date,j.job_type||'',j.job_name||'',(prosByJob[j.id]||0),age>60,age];
+    }).sort((a,b)=>String(b[1]||'').localeCompare(String(a[1]||''))||String(b[0]).localeCompare(String(a[0])));
 
     // D.di: dies [id, die_name, total_ups, status]
     D.di=dies.map(d=>[d.id,d.die_name||'',d.total_ups||'',d.status||'']);
@@ -2028,9 +2050,12 @@ async function loadData(){
     // D.pp: active production_orders mapped to job board shape
     // [id, date, product_name, customer_name, qty, sheet_qty, 0, is_cancelled, is_on_hold, job_id, material, size_l, size_b, size_units, job_type]
     // index 7=is_cancelled, 8=is_on_hold, 9=job_id
+    // [0]id [1]date [2]product [3]customer [4]qty pcs [5]sheet_qty [6]ups [7]is_cancelled [8]is_on_hold
+    // [9]job_id [10]material [11]size_l [12]size_b [13]size_units [14]job_type (from jobs table) [15]blocks [16]pro_status [17]product_id
+    const jobTypeMap={};jobs.forEach(j=>{jobTypeMap[j.id]=j.job_type||'';});
     D.pp=pros.filter(p=>!p.is_cancelled&&!p.is_on_hold&&p.job_id).map(p=>{
       const pm=prodMap[p.product_id]||{};
-      return [p.id,p.date,pm.product_name||p.job_name||'',pm.customer_name||'',p.qty||0,p.sheet_qty||0,0,0,0,p.job_id||'',pm.material||'',pm.size_l||0,pm.size_b||0,pm.size_units||'mm',p.job_type||''];
+      return [p.id,p.date,pm.product_name||p.job_name||'',pm.customer_name||'',proQty(p),Number(p.sheet_qty)||0,Number(p.ups)||1,false,false,p.job_id||'',pm.material||'',pm.size_l||0,pm.size_b||0,pm.size_units||'mm',jobTypeMap[p.job_id]||'',Number(p.blocks)||1,p.pro_status||'',p.product_id||''];
     });
 
 
@@ -2155,7 +2180,7 @@ const SECTIONS={
   },
   'production-sec':{
     tabs:[
-      {id:'wflow-prod',label:'Workflow'},
+      {id:'wflow-prod',label:'🟢 Live'},
       {id:'pros',label:'PROs'},
       {id:'jobs',label:'Jobs'},
       {id:'processes',label:'Processes'},
@@ -2781,7 +2806,7 @@ R.dash=function(){
   const comp=D.o.filter(o=>o[5]==='complete').length;
   document.getElementById('d-stats').innerHTML=`
     <div class="sc acc" onclick="nav('orders')"><div class="l">📋 Active Orders</div><div class="v">${ao}</div><div class="s">of ${D.OT.toLocaleString()} total</div></div>
-    <div class="sc org" onclick="nav('pros')"><div class="l">📄 Active PROs</div><div class="v">${ap}</div><div class="s">of ${D.PT.toLocaleString()} total</div></div>
+    <div class="sc org" onclick="nav('pros')"><div class="l">📄 PROs in Live Jobs</div><div class="v">${ap}</div><div class="s">of ${D.PT.toLocaleString()} total</div></div>
     <div class="sc grn" onclick="nav('products')"><div class="l">🏷 Active Products</div><div class="v">${D.PDT.toLocaleString()}</div><div class="s">${fr} file ready</div></div>
     <div class="sc ylw" onclick="nav('dq')"><div class="l">✏️ Design Queue</div><div class="v">${dql}</div><div class="s">needs attention</div></div>
     <div class="sc acc" onclick="nav('customers')"><div class="l">👥 Customers</div><div class="v">${D.cu.length}</div></div>
@@ -4101,7 +4126,8 @@ function genPackingSlip(proid){
   const ppRec=D.pp?.find(x=>x[0]===proid);
   const sheetQty=Number(rawPro.sheet_qty)||Number(ppRec?.[5])||0;
   const ups=Number(rawPro.ups)||1;
-  const totalPcs=sheetQty*ups;
+  const blocks=Number(rawPro.blocks)||1;
+  const totalPcs=sheetQty*ups*blocks;
   const sizeStr=rawProd.size_l?`${rawProd.size_l}×${rawProd.size_b} ${rawProd.size_units||'mm'}`:ppRec?.[11]?`${ppRec[11]}×${ppRec[12]} ${ppRec[13]||'mm'}`:'—';
   const material=rawProd.material||ppRec?.[10]||'—';
   const today=new Date().toISOString().slice(0,10);
@@ -5781,42 +5807,51 @@ function kbNavCol(p,tab,e){
 function initKanban(){kbRenderBoard(KB);}
 
 
-// ── PRODUCTION WORKFLOW ───────────────────────────────────
-var PW_STEP_MAP={'Machine':['PRT','COAT','RW','PACK'],'Sheet':['PRT','COAT','LAM','PUN','PACK'],'Direct':['PACK'],'':['PRT','COAT','LAM','PUN','PACK']};
-var pwState={};
-function pwGetSteps(t){return PW_STEP_MAP[t]||PW_STEP_MAP.Sheet;}
-function pwGetState(pro){
-  var id=pro[0];
-  if(pwState[id]) return pwState[id];
-  var steps=pwGetSteps(pro[14]||'Sheet');
-  // Use real pro_steps if available
-  var realSteps=(D.procs_raw||[]).filter(function(r){return r.prod_order_id===id;});
-  var objs;
-  if(realSteps.length){
-    objs=steps.map(function(s){
-      var r=realSteps.find(function(x){return x.process_name===s;});
-      return {code:s,status:r?(r.step_status||r.process_status||'pending'):'pending',
-        mode:r&&r.vendor_id?'jw':'inhouse',
-        jw:r&&r.vendor_id?(D.ve||[]).find(function(v){return v[0]===r.vendor_id;})||[null,''][1]:'',
-        counter:r?r.qty_out||0:0,wastage:r?r.wastage||0:0};
-    });
-  } else {
-    // Fallback: estimate from PRO date
-    var age=pro[1]?Math.max(0,Math.round((Date.now()-new Date(pro[1]))/86400000)):3;
-    var done=Math.min(Math.floor(age/3),steps.length-1);
-    objs=steps.map(function(s,i){
-      return {code:s,status:i<done?'done':i===done?'active':'pending',
-        mode:(s!=='PRT'&&s!=='PACK'&&i%3===1)?'jw':'inhouse',jw:'',
-        counter:i<done?Math.round((Number(pro[4])||1000)*1.02):0,
-        wastage:i<done?Math.round((Number(pro[4])||1000)*0.02):0};
-    });
-  }
-  pwState[id]={steps:objs};
-  return pwState[id];
+// ── PRODUCTION — LIVE ─────────────────────────────────────
+// Live job = job created / job image uploaded, until every process in it is complete (see D.pj).
+// PPC mapping (jobs.job_type): Machine=PPC1 Flexo · Sheet=PPC2 Hybrid · Tupax=PPC3 TUPAX · Direct=PPC4/5 Direct
+var PW_PPC={
+  Machine:{lbl:'PPC1 Flexo',cls:'jb-ppc1'},
+  Sheet:{lbl:'PPC2 Hybrid',cls:'jb-ppc2'},
+  Tupax:{lbl:'PPC3 TUPAX',cls:'jb-ppc3'},
+  Direct:{lbl:'PPC4/5 Direct',cls:'jb-ppc4'}
+};
+var PW_PROC_NAMES={PRT:'Printing',LAM:'Lamination',COAT:'Coating',PUN:'Punching',RW:'Rewinding',STRG:'Strip Gumming',DVD:'Diverting',CUT:'Cutting',SEAL:'Sealing',FOIL:'Foil',EMB:'Emboss'};
+var _pwOpen={};      // expanded job ids (collapsed by default)
+var _pwShowOld=false; // show jobs older than 60 days
+function pwPPCB(t){
+  var p=PW_PPC[t];
+  return p?'<span class="jb-badge '+p.cls+'">'+p.lbl+'</span>':'<span class="jb-badge" style="background:var(--s2);color:var(--t3)">No PPC set</span>';
+}
+function pwStepsOf(proId){
+  return (D.procs_raw||[]).filter(function(r){return r.prod_order_id===proId;})
+    .sort(function(a,b){return (a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||''))||String(a.id).localeCompare(String(b.id));});
+}
+function pwStepSt(r){
+  var s=(r.step_status||'').toLowerCase();
+  if(s==='done'||s==='in_progress'||s==='pending'||s==='skipped'||s==='cancelled')return s;
+  return 'pending';
+}
+function pwWho(r){
+  if(r.vendor_id){var v=(D.ve||[]).find(function(x){return x[0]===r.vendor_id;});return 'JW · '+(v?(v[2]||v[1]):r.vendor_id);}
+  return r.machine||'In-house';
+}
+function pwPills(proId){
+  var steps=pwStepsOf(proId);
+  if(!steps.length)return '<div style="font-size:11px;color:var(--t3);padding:2px 0">No processes recorded yet</div>';
+  var out='<div class="step-track">';
+  steps.forEach(function(r,i){
+    var st=pwStepSt(r);
+    var cls=st==='done'?'step-done':st==='in_progress'?'step-active':(st==='skipped'||st==='cancelled')?'step-skip':'step-pending';
+    var icon=st==='done'?'&#10003; ':st==='in_progress'?'&#9654; ':'';
+    out+='<div class="step-node" title="'+(PW_PROC_NAMES[r.process_name]||r.process_name)+' · '+st.replace('_',' ')+' · '+pwWho(r).replace(/"/g,'')+'">'+
+      '<div class="step-pill '+cls+'" onclick="event.stopPropagation();selProc(event,'+esc(r.id)+')">'+icon+(r.process_name||'?')+'</div>'+
+      '<div class="step-lbl">'+tr(pwWho(r),12)+'</div></div>';
+    if(i<steps.length-1)out+='<span class="step-arr">&rsaquo;</span>';
+  });
+  return out+'</div>';
 }
 function pwView(v){
-  // Map shorthand to panel suffix
-  var map={'board':'board','timeline':'timeline','table':'table'};
   ['board','timeline','table'].forEach(function(x){
     var el=document.getElementById('pwv-'+x+'-panel'),btn=document.getElementById('pwv-'+x);
     if(el)el.style.display=x===v?'block':'none';
@@ -5824,276 +5859,163 @@ function pwView(v){
   });
   pwRender();
 }
-function pwFilter(){
+function pwToggleOld(){_pwShowOld=!_pwShowOld;pwRender();}
+// Jobs matching PPC + search; old (>60d) jobs only when toggled on
+function pwFilter(includeOld){
   var ppc=(document.getElementById('pw-ppc')||{}).value||'';
   var q=((document.getElementById('pw-q')||{}).value||'').toLowerCase();
   return (D.pj||[]).filter(function(j){
-    if(ppc&&j[2]!==ppc)return false;
+    if(!includeOld&&!_pwShowOld&&j[5])return false;
+    if(ppc==='none'){if(PW_PPC[j[2]])return false;}
+    else if(ppc&&j[2]!==ppc)return false;
     if(q){
       var pros=(D.pp||[]).filter(function(p){return p[9]===j[0];});
-      var hay=[j[0],j[3]].concat(pros.map(function(p){return p[2]+' '+p[3];})).join(' ').toLowerCase();
+      var hay=[j[0],j[3]].concat(pros.map(function(p){return p[0]+' '+p[2]+' '+p[3];})).join(' ').toLowerCase();
       if(!hay.includes(q))return false;
     }
     return true;
   });
 }
 function pwRender(){
-  // Populate vendor dropdown from D.ve
   var vendSel=document.getElementById('pw-vendor');
   if(vendSel&&vendSel.options.length<=1){
-    (D.ve||[]).filter(function(v){return v[3]==='vendor'||v[3]==='Vendor'||!v[3];}).forEach(function(v){
-      var o=document.createElement('option');o.value=v[1];o.textContent=v[1];vendSel.appendChild(o);
+    (D.ve||[]).filter(function(v){return v[3]==='vendor';}).sort(function(a,b){return a[1].localeCompare(b[1]);}).forEach(function(v){
+      var o=document.createElement('option');o.value=v[0];o.textContent=v[1];vendSel.appendChild(o);
     });
   }
-  var jobs=pwFilter(),allPros=(D.pp||[]).filter(function(p){return !p[7]&&!p[8];});
-  ['pw-s-jobs','pw-s-pros','pw-s-ppc1','pw-s-ppc2','pw-s-ppc3','pw-s-direct'].forEach(function(id,i){
-    var el=document.getElementById(id); if(!el)return;
-    var v=[jobs.length,allPros.length,
-      (D.pj||[]).filter(function(j){return j[2]==='Machine';}).length,
-      (D.pj||[]).filter(function(j){return j[2]==='Sheet';}).length,
-      0,
-      (D.pj||[]).filter(function(j){return j[2]==='Direct';}).length][i];
-    el.textContent=v;
-  });
+  var jobs=pwFilter(false);
+  var cur=(D.pj||[]).filter(function(j){return _pwShowOld||!j[5];});
+  var jobIds=new Set(cur.map(function(j){return j[0];}));
+  var proCount=(D.pp||[]).filter(function(p){return jobIds.has(p[9]);}).length;
+  var byT=function(t){return cur.filter(function(j){return j[2]===t;}).length;};
+  var vals={'pw-s-jobs':cur.length,'pw-s-pros':proCount,'pw-s-ppc1':byT('Machine'),'pw-s-ppc2':byT('Sheet'),'pw-s-ppc3':byT('Tupax'),'pw-s-direct':byT('Direct')};
+  Object.keys(vals).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=vals[id];});
+  var oldN=(D.pj||[]).filter(function(j){return j[5];}).length;
+  var ob=document.getElementById('pw-old-btn');
+  if(ob){ob.textContent=(_pwShowOld?'Hide':'Show')+' old jobs ('+oldN+')';ob.style.display=oldN?'':'none';ob.classList.toggle('on',_pwShowOld);}
   var vtog=document.querySelector('.pw-vtog.on'),active=vtog?vtog.id.replace('pwv-',''):'board';
   if(active==='board')pwBoard(jobs);
   else if(active==='timeline')pwTimeline(jobs);
-  else if(active==='table')pwTable();
+  else if(active==='table')pwTable(jobs);
 }
-function pwPPCB(t){
-  if(t==='Machine')return '<span class="jb-ppc ppc-machine">PPC1 Flexo</span>';
-  if(t==='Direct')return '<span class="jb-ppc ppc-direct">PPC4/5 Direct</span>';
-  return '<span class="jb-ppc ppc-sheet">PPC2 Sheet</span>';
-}
-function pwPills(pro){
-  var st=pwGetState(pro),out='<div class="step-track">';
-  st.steps.forEach(function(s,i){
-    var cls=s.status==='done'?'step-done':s.status==='active'?'step-active':'step-pending';
-    var icon=s.status==='done'?'&#10003;':s.status==='active'?'&#9654;':'&middot;';
-    out+='<div class="step-wrap"><div class="step-btn '+cls+'" data-pro="'+pro[0]+'" data-step="'+s.code+'" onclick="pwLogStep(this.dataset.pro,this.dataset.step)">'+icon+' '+s.code+'</div>'+
-      '<div class="step-lbl">'+(s.mode==='jw'?'JW':'IH')+'</div></div>';
-    if(i<st.steps.length-1)out+='<span class="step-arr">&rsaquo;</span>';
-  });
-  return out+'</div>';
+function pwJobProgress(pros){
+  var all=[];pros.forEach(function(p){all=all.concat(pwStepsOf(p[0]));});
+  var live=all.filter(function(r){var s=pwStepSt(r);return s!=='skipped'&&s!=='cancelled';});
+  var done=live.filter(function(r){return pwStepSt(r)==='done';}).length;
+  return {total:live.length,done:done};
 }
 function pwBoard(jobs){
   var board=document.getElementById('pw-board');if(!board)return;
-  if(!jobs.length){board.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">No active jobs</div>';return;}
+  if(!jobs.length){board.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">No live jobs match</div>';return;}
   board.innerHTML=jobs.map(function(j){
-    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&!p[7]&&!p[8];});
+    var pros=(D.pp||[]).filter(function(p){return p[9]===j[0];});
+    var open=!!_pwOpen[j[0]];
+    var pg=pwJobProgress(pros);
+    var totQty=pros.reduce(function(s,p){return s+(p[4]||0);},0);
     var prosH=pros.map(function(pro){
-      var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+(pro[13]?' '+pro[13]:'mm'):'&mdash;';
-      var qty=pro[4]?Number(pro[4]).toLocaleString():'&mdash;';
-      var sheets=pro[5]?Number(pro[5]).toLocaleString()+' sh':'';
-      return '<div class="pro-row">'+
-        '<div class="pro-top">'+
+      var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+' '+(pro[13]||'mm'):'';
+      return '<div class="pro-row" style="cursor:pointer" onclick="pwOpenPro('+esc(pro[0])+')">'+
+        '<div class="pro-row-hdr" style="flex-wrap:wrap">'+
           '<span class="pro-id">'+pro[0]+'</span>'+
-          '<span class="pro-prod" title="'+pro[2]+'">'+tr(pro[2],26)+'</span>'+
-          '<span class="pro-cust">'+tr(pro[3]||'',14)+'</span>'+
-          '<span class="pro-qty">'+qty+(sheets?' / '+sheets:'')+'</span>'+
-          '<span class="pro-mat">'+tr(pro[10]||'',10)+(pro[11]?' '+pro[11]+'&times;'+pro[12]:'')+'</span>'+
-          '<button class="ab ab-b" style="margin-left:auto;font-size:10px" data-jid="'+j[0]+'" data-pid="'+pro[0]+'" onclick="pwJobCard(this.dataset.jid,this.dataset.pid)">&#x1F4CB; Job Card</button>'+
-          '<button class="ab ab-g" style="font-size:10px" data-pid="'+pro[0]+'" onclick="pwLogStep(this.dataset.pid,null)">+ Step</button>'+
-        '</div>'+pwPills(pro)+'</div>';
-    }).join('');
-    return '<div class="jb-card">'+
-      '<div class="jb-hdr" data-id="'+j[0]+'" onclick="pwToggle(this)">'+
-        '<span class="jb-id">'+j[0]+'</span>'+
-        '<div class="jb-meta">'+
-          '<div style="font-size:12px;font-weight:700">'+tr((j[3]||'').replace(j[0]+' - ','').replace(j[0]+' ',''),48)+'</div>'+
-          '<div class="jb-name">'+j[1]+' &middot; '+pros.length+' PRO'+(pros.length!==1?'s':'')+'</div>'+
+          '<span class="pro-prod" title="'+String(pro[2]).replace(/"/g,'&quot;')+'">'+(pro[2]||'—')+'</span>'+
+          '<span class="pro-cust">'+(pro[3]||'')+'</span>'+
         '</div>'+
+        '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--t2);margin-bottom:8px">'+
+          '<span>Qty <b style="color:var(--txt)">'+(pro[4]?Number(pro[4]).toLocaleString()+' pcs':'—')+'</b></span>'+
+          '<span>Sheets <b style="color:var(--txt)">'+(pro[5]?Number(pro[5]).toLocaleString():'—')+'</b></span>'+
+          '<span>Ups <b style="color:var(--txt)">'+(pro[6]||'—')+'</b></span>'+
+          (pro[15]>1?'<span>Blocks <b style="color:var(--txt)">'+pro[15]+'</b></span>':'')+
+          (pro[10]?'<span>Material <b style="color:var(--txt)">'+pro[10]+'</b></span>':'')+
+          (sz?'<span>Size <b style="color:var(--txt)">'+sz+'</b></span>':'')+
+          '<button class="ab ab-b" style="margin-left:auto;font-size:10px" onclick="event.stopPropagation();genPackingSlip('+esc(pro[0])+')">&#x1F4CB; Packing Slip</button>'+
+        '</div>'+pwPills(pro[0])+'</div>';
+    }).join('')||'<div style="font-size:12px;color:var(--t3)">No production orders linked to this job</div>';
+    var name=(j[3]||'').replace(j[0]+' - ','').replace(j[0]+' ','');
+    return '<div class="jb-card">'+
+      '<div class="jb-hdr" onclick="pwToggle('+esc(j[0])+')">'+
+        '<span class="jb-hdr-id">'+j[0]+'</span>'+
+        '<div class="jb-hdr-meta">'+
+          '<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+name.replace(/"/g,'&quot;')+'">'+(name||j[0])+'</div>'+
+          '<div class="jb-hdr-name">'+(j[1]||'—')+' &middot; '+j[6]+'d old &middot; '+pros.length+' PRO'+(pros.length!==1?'s':'')+(totQty?' &middot; '+totQty.toLocaleString()+' pcs':'')+'</div>'+
+        '</div>'+
+        '<span class="jb-badge" style="background:var(--s1);border:1px solid var(--bdr);color:var(--t2)">'+(pg.total?pg.done+'/'+pg.total+' steps done':'No steps yet')+'</span>'+
         pwPPCB(j[2])+
-        '<span class="pw-arr" style="color:var(--t3);font-size:18px;margin-left:8px">&or;</span>'+
+        '<span style="color:var(--t3);font-size:14px;width:16px;text-align:center">'+(open?'&#9650;':'&#9660;')+'</span>'+
       '</div>'+
-      '<div class="jb-body" id="pwjb-'+j[0]+'"><div class="jb-pros">'+prosH+'</div></div>'+
+      '<div class="jb-body" style="display:'+(open?'block':'none')+'"><div class="jb-pros">'+prosH+'</div></div>'+
     '</div>';
   }).join('');
 }
-function pwToggle(hdr){
-  var id=hdr.dataset.id,body=document.getElementById('pwjb-'+id),arr=hdr.querySelector('.pw-arr');
-  if(!body)return;
-  var hidden=body.style.display==='none';
-  body.style.display=hidden?'block':'none';
-  if(arr)arr.textContent=hidden?'&#8743;':'&#8744;';
-}
+function pwToggle(id){_pwOpen[id]=!_pwOpen[id];pwRender();}
+function pwOpenPro(pid){selPR(null,pid);}
+// Process view: real steps of live jobs, grouped by step status
 function pwTimeline(jobs){
-  // Process View: kanban by process_status with vendor filter
   var tl=document.getElementById('pw-timeline');if(!tl)return;
   var vendF=(document.getElementById('pw-vendor')||{}).value||'';
-  var veMap={};(D.ve||[]).forEach(function(v){veMap[v[0]]=v[1];});
-  // Collect all processes for active PROs under filtered jobs
-  var jobIds=jobs.map(function(j){return j[0];});
-  var allProcs=(D.procs_raw||[]).filter(function(r){
-    if(!r.prod_order_id)return false;
-    var pro=(D.pp||[]).find(function(p){return p[0]===r.prod_order_id;});
-    if(!pro)return false;
-    if(jobIds.length&&pro[9]&&!jobIds.includes(pro[9]))return false;
-    if(vendF&&veMap[r.vendor_id]!==vendF&&r.vendor_id!==vendF)return false;
+  var jobIds=new Set(jobs.map(function(j){return j[0];}));
+  var proMap={};(D.pp||[]).forEach(function(p){if(jobIds.has(p[9]))proMap[p[0]]=p;});
+  var steps=(D.procs_raw||[]).filter(function(r){
+    if(!proMap[r.prod_order_id])return false;
+    if(vendF&&r.vendor_id!==vendF)return false;
     return true;
   });
-  var PROC_STAGES=[
-    {key:'To Send',      label:'To Send',        clr:'var(--t2)',  bg:'var(--s2)'},
-    {key:'Job Order Sent',label:'Sent',          clr:'var(--blu)', bg:'#dbeafe'},
-    {key:'Job Approved', label:'Approved',       clr:'var(--pur)', bg:'#ede9fe'},
-    {key:'Part Processed',label:'Part Done',     clr:'var(--ylw)', bg:'#fef3c7'},
-    {key:'Complete',     label:'Complete',       clr:'var(--grn)', bg:'#d1fae5'},
+  var COLS=[
+    {key:'pending',label:'Pending',clr:'var(--t2)',bg:'var(--s2)'},
+    {key:'in_progress',label:'In Progress',clr:'var(--blu)',bg:'#dbeafe'},
+    {key:'done',label:'Done',clr:'var(--grn)',bg:'#d1fae5'},
+    {key:'skipped',label:'Skipped / Cancelled',clr:'var(--t3)',bg:'var(--s2)'}
   ];
-  tl.innerHTML=PROC_STAGES.map(function(st){
-    var cards=allProcs.filter(function(r){return (r.process_status||'To Send')===st.key;});
-    var cardsHtml=cards.map(function(r){
-      var pro=(D.pp||[]).find(function(p){return p[0]===r.prod_order_id;})||(D.pr||[]).find(function(p){return p[0]===r.prod_order_id;});
-      var prodName=pro?pro[2]||'—':'—';
-      var custName=pro?pro[3]||'—':'—';
-      var vname=veMap[r.vendor_id]||r.machine||'In-house';
-      var qty=r.counter?Number(r.counter).toLocaleString():'—';
-      var rmOut=(D.rm_out||[]).filter(function(x){return x[3]===r.id;});
-      var matLine=rmOut.length?rmOut.slice(0,2).map(function(x){var ri=(D.rm_in||[]).find(function(ri){return ri[0]===x[2];});return ri?ri[2]:'RM-'+x[2];}).join(', '):'No material';
-      return '<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="selProc(event,'+esc(r.id||r.process_name)+')" onmouseenter="this.style.borderColor=\'var(--acc)\'" onmouseleave="this.style.borderColor=\'var(--bdr)\'">'
-        +'<div style="font-weight:700;font-size:12px;color:var(--acc);margin-bottom:4px">'+( r.process_name||'Process')+'</div>'
-        +'<div style="font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+prodName+'">'+prodName+'</div>'
-        +'<div style="color:var(--t2);margin-bottom:6px">'+custName+'</div>'
-        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'
-          +'<span style="background:'+st.bg+';color:'+st.clr+';padding:1px 6px;border-radius:10px;font-weight:700;font-size:10px">'+st.label+'</span>'
-          +'<span style="background:var(--s2);padding:1px 6px;border-radius:10px;font-size:10px">'+vname+'</span>'
-        +'</div>'
-        +'<div style="display:flex;justify-content:space-between;color:var(--t3);font-size:10px">'
-          +'<span>'+matLine+'</span>'
-          +'<span class="mono">'+r.prod_order_id+'</span>'
-        +'</div>'
-      +'</div>';
+  var noSteps=Object.keys(proMap).filter(function(id){return !(D.procs_raw||[]).some(function(r){return r.prod_order_id===id;});}).length;
+  var note=noSteps&&!vendF?'<div style="font-size:11px;color:var(--t2);margin-bottom:10px;width:100%">'+noSteps+' of '+Object.keys(proMap).length+' production orders in these jobs have no processes recorded yet, so they don\'t appear here.</div>':'';
+  tl.style.flexWrap='wrap';
+  tl.innerHTML=note+COLS.map(function(c){
+    var cards=steps.filter(function(r){var s=pwStepSt(r);return c.key==='skipped'?(s==='skipped'||s==='cancelled'):s===c.key;});
+    var html=cards.map(function(r){
+      var pro=proMap[r.prod_order_id];
+      return '<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="selProc(event,'+esc(r.id)+')">'+
+        '<div style="display:flex;justify-content:space-between;gap:6px;margin-bottom:4px"><span style="font-weight:800;font-size:12px;color:var(--acc)">'+r.process_name+' <span style="font-weight:500;color:var(--t2)">'+(PW_PROC_NAMES[r.process_name]||'')+'</span></span><span class="mono" style="color:var(--t3);font-size:10px">'+pro[9]+'</span></div>'+
+        '<div style="font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+String(pro[2]).replace(/"/g,'&quot;')+'">'+(pro[2]||'—')+'</div>'+
+        '<div style="color:var(--t2);margin-bottom:6px">'+(pro[3]||'—')+'</div>'+
+        '<div style="display:flex;justify-content:space-between;gap:6px;color:var(--t3);font-size:10px"><span>'+pwWho(r)+'</span><span class="mono">'+r.prod_order_id+'</span></div>'+
+        (r.qty_out?'<div style="font-size:10px;margin-top:4px">Out: <b>'+Number(r.qty_out).toLocaleString()+'</b>'+(r.wastage?' · Wastage '+Number(r.wastage).toLocaleString():'')+'</div>':'')+
+      '</div>';
     }).join('')||'<div style="padding:20px 10px;text-align:center;color:var(--t3);font-size:11px">None</div>';
-    return '<div style="min-width:200px;flex:1;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden">'
-      +'<div style="padding:10px 12px;border-bottom:1px solid var(--bdr);background:'+st.bg+';display:flex;align-items:center;gap:6px">'
-        +'<span style="font-weight:700;color:'+st.clr+';font-size:12px">'+st.label+'</span>'
-        +'<span style="margin-left:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700">'+cards.length+'</span>'
-      +'</div>'
-      +'<div style="padding:8px;overflow-y:auto;max-height:calc(100vh - 340px)">'+cardsHtml+'</div>'
-    +'</div>';
+    return '<div style="min-width:220px;flex:1;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden">'+
+      '<div style="padding:10px 12px;border-bottom:1px solid var(--bdr);background:'+c.bg+';display:flex;align-items:center;gap:6px">'+
+        '<span style="font-weight:700;color:'+c.clr+';font-size:12px">'+c.label+'</span>'+
+        '<span style="margin-left:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700">'+cards.length+'</span></div>'+
+      '<div style="padding:8px;overflow-y:auto;max-height:calc(100vh - 360px)">'+html+'</div></div>';
   }).join('');
 }
-function pwTable(){
-  var q=((document.getElementById('pw-q')||{}).value||'').toLowerCase();
-  var items=(D.pp||[]).filter(function(p){return !p[7]&&!p[8]&&(!q||[p[0],p[2],p[3],p[9]].join(' ').toLowerCase().includes(q));});
+// PRO view: PROs in live jobs
+function pwTable(jobs){
+  jobs=jobs||pwFilter(false);
+  var jobIds=new Set(jobs.map(function(j){return j[0];}));
+  var items=(D.pp||[]).filter(function(p){return jobIds.has(p[9]);})
+    .sort(function(a,b){return String(b[1]||'').localeCompare(String(a[1]||''))||String(b[0]).localeCompare(String(a[0]));});
   var slice=pgr(items,'pw-tbl','pwTable','pw-tbl-pg','pw-tbl-cnt');
   document.getElementById('pw-tbl-body').innerHTML=slice.map(function(pro){
-    var cur=pwGetState(pro).steps.find(function(s){return s.status==='active';});
-    var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]:'&mdash;';
-    return '<tr><td class="mono">'+pro[0]+'</td><td class="mono" style="font-size:10px">'+pro[9]+'</td>'+
-      '<td>'+pwPPCB(pro[14]||'Sheet')+'</td><td title="'+pro[2]+'">'+tr(pro[2],22)+'</td>'+
-      '<td>'+tr(pro[3]||'',16)+'</td><td style="font-weight:600">'+Number(pro[4]||0).toLocaleString()+'</td>'+
-      '<td>'+Number(pro[5]||0).toLocaleString()+'</td><td>'+sz+'</td>'+
-      '<td>'+(cur?'<span class="b bb">&#9654; '+cur.code+'</span>':'<span class="b bg">&#10003; Done</span>')+'</td>'+
-      '<td><button class="ab ab-g" data-pid="'+pro[0]+'" onclick="pwLogStep(this.dataset.pid,null)">+ Step</button> '+
-      '<button class="ab ab-b" data-jid="'+pro[9]+'" data-pid="'+pro[0]+'" onclick="pwJobCard(this.dataset.jid,this.dataset.pid)">&#x1F4CB;</button></td></tr>';
-  }).join('');
+    var steps=pwStepsOf(pro[0]);
+    var next=steps.find(function(r){var s=pwStepSt(r);return s==='in_progress';})||steps.find(function(r){return pwStepSt(r)==='pending';});
+    var stepH=!steps.length?'<span style="color:var(--t3);font-size:11px">No steps yet</span>':next?'<span class="b bb">'+(pwStepSt(next)==='in_progress'?'&#9654; ':'')+next.process_name+'</span>':'<span class="b bg">&#10003; All done</span>';
+    var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+' '+(pro[13]||'mm'):'';
+    var mat=[pro[10],sz].filter(Boolean).join(' · ')||'&mdash;';
+    return '<tr style="cursor:pointer" onclick="pwOpenPro('+esc(pro[0])+')">'+
+      '<td class="mono">'+pro[0]+'</td>'+
+      '<td>'+(pro[1]||'&mdash;')+'</td>'+
+      '<td class="mono" style="font-size:11px">'+pro[9]+'</td>'+
+      '<td>'+pwPPCB(pro[14])+'</td>'+
+      '<td title="'+String(pro[2]).replace(/"/g,'&quot;')+'">'+tr(pro[2]||'&mdash;',26)+'</td>'+
+      '<td>'+tr(pro[3]||'&mdash;',18)+'</td>'+
+      '<td style="font-weight:700">'+(pro[4]?Number(pro[4]).toLocaleString():'&mdash;')+'</td>'+
+      '<td>'+(pro[5]?Number(pro[5]).toLocaleString():'&mdash;')+'</td>'+
+      '<td style="font-size:11px">'+mat+'</td>'+
+      '<td>'+stepH+'</td></tr>';
+  }).join('')||'<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--t3)">No production orders in live jobs</td></tr>';
 }
-function pwLogStep(proId,stepCode){
-  var pro=(D.pp||[]).find(function(p){return p[0]===proId;});if(!pro)return;
-  var st=pwGetState(pro),steps=pwGetSteps(pro[14]||'Sheet');
-  var cur=stepCode?st.steps.find(function(s){return s.code===stepCode;}):st.steps.find(function(s){return s.status==='active';});
-  var machOpts=(D.ma||[]).map(function(m){return '<option>'+m[0]+'</option>';}).join('');
-  var vendOpts=(D.ve||[]).filter(function(v){return v[3]==='vendor';}).map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join('');
-  var stepOpts=steps.map(function(s){return '<option value="'+s+'" '+(cur&&cur.code===s?'selected':'')+'>'+s+'</option>';}).join('');
-  document.getElementById('pw-modal-title').textContent=(stepCode||'Log')+' \u2014 Process Step';
-  document.getElementById('pw-modal-sub').textContent=proId+' \u00b7 '+tr(pro[2],26)+' \u00b7 '+Number(pro[4]||0).toLocaleString()+' pcs';
-  document.getElementById('pw-modal-body').innerHTML=
-    '<div style="background:var(--s2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;display:flex;gap:16px;flex-wrap:wrap">'+
-    '<div>PRO: <strong>'+proId+'</strong></div><div>Job: <strong>'+pro[9]+'</strong></div>'+
-    '<div>Qty: <strong>'+Number(pro[4]||0).toLocaleString()+'</strong></div>'+
-    '<div>Sheets: <strong>'+Number(pro[5]||0).toLocaleString()+'</strong></div></div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'+
-    '<div><div class="nof-lbl">STEP</div><select class="f" id="pm-step" style="width:100%" onchange="pwModeChg()">'+stepOpts+'</select></div>'+
-    '<div><div class="nof-lbl">MODE</div><select class="f" id="pm-mode" style="width:100%" onchange="pwModeChg()"><option value="inhouse">In-House</option><option value="jw">Jobworker</option></select></div>'+
-    '<div id="pm-mw"><div class="nof-lbl">MACHINE</div><select class="f" id="pm-mach" style="width:100%">'+machOpts+'</select></div>'+
-    '<div id="pm-jw" style="display:none"><div class="nof-lbl">JOBWORKER</div><select class="f" id="pm-vend" style="width:100%"><option value="">&mdash; Select &mdash;</option>'+vendOpts+'</select></div>'+
-    '<div><div class="nof-lbl">COUNTER</div><input class="f" id="pm-cnt" type="number" style="width:100%" placeholder="Output qty" value="'+(cur&&cur.counter||'')+'"></div>'+
-    '<div><div class="nof-lbl">WASTAGE</div><input class="f" id="pm-wst" type="number" style="width:100%" value="'+(cur&&cur.wastage||'')+'"></div>'+
-    '<div><div class="nof-lbl">STATUS</div><select class="f" id="pm-stat" style="width:100%"><option value="active">&#9654; In Progress</option><option value="done">&#10003; Completed</option><option value="pending">Not Started</option></select></div>'+
-    '<div><div class="nof-lbl">NOTES</div><input class="f" id="pm-note" style="width:100%" placeholder="Notes\u2026"></div></div>'+
-    '<div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--bdr);padding-top:10px">'+
-    '<button class="btn" style="background:var(--s2);border:1px solid var(--bdr)" onclick="closePwModal()">Cancel</button>'+
-    '<button class="btn btn-p" data-pid="'+proId+'" onclick="pwSave(this.dataset.pid)">&#10003; Save</button></div>';
-  document.getElementById('pw-proc-modal').style.display='flex';
-}
-function pwModeChg(){
-  var m=(document.getElementById('pm-mode')||{}).value;
-  var mw=document.getElementById('pm-mw'),jw=document.getElementById('pm-jw');
-  if(mw)mw.style.display=m==='inhouse'?'block':'none';
-  if(jw)jw.style.display=m==='jw'?'block':'none';
-}
-function closePwModal(){document.getElementById('pw-proc-modal').style.display='none';}
-function pwSave(proId){
-  var step=(document.getElementById('pm-step')||{}).value;
-  var stat=(document.getElementById('pm-stat')||{}).value;
-  var cnt=(document.getElementById('pm-cnt')||{}).value;
-  var wst=(document.getElementById('pm-wst')||{}).value;
-  var mode=(document.getElementById('pm-mode')||{}).value;
-  var st=pwState[proId];
-  if(st){var s=st.steps.find(function(x){return x.code===step;});
-    if(s){s.status=stat;s.counter=Number(cnt)||0;s.wastage=Number(wst)||0;s.mode=mode;}}
-  closePwModal();pwRender();toast('Step '+step+' saved for '+proId+' \u2705');
-}
-function pwJobCard(jobId,proId){
-  var job=(D.pj||[]).find(function(j){return j[0]===jobId;});
-  var jobPros=(D.pp||[]).filter(function(p){return p[9]===jobId;});
-  var pro=(D.pp||[]).find(function(p){return p[0]===proId;});
-  if(!pro)return;
-  var st=pwGetState(pro);
-  var sz=pro[11]&&pro[12]?pro[11]+'&times;'+pro[12]+(pro[13]?' '+pro[13]:'mm'):'&mdash;';
-  document.getElementById('jc-title').textContent='Job Card \u2014 '+proId;
-  document.getElementById('jc-sub').textContent=(job?tr(job[3],48):jobId)+' \u00b7 '+tr(pro[2],30);
-  var stRows=st.steps.map(function(s){
-    return '<tr><td style="font-weight:700">'+s.code+'</td>'+
-      '<td>'+(s.mode==='jw'?'Jobworker':'In-House')+'</td>'+
-      '<td>'+(s.mode==='jw'?tr(s.jw||'&mdash;',18):(D.ma&&D.ma[0]?D.ma[0][0]:'&mdash;'))+'</td>'+
-      '<td><span class="b '+(s.status==='done'?'bg':s.status==='active'?'bb':'bd')+'">'+s.status+'</span></td>'+
-      '<td>'+(s.counter?Number(s.counter).toLocaleString():'&mdash;')+'</td>'+
-      '<td>'+(s.wastage?Number(s.wastage).toLocaleString():'&mdash;')+'</td></tr>';
-  }).join('');
-  var splitH=jobPros.length>1
-    ?jobPros.map(function(p,i){return '<div style="padding:4px 0;border-bottom:1px solid var(--bdr);font-size:12px"><strong class="mono">'+p[0]+'</strong> &mdash; '+tr(p[2],26)+' &mdash; Line <strong>'+'ABCDE'[i]+'</strong></div>';}).join('')
-    :'<div style="font-size:12px;color:var(--t2)">Single line &mdash; no split</div>';
-  var pktRows=[1,2,3].map(function(n){
-    return '<tr><td style="padding:5px 8px;border:1px solid #bbf7d0;text-align:center">PKT-00'+n+'</td>'+
-      '<td style="padding:5px 8px;border:1px solid #bbf7d0;font-family:monospace;font-size:9px">INV-'+proId+'-PKT00'+n+'</td>'+
-      '<td style="padding:5px 8px;border:1px solid #bbf7d0"><input type="number" style="width:70px;border:1px solid var(--bdr);border-radius:4px;padding:3px 6px"></td>'+
-      '<td style="padding:5px 8px;border:1px solid #bbf7d0"><input style="width:100%;border:1px solid var(--bdr);border-radius:4px;padding:3px 6px"></td></tr>';
-  }).join('');
-  document.getElementById('jc-body').innerHTML=
-    '<div class="jc-sec">PRODUCTION ORDER</div>'+
-    '<div class="jc-grid">'+
-    '<div class="jc-field"><span class="jc-lbl">PRO ID</span><span class="jc-val mono">'+proId+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Job ID</span><span class="jc-val mono">'+jobId+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Date</span><span class="jc-val">'+pro[1]+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Product</span><span class="jc-val">'+tr(pro[2],28)+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Customer</span><span class="jc-val">'+tr(pro[3]||'&mdash;',22)+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Material</span><span class="jc-val">'+tr(pro[10]||'&mdash;',16)+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Size</span><span class="jc-val">'+sz+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Qty</span><span class="jc-val" style="color:var(--acc);font-size:16px">'+Number(pro[4]||0).toLocaleString()+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Sheet Qty</span><span class="jc-val">'+Number(pro[5]||0).toLocaleString()+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Ups</span><span class="jc-val">'+pro[6]+'</span></div>'+
-    '<div class="jc-field"><span class="jc-lbl">Job Type</span><span class="jc-val">'+pwPPCB(pro[14]||'Sheet')+'</span></div>'+
-    '</div>'+
-    '<div class="jc-sec">PROCESS STEPS</div>'+
-    '<table class="jc-steps-tbl"><thead><tr><th>Step</th><th>Mode</th><th>Machine/Vendor</th><th>Status</th><th>Counter</th><th>Wastage</th></tr></thead><tbody>'+stRows+'</tbody></table>'+
-    '<div class="jc-sec">SPLIT LINES</div><div style="background:var(--s2);border-radius:8px;padding:10px 14px;margin-bottom:14px">'+splitH+'</div>'+
-    '<div class="jc-sec">PACKING SLIP <span style="font-size:10px;color:var(--ylw);margin-left:6px">&#9660; Fill at last stage</span></div>'+
-    '<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:8px;padding:14px">'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">'+
-    '<div><div class="jc-lbl">PACKED BY</div><input class="f" style="width:100%" placeholder="Name\u2026"></div>'+
-    '<div><div class="jc-lbl">PACKING DATE</div><input class="f" type="date" style="width:100%"></div>'+
-    '<div><div class="jc-lbl">TOTAL PACKETS</div><input class="f" type="number" style="width:100%"></div></div>'+
-    '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">'+
-    '<thead style="background:#d1fae5"><tr><th style="padding:5px 8px;border:1px solid #bbf7d0">Packet #</th>'+
-    '<th style="padding:5px 8px;border:1px solid #bbf7d0">QR Code ID</th>'+
-    '<th style="padding:5px 8px;border:1px solid #bbf7d0">Qty</th>'+
-    '<th style="padding:5px 8px;border:1px solid #bbf7d0">Remarks</th></tr></thead><tbody>'+pktRows+'</tbody></table>'+
-    '<div style="text-align:right"><button class="btn btn-p" onclick="toast(\'Packing slip saved \u2014 packets in FG Inventory \u2705\');closeJcModal()">&#10003; Submit &mdash; Add to FG Inventory</button></div></div>';
-  document.getElementById('pw-jc-modal').style.display='flex';
-}
-function closeJcModal(){document.getElementById('pw-jc-modal').style.display='none';}
-function pwNewJob(){toast('New Job \u2014 scan job card or enter manually');}
+function closePwModal(){var m=document.getElementById('pw-proc-modal');if(m)m.style.display='none';}
+function closeJcModal(){var m=document.getElementById('pw-jc-modal');if(m)m.style.display='none';}
+function pwNewJob(){toast('New Job form is being built next — it will start with uploading the job image');}
 function initProdWF(){pwView('board');}
 
 // ── DESIGN WORKFLOW ──────────────────────────────────────────────────────────
