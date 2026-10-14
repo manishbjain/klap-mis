@@ -6018,17 +6018,15 @@ function pwRender(){
 }
 function pwCard(c){
   var j=c.m.job,g=c.g;
-  var qty=g.items.reduce(function(a,x){return a+(x.pro[4]||0);},0);
   var pros=g.items.map(function(x){
     return '<div class="pwx-pro"><span class="pid">'+pwH(x.pro[0])+'</span><span class="nm">'+pwH(x.pro[2]||'—')+'</span><span class="q">'+pwFmt(x.pro[4])+'</span></div>';
   }).join('');
   // Tag only when a step is actually in progress; process name only in vendor view (columns are vendors there)
   var tag=(!g.plan&&g.running)?(g.inHouse?'<span class="pwx-st run">Running</span>':'<span class="pwx-st ven">At vendor</span>'):'';
   var proc=(_pwMode==='vendor'&&!g.plan)?'<span class="pwx-st pln">'+pwH(pwProcName(g.proc))+'</span>':'';
-  var total=g.items.length>1?'<div class="pwx-tot">Total <b>'+pwFmt(qty)+' pcs</b></div>':'';
   return '<button type="button" class="pwx-card" onclick="selJob(null,'+pwJS(j[0])+')">'+
     '<div class="pwx-ch"><span class="id">'+pwH(j[0])+'</span>'+(g.branch?'<span class="pwx-split">Split '+g.branch+' · '+g.items.length+'/'+c.m.pros.length+'</span>':'')+proc+tag+'<span class="age">'+(j[6]||0)+'d</span></div>'+
-    '<div class="pwx-pros">'+pros+'</div>'+total+
+    '<div class="pwx-pros">'+pros+'</div>'+
   '</button>';
 }
 // Process flow for the job panel: shared steps, then one row per split
