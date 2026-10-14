@@ -3719,69 +3719,85 @@ function joMachines(){return [...new Set((D.procs_raw||[]).map(r=>r.machine).fil
 function selJob(e,jid){try{
   const j=D.jo.find(x=>x[0]===jid);
   if(!j)return;
-  const pros=D.pr.filter(p=>p[9]===jid);
-  const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
-  const allProcs=pwStepsOfMany(pros.map(p=>p[0]));
-  const countable=allProcs.filter(r=>!['skipped','cancelled'].includes(joStepSt(r)));
+  const pros=D.pr.filter(p=>p[9]===jid&&!p[5]);
+  const proIds=pros.map(p=>p[0]);
+  const activePros=pros.filter(p=>!p[6]&&p[8]!=='complete');
+  // Job-level processes: every step linked to any PRO of this job, once each
+  const steps=pwStepsOfMany(proIds).sort((a,b)=>(a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||''))||String(a.id).localeCompare(String(b.id)));
+  const countable=steps.filter(r=>!['skipped','cancelled'].includes(joStepSt(r)));
   const doneProcs=countable.filter(r=>joStepSt(r)==='done').length;
-  const totalQty=pros.filter(p=>!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
+  const totalQty=pros.reduce((s,p)=>s+(Number(p[4])||0),0);
   const uniqCustomers=[...new Set(pros.filter(p=>p[3]&&p[3]!=='—').map(p=>p[3]))];
   const vendors=joVendors();
   const canDel=typeof canDelete==='function'?canDelete('pro_steps'):false;
-  const inp='font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:3px 5px;background:var(--s1);color:var(--txt)';
-  const proSections=pros.map(p=>{
-    const pProcs=pwStepsOf(p[0]).sort((a,b)=>(a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||'')));
-    const pCount=pProcs.filter(r=>!['skipped','cancelled'].includes(joStepSt(r)));
-    const pDone=pCount.filter(r=>joStepSt(r)==='done').length;
-    const pk=p[0].replace(/[^a-z0-9]/gi,'_');
-    const procRows=pProcs.map((r,i)=>{
-      const st=joStepSt(r);
-      const isDone=st==='done',isOff=st==='skipped'||st==='cancelled';
-      const delBtn=canDel&&st==='pending'&&!(r.qty_out>0)?`<button onclick="joDeleteProc(${esc(r.id)},${esc(jid)})" style="border:none;background:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px" title="Delete this unstarted step">✕</button>`:'<span></span>';
-      return`<div style="padding:7px 8px;border-bottom:1px solid var(--bdr);background:${isDone?'rgba(34,197,94,.05)':isOff?'var(--s2)':'transparent'};opacity:${isOff?.6:1}">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;color:var(--t3);min-width:14px;text-align:center">${r.seq||i+1}</span>
-          <span style="font-size:11px;font-weight:700;min-width:70px;color:${isDone?'#16a34a':'var(--txt)'}" title="${r.id}">${PROC_LABEL[r.process_name]||r.process_name||'?'}</span>
-          <select onchange="joSetVendor(${esc(r.id)},this.value,${esc(jid)})" style="${inp};max-width:150px" title="Outsourced to (jobworker)">
+  const inp='font-size:11px;border:1px solid var(--bdr);border-radius:6px;padding:4px 6px;background:var(--s1);color:var(--txt)';
+  const proShort=id=>id.replace(/^PROD/,'');
+  const proName=id=>{const p=pros.find(x=>x[0]===id);return p?(p[2]||id):id;};
+  const chip=(sid,pid,on)=>`<button type="button" onclick="joToggleStepPro(${esc(sid)},${esc(pid)},${esc(jid)})" title="${String(proName(pid)).replace(/"/g,'&quot;')}" style="border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:monospace;${on?'background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc':'background:var(--s1);color:var(--t3);border:1px dashed var(--bdr);text-decoration:line-through'}">${on?'✓ ':''}${proShort(pid)}</button>`;
+
+  const procRows=steps.map((r,i)=>{
+    const st=joStepSt(r);
+    const isDone=st==='done',isOff=st==='skipped'||st==='cancelled';
+    const linked=pwProsOfStep(r.id);
+    const delBtn=canDel&&st==='pending'&&!(r.qty_out>0)?`<button onclick="joDeleteProc(${esc(r.id)},${esc(jid)})" style="border:none;background:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 4px" title="Delete this unstarted process">✕</button>`:'';
+    return `<div style="padding:10px 12px;border-bottom:1px solid var(--bdr);background:${isDone?'rgba(34,197,94,.05)':isOff?'var(--s2)':'var(--s1)'};opacity:${isOff?.65:1}">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--t3);min-width:16px">${i+1}</span>
+        <span style="font-size:13px;font-weight:800;color:${isDone?'#16a34a':'var(--txt)'}" title="${r.id}">${PROC_LABEL[r.process_name]||r.process_name||'?'}</span>
+        <span style="font-size:10px;color:var(--t3);font-family:monospace">${r.id}</span>
+        <span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select onchange="joSetVendor(${esc(r.id)},this.value,${esc(jid)})" style="${inp};max-width:170px" title="In-house or jobworker">
             <option value="">In-house</option>
             ${vendors.map(v=>`<option value="${v[0]}"${r.vendor_id===v[0]?' selected':''}>${v[1]}</option>`).join('')}
             ${r.vendor_id&&!vendors.some(v=>v[0]===r.vendor_id)?`<option value="${r.vendor_id}" selected>${r.vendor_id}</option>`:''}
           </select>
-          <input value="${(r.machine||'').replace(/"/g,'&quot;')}" placeholder="Machine" list="jo-machines" ${r.vendor_id?'disabled title="Outsourced — no machine"':''} onchange="joSetMachine(${esc(r.id)},this.value,${esc(jid)})" style="${inp};width:96px">
+          <input value="${(r.machine||'').replace(/"/g,'&quot;')}" placeholder="Machine" list="jo-machines" ${r.vendor_id?'disabled title="Outsourced — no machine"':''} onchange="joSetMachine(${esc(r.id)},this.value,${esc(jid)})" style="${inp};width:120px">
           <select onchange="joSetProcStatus(${esc(r.id)},this.value,${esc(jid)})" style="${inp};font-weight:700;color:${isDone?'#16a34a':st==='in_progress'?'var(--blu)':'var(--t2)'}">
             ${JO_STEP_ST.map(([v,l])=>`<option value="${v}"${st===v?' selected':''}>${l}</option>`).join('')}
             ${st==='cancelled'?'<option value="cancelled" selected>Cancelled</option>':''}
           </select>
-          <span style="margin-left:auto;display:flex;align-items:center;gap:4px">
-            <input type="number" min="0" value="${r.qty_out||''}" placeholder="Qty out" onchange="joSetNum(${esc(r.id)},'qty_out',this.value,${esc(jid)})" style="${inp};width:78px" title="Output quantity">
-            <input type="number" min="0" value="${r.wastage||''}" placeholder="Wastage" onchange="joSetNum(${esc(r.id)},'wastage',this.value,${esc(jid)})" style="${inp};width:70px" title="Wastage">
-            ${delBtn}
-          </span>
-        </div>
-      </div>`;
-    }).join('');
-    return`<div style="border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s1);border-bottom:1px solid var(--bdr);flex-wrap:wrap">
-        <span class="mono" style="font-size:11px;font-weight:700;color:var(--acc);cursor:pointer" onclick="selPR(null,${esc(p[0])})">${p[0]}</span>
-        <span style="font-size:11px;color:var(--t2);flex:1;min-width:140px">${p[2]||'—'} · ${p[3]||'—'}</span>
-        <span style="font-size:11px;font-weight:700">${p[4]?Number(p[4]).toLocaleString()+' pcs':''}</span>
-        ${proSubStatus(p)}
-        <span style="font-size:10px;color:var(--t3)">${pDone}/${pCount.length} done</span>
+          <input type="number" min="0" value="${r.qty_out||''}" placeholder="Qty out" onchange="joSetNum(${esc(r.id)},'qty_out',this.value,${esc(jid)})" style="${inp};width:84px" title="Output quantity">
+          <input type="number" min="0" value="${r.wastage||''}" placeholder="Wastage" onchange="joSetNum(${esc(r.id)},'wastage',this.value,${esc(jid)})" style="${inp};width:76px" title="Wastage">
+          ${delBtn}
+        </span>
       </div>
-      ${procRows||`<div style="padding:10px 12px;font-size:11px;color:var(--t3)">No process steps yet</div>`}
-      <div style="padding:6px 8px;background:var(--s1);border-top:1px solid var(--bdr);display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <span style="font-size:10px;color:var(--t3)">Add step:</span>
-        <select id="addproc_proc_${pk}" style="${inp}">
-          ${JO_PROC_CODES.map(n=>`<option value="${n}">${PROC_LABEL[n]||n} (${n})</option>`).join('')}
-        </select>
-        <select id="addproc_ve_${pk}" style="${inp};max-width:150px">
-          <option value="">In-house</option>${vendors.map(v=>`<option value="${v[0]}">${v[1]}</option>`).join('')}
-        </select>
-        <button onclick="joAddProc(${esc(p[0])},${esc(jid)},'addproc_proc_${pk}','addproc_ve_${pk}')" style="font-size:10px;padding:3px 10px;border:1px solid var(--acc);border-radius:5px;background:transparent;color:var(--acc);cursor:pointer;font-weight:700">+ Add</button>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding-left:24px">
+        <span style="font-size:10px;color:var(--t3);margin-right:2px">PROs:</span>
+        ${proIds.map(pid=>chip(r.id,pid,linked.indexOf(pid)>=0)).join('')}
       </div>
     </div>`;
-  }).join('')||'<div style="padding:12px;font-size:12px;color:var(--t3)">No PROs linked to this job</div>';
+  }).join('');
 
+  // Default PROs for a new process = the group of the last process (a split group stays together)
+  const lastStep=steps.filter(r=>joStepSt(r)!=='cancelled').slice(-1)[0];
+  const defPros=lastStep?pwProsOfStep(lastStep.id).filter(id=>proIds.indexOf(id)>=0):proIds;
+  const addRow=`<div style="padding:10px 12px;background:var(--s2);border-top:1px solid var(--bdr)">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--t2)">+ Add process</span>
+      <select id="jo-new-proc" style="${inp}">${JO_PROC_CODES.map(n=>`<option value="${n}">${PROC_LABEL[n]||n} (${n})</option>`).join('')}</select>
+      <select id="jo-new-ve" style="${inp};max-width:170px"><option value="">In-house</option>${vendors.map(v=>`<option value="${v[0]}">${v[1]}</option>`).join('')}</select>
+      <button onclick="joAddProcJob(${esc(jid)})" style="margin-left:auto;font-size:11px;padding:5px 14px;border:0;border-radius:6px;background:var(--acc);color:#fff;cursor:pointer;font-weight:700">Add</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap" id="jo-new-pros">
+      <span style="font-size:10px;color:var(--t3)">For PROs:</span>
+      ${proIds.map(pid=>`<label style="display:flex;align-items:center;gap:4px;font-size:11px;font-family:monospace;cursor:pointer" title="${String(proName(pid)).replace(/"/g,'&quot;')}"><input type="checkbox" value="${pid}"${defPros.indexOf(pid)>=0?' checked':''}>${proShort(pid)}</label>`).join('')}
+    </div>
+  </div>`;
+
+  const proRows=pros.map(p=>{
+    const cur=pwStepsOf(p[0]).find(r=>{const s=joStepSt(r);return s==='pending'||s==='in_progress';});
+    const now=cur?(PROC_LABEL[cur.process_name]||cur.process_name)+' · '+pwWho(cur):(pwStepsOf(p[0]).length?'All processes done':'No processes yet');
+    return `<tr style="border-top:1px solid var(--bdr)">
+      <td style="padding:6px 8px"><span class="mono" style="color:var(--acc);font-weight:700;cursor:pointer" onclick="selPR(null,${esc(p[0])})">${p[0]}</span></td>
+      <td style="padding:6px 8px">${p[2]||'—'}</td>
+      <td style="padding:6px 8px;color:var(--t2)">${p[3]||'—'}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:700">${p[4]?Number(p[4]).toLocaleString():'—'}</td>
+      <td style="padding:6px 8px">${proSubStatus(p)}</td>
+      <td style="padding:6px 8px;font-size:11px;color:var(--t2)">${now}</td>
+    </tr>`;
+  }).join('');
+
+  const sec=t=>`<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin:4px 0 8px">${t}</div>`;
   const html=`
   <datalist id="jo-machines">${joMachines().map(m=>`<option value="${m.replace(/"/g,'&quot;')}">`).join('')}</datalist>
   <div style="margin-bottom:12px">
@@ -3798,16 +3814,57 @@ function selJob(e,jid){try{
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--acc)">${pros.length}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">PROs</div></div>
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--org)">${activePros.length}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Active</div></div>
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700">${totalQty?Number(totalQty).toLocaleString():'0'}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Qty (pcs)</div></div>
-    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:#22c55e">${doneProcs}<span style="font-size:10px;color:var(--t3)">/${countable.length}</span></div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Steps Done</div></div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:#22c55e">${doneProcs}<span style="font-size:10px;color:var(--t3)">/${countable.length}</span></div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Processes done</div></div>
   </div>
-  <div style="margin-bottom:14px">
-    <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Process Flow</div>
-    ${pwFlowHtml(jid)}
+  ${sec('Process flow')}
+  ${pwFlowHtml(jid)}
+  ${sec('Processes in this job')}
+  <div style="border:1px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:16px">
+    ${procRows||'<div style="padding:12px;font-size:12px;color:var(--t3)">No processes yet — add the first one below (usually Print, for all PROs).</div>'}
+    ${addRow}
   </div>
-  <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Production Orders & Steps</div>
-  ${proSections}`;
+  ${sec('Production orders in this job')}
+  <div style="border:1px solid var(--bdr);border-radius:10px;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px">
+      <thead><tr style="background:var(--s2);text-align:left;color:var(--t2)"><th style="padding:6px 8px">PRO</th><th style="padding:6px 8px">Product</th><th style="padding:6px 8px">Customer</th><th style="padding:6px 8px;text-align:right">Qty</th><th style="padding:6px 8px">Status</th><th style="padding:6px 8px">Now at</th></tr></thead>
+      <tbody>${proRows||'<tr><td colspan="6" style="padding:12px;color:var(--t3)">No PROs linked to this job</td></tr>'}</tbody>
+    </table>
+  </div>`;
   openRP(html,'Job: '+j[0]);
 }catch(err){openRP(`<pre style="color:red;white-space:pre-wrap;font-size:11px">selJob ERROR:\n${err.message}\n\n${err.stack}</pre>`,'⚠️ Error');}
+}
+
+// Add a process to the job for the ticked PROs
+async function joAddProcJob(jid){
+  const procName=document.getElementById('jo-new-proc')?.value;
+  const vendorId=document.getElementById('jo-new-ve')?.value||null;
+  const ids=[...document.querySelectorAll('#jo-new-pros input[type=checkbox]:checked')].map(x=>x.value);
+  if(!procName)return;
+  if(!ids.length){toast('❌ Tick at least one PRO for this process');return;}
+  const pros=D.pr.filter(p=>p[9]===jid).map(p=>p[0]);
+  const seq=pwStepsOfMany(pros).reduce((m,r)=>Math.max(m,r.seq||0),0)+1;
+  try{
+    const row=await apiWrite('pro_steps','insert',null,{process_name:procName,vendor_id:vendorId,seq,step_status:'pending',pro_ids:ids});
+    D.procs_raw.push(row);
+    ids.forEach(pid=>D.step_links.push({step_id:row.id,prod_order_id:pid}));
+    pwBuildStepIndex(D.procs_raw,D.step_links);
+    toast('✓ '+(PROC_LABEL[procName]||procName)+' added for '+ids.length+' PRO'+(ids.length>1?'s':''));
+    joRefresh(jid);
+  }catch(e){toast('❌ '+e.message);}
+}
+// Tick / untick a PRO on a process
+async function joToggleStepPro(sid,pid,jid){
+  const cur=pwProsOfStep(sid).slice();
+  const next=cur.indexOf(pid)>=0?cur.filter(x=>x!==pid):cur.concat([pid]);
+  if(!next.length){toast('❌ A process needs at least one PRO — delete or skip the process instead');return;}
+  try{
+    await apiWrite('pro_steps','set_pros',sid,{pro_ids:next});
+    D.step_links=(D.step_links||[]).filter(x=>x.step_id!==sid).concat(next.map(x=>({step_id:sid,prod_order_id:x})));
+    const r=D.procs_raw.find(x=>x.id===sid);if(r)r.prod_order_id=next[0];
+    pwBuildStepIndex(D.procs_raw,D.step_links);
+    toast('✓ '+pid+(next.indexOf(pid)>=0?' added to':' removed from')+' '+(PROC_LABEL[r&&r.process_name]||'process'));
+    joRefresh(jid);
+  }catch(e){toast('❌ '+e.message);}
 }
 
 // ---- Job management actions (all saves go through apiWrite → server checks login + role) ----

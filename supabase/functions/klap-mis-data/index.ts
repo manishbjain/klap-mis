@@ -101,18 +101,28 @@ Deno.serve(async(req)=>{
       const body=await req.json().catch(()=>({}))
       const table=String(body.table||''),op=String(body.op||''),id=body.id!=null?String(body.id):'',data=body.data||{}
       const RULES:Record<string,{ops:string[],fields:string[]}>={
-        pro_steps:{ops:['insert','update','delete'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
+        pro_steps:{ops:['insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
         jobs:{ops:['update'],fields:['job_name','job_type','status']}
       }
       const rule=RULES[table]
       if(!rule||!rule.ops.includes(op))return J({error:`Not allowed: ${op} on ${table}`},400)
       if(au.role_id!=='owner'){
         const{data:perm}=await supabase.from('role_permissions').select('can_write,can_delete').eq('role_id',au.role_id).eq('resource',table).single()
-        const ok=op==='delete'?perm?.can_delete:perm?.can_write
+        const ok=op==='delete'?perm?.can_delete:perm?.can_write // set_pros counts as a write
         if(!ok)return J({error:`Your role (${au.role_id}) cannot ${op==='delete'?'delete':'change'} ${table}`},403)
       }
       const clean:Record<string,any>={}
       for(const k of rule.fields)if(k in data)clean[k]=data[k]===''?null:data[k]
+      // PROs for a step (one step can cover several PROs of the SAME job)
+      let proIds:string[]|null=null
+      if(table==='pro_steps'&&Array.isArray(data.pro_ids)){
+        proIds=[...new Set(data.pro_ids.map((x:any)=>String(x)))]
+        if(!proIds.length)return J({error:'Select at least one production order'},400)
+        const{data:pr}=await supabase.from('production_orders').select('id,job_id').in('id',proIds)
+        if(!pr||pr.length!==proIds.length)return J({error:'Some production orders were not found'},400)
+        if(new Set(pr.map((x:any)=>x.job_id)).size!==1)return J({error:'All production orders of a process must belong to the same job'},400)
+        if(op==='insert'&&!data.prod_order_id)data.prod_order_id=proIds[0]
+      }
       const STEP_ST=['pending','in_progress','done','skipped','cancelled']
       const LEGACY:Record<string,string>={pending:'To Send',in_progress:'Part Processed',done:'Moved',skipped:'Skipped',cancelled:'Cancelled'}
       if(table==='pro_steps'){
@@ -133,6 +143,7 @@ Deno.serve(async(req)=>{
         old=o
       }
       if(op==='insert'){
+        if(!clean.prod_order_id&&proIds)clean.prod_order_id=proIds[0]
         if(!clean.prod_order_id||!clean.process_name)return J({error:'PRO and process are required'},400)
         const{data:pro}=await supabase.from('production_orders').select('id').eq('id',clean.prod_order_id).single()
         if(!pro)return J({error:'PRO not found'},404)
@@ -142,10 +153,18 @@ Deno.serve(async(req)=>{
           const{data:nid,error:ie}=await supabase.rpc('next_pro_step_id',{p_proc:clean.process_name})
           if(ie)return J({error:ie.message},500)
           const r=await supabase.from(table).insert({...clean,id:nid}).select().single()
-          if(!r.error){row=r.data;await supabase.from('pro_step_orders').insert({step_id:nid,prod_order_id:clean.prod_order_id})}
+          if(!r.error){row=r.data;await supabase.from('pro_step_orders').insert((proIds||[clean.prod_order_id]).map(pid=>({step_id:nid,prod_order_id:pid})))}
           else if(!String(r.error.message).includes('duplicate'))return J({error:r.error.message},400)
         }
         if(!row)return J({error:'Could not create step id'},500)
+      }else if(op==='set_pros'){
+        if(!proIds)return J({error:'pro_ids required'},400)
+        await supabase.from('pro_step_orders').delete().eq('step_id',id)
+        const ins=await supabase.from('pro_step_orders').insert(proIds.map(pid=>({step_id:id,prod_order_id:pid})))
+        if(ins.error)return J({error:ins.error.message},400)
+        const r=await supabase.from(table).update({prod_order_id:proIds[0]}).eq('id',id).select().single()
+        if(r.error)return J({error:r.error.message},400)
+        row={...r.data,pro_ids:proIds}
       }else if(op==='update'){
         if(!Object.keys(clean).length)return J({error:'Nothing to update'},400)
         if(table==='pro_steps'){
