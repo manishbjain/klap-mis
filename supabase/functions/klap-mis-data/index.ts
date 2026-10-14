@@ -123,7 +123,7 @@ Deno.serve(async(req)=>{
         for(const k of ['seq','qty_in','qty_out','wastage'])if(k in clean&&clean[k]!=null){const n=Number(clean[k]);if(!Number.isFinite(n)||n<0)return J({error:`Invalid ${k}`},400);clean[k]=Math.round(n)}
         if(clean.vendor_id&&clean.machine)return J({error:'A step is either in-house (machine) or outsourced (vendor), not both'},400)
       }
-      if(table==='jobs'&&'job_type' in clean&&clean.job_type!=null&&!['Machine','Sheet','Tupax','Direct'].includes(clean.job_type))return J({error:'Invalid job type'},400)
+      if(table==='jobs'&&'job_type' in clean&&clean.job_type!=null&&!['Machine','Sheet','Tupax','Direct','Direct5'].includes(clean.job_type))return J({error:'Invalid job type'},400)
       if(table==='jobs'&&'status' in clean&&clean.status!=null&&!['planned','in_progress','done'].includes(clean.status))return J({error:'Invalid job status'},400)
       let row:any=null,old:any=null
       if(op!=='insert'){
