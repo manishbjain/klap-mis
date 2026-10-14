@@ -3538,7 +3538,7 @@ function selPR(e,pid){try{
   const pct=totalProcs?Math.round(doneProcs/totalProcs*100):0;
   const imgUrl=p[10]?getProductImageUrl(p[10]):null;
   const imgHtml=imgUrl?`<img src="${imgUrl}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;border:1px solid var(--bdr);background:#fff;display:block" onerror="this.style.display='none'">`:`<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:8px;background:var(--s1)">📦</div>`;
-  const sortedProcs=procs.slice().sort((a,b)=>(a.seq||0)-(b.seq||0));
+  const sortedProcs=procs.slice().sort(pwStepOrder);
   const procsRows=sortedProcs.length?sortedProcs.map((r,i)=>{
     const effStatus=r.step_status||r.process_status||'pending';
     const isDone=effStatus==='done'||effStatus==='Complete'||effStatus==='Moved';
@@ -3723,7 +3723,7 @@ function selJob(e,jid){try{
   const proIds=pros.map(p=>p[0]);
   const activePros=pros.filter(p=>!p[6]&&p[8]!=='complete');
   // Job-level processes: every step linked to any PRO of this job, once each
-  const steps=pwStepsOfMany(proIds).sort((a,b)=>(a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||''))||String(a.id).localeCompare(String(b.id)));
+  const steps=pwStepsOfMany(proIds).sort(pwStepOrder);
   const countable=steps.filter(r=>!['skipped','cancelled'].includes(joStepSt(r)));
   const doneProcs=countable.filter(r=>joStepSt(r)==='done').length;
   const totalQty=pros.reduce((s,p)=>s+(Number(p[4])||0),0);
@@ -5929,9 +5929,11 @@ function pwBuildStepIndex(procs,links){
 }
 function pwProsOfStep(sid){return _pwProsByStep[sid]||[];}
 function pwStepsOfMany(ids){var seen={},out=[];ids.forEach(function(id){pwStepsOf(id).forEach(function(r){if(!seen[r.id]){seen[r.id]=1;out.push(r);}});});return out;}
+// Step order: seq (set by the app), else the creation counter at the end of the step ID (PROD_PRT_2509_4433 → 4433)
+function pwStepNo(r){var m=String(r.id||'').match(/_(\d+)$/);return m?Number(m[1]):0;}
+function pwStepOrder(a,b){return (a.seq||0)-(b.seq||0)||pwStepNo(a)-pwStepNo(b)||String(a.date||'').localeCompare(String(b.date||''));}
 function pwStepsOf(proId){
-  return (_pwStepsByPro[proId]||[]).slice()
-    .sort(function(a,b){return (a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||''))||String(a.id).localeCompare(String(b.id));});
+  return (_pwStepsByPro[proId]||[]).slice().sort(pwStepOrder);
 }
 function pwStepSt(r){
   var s=(r.step_status||'').toLowerCase();
