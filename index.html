@@ -2806,7 +2806,7 @@ R.dash=function(){
   const comp=D.o.filter(o=>o[5]==='complete').length;
   document.getElementById('d-stats').innerHTML=`
     <div class="sc acc" onclick="nav('orders')"><div class="l">📋 Active Orders</div><div class="v">${ao}</div><div class="s">of ${D.OT.toLocaleString()} total</div></div>
-    <div class="sc org" onclick="nav('pros')"><div class="l">📄 PROs in Live Jobs</div><div class="v">${ap}</div><div class="s">of ${D.PT.toLocaleString()} total</div></div>
+    <div class="sc org" onclick="nav('pros')"><div class="l">📄 Active PROs</div><div class="v">${ap}</div><div class="s">of ${D.PT.toLocaleString()} total</div></div>
     <div class="sc grn" onclick="nav('products')"><div class="l">🏷 Active Products</div><div class="v">${D.PDT.toLocaleString()}</div><div class="s">${fr} file ready</div></div>
     <div class="sc ylw" onclick="nav('dq')"><div class="l">✏️ Design Queue</div><div class="v">${dql}</div><div class="s">needs attention</div></div>
     <div class="sc acc" onclick="nav('customers')"><div class="l">👥 Customers</div><div class="v">${D.cu.length}</div></div>
@@ -6221,6 +6221,8 @@ function initApp(){
   // ── INIT ──
   R.dash();
   R.machines();
+  // If a Production Live tab is already open (opened while data was loading), redraw it
+  if(typeof _curTab!=='undefined'&&_curTab==='wflow-prod'&&typeof pwRender==='function')pwRender();
 }
 
 // ── STARTUP ─────────────────────────────────────────────
