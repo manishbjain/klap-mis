@@ -1934,6 +1934,10 @@ async function loadData(){
     showLoader('Building data…');
     const {orders,pros,products,accounts,jobs,dies,plates,procs,
       rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos}=raw;
+    // Step ↔ PRO links (pro_step_orders, from the sheet's Prod_Process_Items). One step can cover several PROs.
+    // A step that has link rows uses ONLY those; a step without any falls back to its prod_order_id.
+    D.step_links=raw.step_links||[];
+    pwBuildStepIndex(procs,D.step_links);
     const accMap={};accounts.forEach(a=>{accMap[a.id]=a;});
     const prodMap={};products.forEach(p=>{prodMap[p.id]=p;});
 
@@ -2062,7 +2066,7 @@ async function loadData(){
     // OR any step of its PROs still pending/in_progress.
     // [0]id [1]date [2]job_type [3]job_name [4]pro_count [5]is_old(>60d) [6]age_days
     const openStepPro=new Set();
-    procs.forEach(s=>{if(s.prod_order_id&&(s.step_status==='pending'||s.step_status==='in_progress'))openStepPro.add(s.prod_order_id);});
+    procs.forEach(s=>{if(s.step_status==='pending'||s.step_status==='in_progress')pwProsOfStep(s.id).forEach(pid=>openStepPro.add(pid));});
     const liveJob=new Set();
     pros.forEach(p=>{
       if(!p.job_id||p.is_cancelled) return;
@@ -3520,7 +3524,7 @@ function selPR(e,pid){try{
   const rawPro=D.pros_raw?.find(x=>x.id===pid)||{};
   const rawProd=D.products_raw?.find(x=>x.id===p[10])||{};
   const job=p[9]?D.jo.find(j=>j[0]===p[9]):null;
-  const procs=D.procs_raw.filter(r=>r.prod_order_id===p[0]);
+  const procs=pwStepsOf(p[0]);
   const rmOut=D.rm_out.filter(r=>r[3]&&procs.find(pr=>pr.id===r[3]));
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
   const ppRec=D.pp.find(x=>x[0]===p[0]);
@@ -3661,7 +3665,7 @@ R.jobs=function(p){
   document.getElementById('jo-body').innerHTML=slice.map(j=>{
     const pros=D.pr.filter(p=>p[9]===j[0]);
     const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
-    const allProcs=D.procs_raw.filter(r=>pros.some(p=>p[0]===r.prod_order_id));
+    const allProcs=pwStepsOfMany(pros.map(p=>p[0]));
     const doneProcs=allProcs.filter(r=>(r.step_status||'')==='done').length;
     const statusCol=activePros.length>0?'var(--org)':pros.length?'#22c55e':'var(--t3)';
     const jid=j[0].replace(/[^a-zA-Z0-9]/g,'_');
@@ -3679,7 +3683,7 @@ R.jobs=function(p){
       <div id="joexp_${jid}" style="display:none;border-top:1px solid var(--bdr);background:var(--s1);padding:10px 12px">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${pros.length?pros.map(p=>{
-          const pProcs=D.procs_raw.filter(r=>r.prod_order_id===p[0]);
+          const pProcs=pwStepsOf(p[0]);
           const pDone=pProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
           return`<div style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;min-width:200px;flex:1;cursor:pointer" onclick="selPR(null,${esc(p[0])})">
             <div style="font-size:10px;font-weight:700;color:var(--acc);font-family:monospace;margin-bottom:4px">${p[0]}</div>
@@ -3716,7 +3720,7 @@ function selJob(e,jid){try{
   if(!j)return;
   const pros=D.pr.filter(p=>p[9]===jid);
   const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
-  const allProcs=D.procs_raw.filter(r=>pros.some(p=>p[0]===r.prod_order_id));
+  const allProcs=pwStepsOfMany(pros.map(p=>p[0]));
   const countable=allProcs.filter(r=>!['skipped','cancelled'].includes(joStepSt(r)));
   const doneProcs=countable.filter(r=>joStepSt(r)==='done').length;
   const totalQty=pros.filter(p=>!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
@@ -3725,7 +3729,7 @@ function selJob(e,jid){try{
   const canDel=typeof canDelete==='function'?canDelete('pro_steps'):false;
   const inp='font-size:10px;border:1px solid var(--bdr);border-radius:5px;padding:3px 5px;background:var(--s1);color:var(--txt)';
   const proSections=pros.map(p=>{
-    const pProcs=D.procs_raw.filter(r=>r.prod_order_id===p[0]).sort((a,b)=>(a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||'')));
+    const pProcs=pwStepsOf(p[0]).sort((a,b)=>(a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||'')));
     const pCount=pProcs.filter(r=>!['skipped','cancelled'].includes(joStepSt(r)));
     const pDone=pCount.filter(r=>joStepSt(r)==='done').length;
     const pk=p[0].replace(/[^a-z0-9]/gi,'_');
@@ -3809,7 +3813,9 @@ function selJob(e,jid){try{
 function joApplyStep(row){
   if(!row)return;
   const i=D.procs_raw.findIndex(x=>x.id===row.id);
-  if(i>=0)D.procs_raw[i]=Object.assign({},D.procs_raw[i],row);else D.procs_raw.push(row);
+  if(i>=0)D.procs_raw[i]=Object.assign({},D.procs_raw[i],row);
+  else{D.procs_raw.push(row);if(row.prod_order_id)D.step_links.push({step_id:row.id,prod_order_id:row.prod_order_id});}
+  pwBuildStepIndex(D.procs_raw,D.step_links);
 }
 function joRefresh(jid){
   if(jid)selJob(null,jid);
@@ -3836,7 +3842,7 @@ async function joAddProc(proid,jid,procSelId,veSelId){
   const procName=document.getElementById(procSelId)?.value;
   const vendorId=document.getElementById(veSelId)?.value||null;
   if(!procName)return;
-  const existing=D.procs_raw.filter(r=>r.prod_order_id===proid);
+  const existing=pwStepsOf(proid);
   const seq=(existing.reduce((m,r)=>Math.max(m,r.seq||0),0))+1;
   try{
     const row=await apiWrite('pro_steps','insert',null,{process_name:procName,prod_order_id:proid,vendor_id:vendorId,seq,step_status:'pending'});
@@ -3848,6 +3854,8 @@ async function joDeleteProc(procId,jid){
   try{
     await apiWrite('pro_steps','delete',procId,{});
     D.procs_raw=D.procs_raw.filter(x=>x.id!==procId);
+    D.step_links=(D.step_links||[]).filter(x=>x.step_id!==procId);
+    pwBuildStepIndex(D.procs_raw,D.step_links);
     toast('✓ Step deleted');joRefresh(jid);
   }catch(e){toast('❌ '+e.message);}
 }
@@ -4923,7 +4931,7 @@ function selFG(e,batchId){
   const product=order?D.pd.find(x=>x[0]===order[3]):null;
 
   // ─── PROCESS STEPS for this PRO ───
-  const procSteps=(D.procs_raw||[]).filter(x=>x.prod_order_id===r[2]);
+  const procSteps=pwStepsOf(r[2]);
   const procStepRows=procSteps.length?procSteps.map(s=>{
     const vendorName=s.vendor_name||s.vendor_id||'—';
     return `<tr>
@@ -5852,8 +5860,19 @@ function pwPPCB(t){
   var p=PW_PPC[t];
   return p?'<span class="jb-badge '+p.cls+'">'+p.code+' '+p.lbl+'</span>':'<span class="jb-badge" style="background:var(--s2);color:var(--t3)">No PPC set</span>';
 }
+// Step index: PRO → steps, built from the link table (see loadData)
+var _pwStepsByPro={},_pwProsByStep={};
+function pwBuildStepIndex(procs,links){
+  _pwStepsByPro={};_pwProsByStep={};
+  var byId={};(procs||[]).forEach(function(s){byId[s.id]=s;});
+  (links||[]).forEach(function(l){if(!byId[l.step_id])return;(_pwProsByStep[l.step_id]=_pwProsByStep[l.step_id]||[]).push(l.prod_order_id);});
+  (procs||[]).forEach(function(s){if(!_pwProsByStep[s.id]&&s.prod_order_id)_pwProsByStep[s.id]=[s.prod_order_id];});
+  Object.keys(_pwProsByStep).forEach(function(sid){_pwProsByStep[sid].forEach(function(pid){(_pwStepsByPro[pid]=_pwStepsByPro[pid]||[]).push(byId[sid]);});});
+}
+function pwProsOfStep(sid){return _pwProsByStep[sid]||[];}
+function pwStepsOfMany(ids){var seen={},out=[];ids.forEach(function(id){pwStepsOf(id).forEach(function(r){if(!seen[r.id]){seen[r.id]=1;out.push(r);}});});return out;}
 function pwStepsOf(proId){
-  return (D.procs_raw||[]).filter(function(r){return r.prod_order_id===proId;})
+  return (_pwStepsByPro[proId]||[]).slice()
     .sort(function(a,b){return (a.seq||0)-(b.seq||0)||String(a.date||'').localeCompare(String(b.date||''))||String(a.id).localeCompare(String(b.id));});
 }
 function pwStepSt(r){

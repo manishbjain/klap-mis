@@ -142,7 +142,7 @@ Deno.serve(async(req)=>{
           const{data:nid,error:ie}=await supabase.rpc('next_pro_step_id',{p_proc:clean.process_name})
           if(ie)return J({error:ie.message},500)
           const r=await supabase.from(table).insert({...clean,id:nid}).select().single()
-          if(!r.error)row=r.data
+          if(!r.error){row=r.data;await supabase.from('pro_step_orders').insert({step_id:nid,prod_order_id:clean.prod_order_id})}
           else if(!String(r.error.message).includes('duplicate'))return J({error:r.error.message},400)
         }
         if(!row)return J({error:'Could not create step id'},500)
@@ -161,6 +161,7 @@ Deno.serve(async(req)=>{
           const{count}=await supabase.from('rm_out').select('id',{count:'exact',head:true}).eq('prod_proc_id',id)
           if(count&&count>0)return J({error:'Material has been issued against this step — mark it Skipped instead'},400)
         }
+        if(table==='pro_steps')await supabase.from('pro_step_orders').delete().eq('step_id',id)
         const r=await supabase.from(table).delete().eq('id',id)
         if(r.error)return J({error:r.error.message},400)
       }
@@ -196,6 +197,7 @@ Deno.serve(async(req)=>{
     const dies=await fetchAll('dies','id,die_name,total_ups,status,die_type')
     const plates=await fetchAll('plates','id,plate_name,status')
     const procs=await fetchAll('pro_steps','id,date,process_name,prod_order_id,material_id,qty_in,qty_out,step_status,process_status,vendor_id,machine,die_id,plate_id,wastage,seq,done_by')
+    const step_links=await fetchAll('pro_step_orders','step_id,prod_order_id','id')
     const rm_cats=await fetchAll('rm_categories','id,name','id')
     const rm_subcats=await fetchAll('rm_subcategories','id,name,category_id','id')
     const rm_list=await fetchAll('rm_list','id,alias,brand,category_id,subcategory_id,vendor_id','id')
@@ -205,7 +207,7 @@ Deno.serve(async(req)=>{
     const dos=await fetchAll('delivery_orders','id,date,order_id,price,taxation')
     const do_items=await fetchAll('delivery_order_items','id,delivery_order_id,ds_item_pl_id,inv_batch_id,packet_qty','id')
     const pos=await fetchAll('purchase_orders','id,date,rm_id,vendor_id,pur_qty,rate,pur_unit,rate_units,status,bill_ref,comments')
-    return new Response(JSON.stringify({orders,pros,products,accounts,jobs,dies,plates,procs,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
+    return new Response(JSON.stringify({orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }catch(err:any){
     return new Response(JSON.stringify({error:err.message}),{status:500,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }
