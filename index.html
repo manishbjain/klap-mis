@@ -3733,7 +3733,7 @@ function selJob(e,jid){try{
   const inp='font-size:11px;border:1px solid var(--bdr);border-radius:6px;padding:4px 6px;background:var(--s1);color:var(--txt)';
   const proShort=id=>id.replace(/^PROD/,'');
   const proName=id=>{const p=pros.find(x=>x[0]===id);return p?(p[2]||id):id;};
-  const chip=(sid,pid,on)=>`<button type="button" onclick="joToggleStepPro(${esc(sid)},${esc(pid)},${esc(jid)})" title="${String(proName(pid)).replace(/"/g,'&quot;')}" style="border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:monospace;${on?'background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc':'background:var(--s1);color:var(--t3);border:1px dashed var(--bdr);text-decoration:line-through'}">${on?'✓ ':''}${proShort(pid)}</button>`;
+  const chip=(sid,pid,on)=>`<button type="button" onclick="joToggleStepPro(${esc(sid)},${esc(pid)},${esc(jid)})" title="${String(proName(pid)).replace(/"/g,'&quot;')}" style="border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:monospace;${on?'background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc':'background:var(--s1);color:var(--t3);border:1px dashed var(--bdr)'}">${on?'✓ ':'+ '}${proShort(pid)}</button>`;
 
   const procRows=steps.map((r,i)=>{
     const st=joStepSt(r);
@@ -3762,7 +3762,7 @@ function selJob(e,jid){try{
         </span>
       </div>
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding-left:24px">
-        <span style="font-size:10px;color:var(--t3);margin-right:2px">PROs:</span>
+        <span style="font-size:10px;color:var(--t3);margin-right:2px">PROs in this process <span style="opacity:.75">(tap to add/remove · saves instantly)</span>:</span>
         ${proIds.map(pid=>chip(r.id,pid,linked.indexOf(pid)>=0)).join('')}
       </div>
     </div>`;
@@ -3779,7 +3779,7 @@ function selJob(e,jid){try{
       <button onclick="joAddProcJob(${esc(jid)})" style="margin-left:auto;font-size:11px;padding:5px 14px;border:0;border-radius:6px;background:var(--acc);color:#fff;cursor:pointer;font-weight:700">Add</button>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap" id="jo-new-pros">
-      <span style="font-size:10px;color:var(--t3)">For PROs:</span>
+      <span style="font-size:10px;color:var(--t3)">PROs for the new process:</span>
       ${proIds.map(pid=>`<label style="display:flex;align-items:center;gap:4px;font-size:11px;font-family:monospace;cursor:pointer" title="${String(proName(pid)).replace(/"/g,'&quot;')}"><input type="checkbox" value="${pid}"${defPros.indexOf(pid)>=0?' checked':''}>${proShort(pid)}</label>`).join('')}
     </div>
   </div>`;
