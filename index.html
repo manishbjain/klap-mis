@@ -2232,9 +2232,8 @@ function buildData(raw){
     pwBuildStepIndex(procs,D.step_links);
     // PRO status is WORKED OUT here every time (like the old app's virtual column), never trusted from storage:
     //   cancelled     → Is_Cancelled
-    //   complete      → FG packed ≥ 90% of the PRO qty (sheets × ups × blocks)
     //   in_production → any process still open (To Send / Job Order Sent / Job Approved / Part Processed)
-    //   complete      → history already marked complete, nothing open
+    //   complete      → marked complete (history, or ✓ Complete on the Packing screen after tallying packed vs production)
     //   packing       → part packed in FG, or all processes Moved/Complete (ready to pack)
     //   planned       → no processes yet (new PRO)
     // "On hold" stays its own flag (Is_On_Hold), as before.
@@ -2245,7 +2244,6 @@ function buildData(raw){
         if(p.pro_status_stored===undefined)p.pro_status_stored=p.pro_status;const stored=p.pro_status_stored;
         if(p.is_cancelled){p.pro_status='cancelled';return;}
         const q=(Number(p.sheet_qty)||0)*(Number(p.ups)||1)*(Number(p.blocks)||1);
-        if(hasFg.has(p.id)&&(!q||fgQty[p.id]>=q*0.9)){p.pro_status='complete';return;}
         const st=pwStepsOf(p.id).filter(r=>r.step_status!=='cancelled'&&r.step_status!=='skipped');
         if(st.some(r=>r.step_status==='pending'||r.step_status==='in_progress')){p.pro_status='in_production';return;}
         if(stored==='complete'){p.pro_status='complete';return;}
@@ -3955,6 +3953,8 @@ function selPR(e,pid){try{
     dpRow('Sheet Qty',rawPro.sheet_qty?Number(rawPro.sheet_qty).toLocaleString():(ppRec?Number(ppRec[5]||0).toLocaleString():'—')),
     dpRow('Cancelled',p[5]?'⛔ Yes':'No'),
     dpRow('On Hold',p[6]?'⏸ Yes':'No'),
+    rawPro.completed_on?dpRow('Completed on',rawPro.completed_on):'',
+    rawPro.completed_on?dpRow('Wastage',(rawPro.wastage_qty!=null?Number(rawPro.wastage_qty).toLocaleString('en-IN')+' pcs'+(p[4]?' ('+Math.round(rawPro.wastage_qty/p[4]*1000)/10+'%)':''):'—')+(rawPro.wastage_reason?' · '+rawPro.wastage_reason:'')):'',
     dpRow('Linked Order',p[7]?`<span class="mono" onclick="selO(null,${esc(p[7])})" style="cursor:pointer;color:var(--acc)">${p[7]}</span>`:'—'),
     dpSec('Product Specs'),
     dpRow('Product',p[2]||'—'),
@@ -4600,20 +4600,28 @@ function pkComplete(pid){
         <tr><td style="padding:6px 0">Packed qty <span style="color:var(--t3);font-size:11px">(${pk.n} lot${pk.n===1?'':'s'}, ${nf(pk.pkts)} packets)</span></td><td style="text-align:right;font-weight:600">${nf(pk.qty)}</td></tr>
         <tr style="border-top:1px solid var(--bdr)"><td style="padding:8px 0;font-weight:700">${w>=0?'Wastage':'Packed extra'}</td><td style="text-align:right;font-weight:800;color:${w>0?'#dc2626':'#16a34a'}">${nf(Math.abs(w))} <span style="font-size:11px;font-weight:600">(${Math.abs(pct)}%)</span></td></tr>
       </tbody></table>
+      <label style="display:block;margin-top:12px;font-size:12px;font-weight:600;color:var(--t2)">Cause of wastage${w>0?' *':''}</label>
+      <input id="pk-reason" list="pk-reasons" placeholder="e.g. Printing set-up, Punching misregister, Short count…" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--bdr);border-radius:8px;background:var(--s1);color:var(--txt);font-size:13px">
+      <datalist id="pk-reasons">${PK_REASONS.map(r=>`<option value="${r}">`).join('')}</datalist>
       ${!pk.n?'<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:#fef3c7;color:#92400e;font-size:12px">Nothing packed yet — add the packed lots first, or close it only if this PRO will not be packed.</div>':''}
       ${open.length?`<div style="margin-top:10px;font-size:12px;color:var(--t2)">${open.length} open process${open.length>1?'es':''} (${open.map(r=>PROC_LABEL[r.process_name]||r.process_name).join(', ')}) will be marked <b>Moved</b>.</div>`:''}
     </div>
-    <div class="cm-f"><span style="flex:1"></span><button class="cm-c" onclick="crudClose()">Cancel</button><button class="cm-s" id="pk-cbtn" onclick="pkDoComplete(${esc(pid)})">✓ Mark complete</button></div>
+    <div class="cm-f"><span style="flex:1"></span><button class="cm-c" onclick="crudClose()">Cancel</button><button class="cm-s" id="pk-cbtn" onclick="pkDoComplete(${esc(pid)},${w})">✓ Mark complete</button></div>
   </div></div>`;
 }
-async function pkDoComplete(pid){
+const PK_REASONS=['Printing set-up / make-ready','Printing defect (colour, register)','Coating / lamination defect','Punching / die-cutting','Cutting / dividing','Rewinding / slitting','Strip gumming','Material defect','Short sheets from vendor','Counting / packing short','Customer rejection'];
+async function pkDoComplete(pid,w){
+  const reason=(document.getElementById('pk-reason')?.value||'').trim();
+  if(w>0&&!reason){toast('Enter the cause of wastage');document.getElementById('pk-reason')?.focus();return;}
   const b=document.getElementById('pk-cbtn');if(b){b.disabled=true;b.textContent='Saving…';}
   try{
     const R_=window._RAW;
     const open=pwStepsOf(pid).filter(r=>PS_STATE[r.process_status]==='pending'||PS_STATE[r.process_status]==='in_progress');
     for(const r of open){await apiWrite('pro_steps','update',r.id,{process_status:'Moved'});const rr=(R_.procs||[]).find(z=>z.id===r.id);if(rr){rr.process_status='Moved';rr.step_status='done';}}
-    await apiWrite('production_orders','update',pid,{pro_status:'complete'});
-    const pr=(R_.pros||[]).find(z=>z.id===pid);if(pr){pr.pro_status='complete';pr.pro_status_stored='complete';}
+    const today=new Date(Date.now()+19800000).toISOString().slice(0,10);
+    const upd={pro_status:'complete',completed_on:today,wastage_qty:w,wastage_reason:reason||null};
+    await apiWrite('production_orders','update',pid,upd);
+    const pr=(R_.pros||[]).find(z=>z.id===pid);if(pr){Object.assign(pr,upd);pr.pro_status_stored='complete';}
     crudClose();buildData(R_);R.packing();toast('✓ '+pid+' marked complete');
   }catch(e){toast('❌ '+e.message);if(b){b.disabled=false;b.textContent='✓ Mark complete';}}
 }

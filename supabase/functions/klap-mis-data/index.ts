@@ -273,7 +273,7 @@ Deno.serve(async(req)=>{
       // Every table the app can change, with the columns it may write (id/created_at are never written by hand)
       const COLS:Record<string,string[]>={
         orders:['date','customer_id','is_repeat','has_changes','product_id','party_reference','order_type','order_status','pplan_group','qty','units','bt','price','ledger_id','freight','transport_id','due_ds','billing_detail','billing_approved','despatch_location_1','despatch_location_2','despatch_detail','despatch_approved'],
-        production_orders:['date','product_id','order_id','job_id','job_id_temp','job_name','imposition_type','job_type','imp_group','sheet_portion_l','sheet_portion_b','sheet_portion_units','sheet_qty','ups','blocks','qty','qty_units','is_cancelled','is_on_hold','packing_status','sent_for_packing'],
+        production_orders:['date','product_id','order_id','job_id','job_id_temp','job_name','imposition_type','job_type','imp_group','sheet_portion_l','sheet_portion_b','sheet_portion_units','sheet_qty','ups','blocks','qty','qty_units','is_cancelled','is_on_hold','packing_status','sent_for_packing','pro_status','completed_on','wastage_qty','wastage_reason'],
         products:['date','product_code','first_oid','product_class','customer_id','customer_name','category','version_type','old_reference','product_name','base_product','version_no','design_status','design_assigned','has_changes','change_desc','size_l','size_b','size_h','size_units','material','gsm','lamination','coating','foil','foil_color','emboss','gumming','gumming_type','border','data_clear','specs_final','thread_link','approval_proof'],
         accounts:['account_type','name','brand','alias','city','state','country','out_id'],
         jobs:['date','job_name','job_type','status'],
@@ -347,6 +347,7 @@ Deno.serve(async(req)=>{
         for(const k of ['seq','qty_in','qty_out','wastage'])if(k in clean&&clean[k]!=null){const n=Number(clean[k]);if(!Number.isFinite(n)||n<0)return J({error:`Invalid ${k}`},400);clean[k]=Math.round(n)}
         if(clean.vendor_id&&clean.machine)return J({error:'A step is either in-house (machine) or outsourced (vendor), not both'},400)
       }
+      if(table==='production_orders'&&'pro_status' in clean&&clean.pro_status!=null&&!['planned','in_production','packing','complete','legacy'].includes(clean.pro_status))return J({error:'Invalid PRO status'},400)
       if(table==='jobs'&&'job_type' in clean&&clean.job_type&&!['Machine','Sheet','Tupax','Direct','Direct5'].includes(clean.job_type))return J({error:'Invalid job type'},400)
       if(table==='jobs'&&'status' in clean&&clean.status!=null&&!['planned','in_progress','done'].includes(clean.status))return J({error:'Invalid job status'},400)
       let row:any=null,old:any=null
@@ -456,7 +457,7 @@ Deno.serve(async(req)=>{
   }
   try{
     const orders=await fetchAll('orders','id,date,order_status,qty,is_repeat,has_changes,pplan_group,customer_id,product_id')
-    const pros=await fetchAll('production_orders','id,date,qty,is_cancelled,is_on_hold,product_id,order_id,job_id,job_name,job_type,imposition_type,sheet_portion_l,sheet_portion_b,sheet_portion_units,sheet_qty,ups,blocks,pro_status')
+    const pros=await fetchAll('production_orders','id,date,qty,is_cancelled,is_on_hold,product_id,order_id,job_id,job_name,job_type,imposition_type,sheet_portion_l,sheet_portion_b,sheet_portion_units,sheet_qty,ups,blocks,pro_status,completed_on,wastage_qty,wastage_reason')
     const products=await fetchAll('products','id,product_name,customer_name,design_status,material,size_l,size_b,size_units,category,product_class')
     const accounts=await fetchAll('accounts','id,name,brand,alias,account_type')
     const jobs=await fetchAll('jobs','id,date,job_name,job_type,status')
