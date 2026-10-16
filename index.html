@@ -1978,6 +1978,35 @@ function openJobImage(jobId){
   fetch(`${SB_URL}/functions/v1/klap-mis-data/job-image/${encodeURIComponent(jobId)}?info=1`).then(r=>r.ok?r.json():null).then(d=>{const n=document.getElementById('jimg-name');if(d&&n)n.textContent=d.name+(d.versions>1?`  ·  latest of ${d.versions} versions`:'');}).catch(()=>{});
 }
 
+// Any product or job thumbnail anywhere in the app opens big in a pop-up (click). Esc or click outside closes.
+function openProductImage(pid){
+  let m=document.getElementById('jimg-modal');
+  if(!m){m=document.createElement('div');m.id='jimg-modal';document.body.appendChild(m);}
+  const pr=(D.products_raw||[]).find(x=>x.id===pid)||{};
+  const title=[pr.product_name,pr.customer_name].filter(Boolean).join(' · ');
+  m.innerHTML=`<div onclick="if(event.target===this||event.target.id==='jimg-x')document.getElementById('jimg-modal').style.display='none'" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;font-size:13px">
+      <b class="mono">${pid}</b><span style="opacity:.8;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${title.replace(/</g,'&lt;')}</span>
+      <button id="jimg-x" style="background:#fff2;color:#fff;border:1px solid #fff5;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">✕ Close</button>
+    </div>
+    <div id="jimg-x-area" onclick="if(event.target===this)document.getElementById('jimg-modal').style.display='none'" style="flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:0 14px 14px">
+      <img id="jimg-big" src="${getProductImageUrl(pid)}" style="max-width:100%;max-height:100%;object-fit:contain;background:#fff;border-radius:6px" onerror="this.outerHTML='<div style=&quot;color:#fff;padding:30px&quot;>No image for this product</div>'">
+    </div>
+  </div>`;
+  m.style.display='block';
+}
+document.addEventListener('click',function(e){
+  const img=e.target&&e.target.closest&&e.target.closest('img');
+  if(!img||img.id==='jimg-big'||img.closest('.jimg-box'))return;
+  const src=img.getAttribute('src')||'';
+  let mt=src.match(/\/klap-mis-data\/image\/([^?#]+)/);
+  if(mt){e.preventDefault();e.stopPropagation();openProductImage(decodeURIComponent(mt[1]));return;}
+  mt=src.match(/\/klap-mis-data\/job-image\/([^?#]+)/);
+  if(mt){e.preventDefault();e.stopPropagation();openJobImage(decodeURIComponent(mt[1]));}
+},true);
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){const m=document.getElementById('jimg-modal');if(m&&m.style.display!=='none')m.style.display='none';}});
+(function(){const st=document.createElement('style');st.textContent='img[src*="/klap-mis-data/image/"],img[src*="/klap-mis-data/job-image/"]{cursor:zoom-in}#jimg-big{cursor:default}';document.head.appendChild(st);})();
+
 // Render a product image element
 async function renderProductImage(productId,size=40){
   const url=await getProductImageUrl(productId);
