@@ -2187,7 +2187,7 @@ function crudRowId(cfg,tr,ids){
   return null;
 }
 function crudDecorate(){
-  Object.keys(CRUD).forEach(k=>{
+  Object.keys(CRUD).forEach(k=>{try{
     const cfg=crudCfg(k);
     if(cfg.addTo){const at=document.querySelector(cfg.addTo);if(at&&!at.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+cfg.title;b.onclick=()=>crudOpen(k,null);at.appendChild(b);}}
     if(!cfg.tbody)return;const tb=document.getElementById(cfg.tbody);if(!tb)return;
@@ -2204,7 +2204,7 @@ function crudDecorate(){
       if(shown){const rid=idMap?idMap[shown]:shown;if(rid!=null)td.innerHTML=crudBtns(k,rid);}
       tr.appendChild(td);
     });
-  });
+  }catch(e){console.warn('crud '+k,e);}});
 }
 function crudInstall(){
   if(window._crudInstalled)return;window._crudInstalled=true;
@@ -3942,6 +3942,7 @@ function selPR(e,pid){try{
       <div style="font-size:14px;font-weight:700;margin-bottom:1px">${p[2]||'—'}</div>
       <div style="font-size:11px;color:var(--t2);margin-bottom:4px">${p[3]||'—'}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${proSubStatus(p)}${p[5]?'<span class="b br">Cancelled</span>':''}${p[6]?'<span class="b by">On Hold</span>':''}</div>
+      <div style="margin-top:6px">${crudBtns('pros',p[0])}</div>
     </div>
     <div style="text-align:right;flex-shrink:0">
       <div style="font-size:20px;font-weight:800">${p[4]?Number(p[4]).toLocaleString():'—'}</div>
