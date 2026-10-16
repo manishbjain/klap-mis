@@ -995,29 +995,23 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <!-- PACKING -->
 <div id="pg-wpk" class="pg">
   <div class="sg" style="grid-template-columns:repeat(4,1fr)">
-    <div class="sc org"><div class="l">⏳ Awaiting Packing</div><div class="v" id="wpk-a">—</div></div>
-    <div class="sc ylw"><div class="l">📦 In Progress</div><div class="v">0</div></div>
-    <div class="sc grn"><div class="l">✅ Packed</div><div class="v" id="wpk-d">—</div></div>
-    <div class="sc acc"><div class="l">📋 Slips Issued</div><div class="v" id="wpk-s">—</div></div>
+    <div class="sc ylw"><div class="l">🏭 In Production</div><div class="v" id="wpk-n-prod">—</div></div>
+    <div class="sc org"><div class="l">📦 In Packing</div><div class="v" id="wpk-n-pack">—</div></div>
+    <div class="sc acc"><div class="l">Production Qty (pcs)</div><div class="v" id="wpk-q-prod">—</div></div>
+    <div class="sc grn"><div class="l">Packed Qty (pcs)</div><div class="v" id="wpk-q-pack">—</div></div>
   </div>
-  <div class="wft-row">
-    <div class="wft on" onclick="wt('wpk',this,'wpk-q')">⏳ Awaiting Packing</div>
-    <div class="wft" onclick="wt('wpk',this,'wpk-d')">✅ Packed / FG Stock</div>
-  </div>
-  <div id="wpk-q" class="wp">
-    <div class="tc">
-      <div class="th"><h3>PROs Ready for Packing</h3><span class="tc-cnt" id="wpk-cnt"></span>
-        <div class="flt-row"><input class="f" id="wpk-sq" placeholder="Search…" oninput="R.packing(1)"></div>
+  <div class="tc">
+    <div class="th"><h3>PROs in process</h3><span class="tc-cnt" id="wpk-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="wpk-st" onchange="R.packing(1)"><option value="">In Production + In Packing</option><option value="in_production">In Production</option><option value="packing">In Packing</option></select>
+        <input class="f" id="wpk-sq" placeholder="Search PRO / product / customer / job…" oninput="R.packing(1)" style="width:240px">
       </div>
-      <div style="overflow-x:auto"><table><thead><tr><th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Qty</th><th>Action</th></tr></thead><tbody id="wpk-body"></tbody></table></div>
-      <div class="pg-bar" id="wpk-pg"></div>
     </div>
-  </div>
-  <div id="wpk-d" class="wp" style="display:none">
-    <div class="tc"><div class="th"><h3>Packed — In FG Stock</h3></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Inventory ID</th><th>PRO</th><th>Product</th><th>Packets</th><th>Status</th></tr></thead>
-        <tbody id="wpk-db"></tbody></table></div>
-    </div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Job</th><th>Status</th>
+      <th style="text-align:right">Production Qty</th><th style="text-align:right">Packed Qty</th><th style="text-align:right">Balance</th><th>Actions</th>
+    </tr></thead><tbody id="wpk-body"></tbody></table></div>
+    <div class="pg-bar" id="wpk-pg"></div>
   </div>
 </div>
 
@@ -2050,13 +2044,12 @@ const CRUD={
   po_list:{t:'purchase_orders',raw:'pos',title:'Purchase order',tbody:'po-body',render:['po_list','wp'],fields:[
     'date|d|Date','rm_id|r:rmitem|Material*','vendor_id|r:vendor|Vendor*','pur_qty|n|Quantity','pur_unit|l|Unit','rate|n|Rate','rate_units|l|Rate per','bill_ref|t|Bill ref','status|l|Status','comments|a|Comments']},
   wp_po:{alias:'po_list',tbody:'wp-po-body'},
-  fg:{t:'fg_inventory',raw:'fg_inv',title:'FG batch',tbody:'winv-body',render:['fg_inventory','fg_instock','despatch_live'],fields:[
+  fg:{t:'fg_inventory',raw:'fg_inv',title:'FG batch',tbody:'winv-body',render:['fg_inventory','fg_instock','despatch_live','packing'],fields:[
     'prod_order_id|r:pro|Production order*','date|d|Packed date','d_no|t|Design no.','ups|n|Ups','sheets|n|Sheets','packets|n|Packets','qty|n|Quantity','qty_units|l|Units','qty_wastage|n|Wastage','wastage_problem|t|Wastage problem','last_entry|t|Last entry','comment|a|Comment','fg_status|l|FG status']},
   fg_instock:{alias:'fg',tbody:'fgis-body'},
   despatch:{t:'delivery_orders',raw:'dos',title:'Despatch (DO)',tbody:'wdep-body',render:['despatch_live','despatch','despatched'],fields:['order_id|r:order|Order*','date|d|Date','price|n|Price','taxation|n|Tax']},
   despatched:{alias:'despatch',tbody:'wdep-done-body',noAdd:true},
   pack_pros:{alias:'pros',tbody:'wpk-body',noAdd:true},
-  pack_fg:{alias:'fg',tbody:'wpk-db',noAdd:true},
   machines:{t:'machines',raw:'machines',title:'Machine',tbody:'ma-body',render:['machines'],fields:['name|t|Machine name*','machine_type|l|Type','processes|t|Processes it does (codes, e.g. PRT,RW)','location|t|Location','status|s:mstat|Status','notes|a|Notes']},
   do_items:{t:'delivery_order_items',addTo:'#pg-wdep .th .flt-row',raw:'do_items',title:'Despatch item',render:['despatch_live'],fields:['delivery_order_id|r:do|Despatch (DO)*','inv_batch_id|r:batch|FG batch*','packet_qty|n|Packets','ds_item_pl_id|t|Packing list item']}
 };
@@ -4553,29 +4546,77 @@ function rcDel(i){const el=document.getElementById('rc-'+i);if(el)el.remove();if
 
 R.packing=function(p){
   if(p)pp.packing=p;
+  const st=document.getElementById('wpk-st')?.value||'';
   const q=(document.getElementById('wpk-sq')?.value||'').toLowerCase();
-  const items=D.pr.filter(x=>x[8]==='packing'&&!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
-  const packedItems=D.pr.filter(x=>x[8]==='complete'&&!x[5]&&!x[6]&&(!q||[x[0],x[2],x[3]].join(' ').toLowerCase().includes(q)));
-  document.getElementById('wpk-a').textContent=items.length;
-  document.getElementById('wpk-d').textContent=packedItems.length;
-  document.getElementById('wpk-s').textContent=D.fg.reduce((s,f)=>s+(Number(f[15])||0),0);
+  const packed=pkPackedMap();
+  // D.pr: [id,date,product,customer,qty(sheets×ups×blocks),cancelled,on_hold,order_id,status,job_id,product_id]
+  const all=D.pr.filter(x=>!x[5]&&!x[6]&&(x[8]==='in_production'||x[8]==='packing'));
+  const items=all.filter(x=>(!st||x[8]===st)&&(!q||[x[0],x[2],x[3],x[9]].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>String(b[1]||'').localeCompare(String(a[1]||''))||String(b[0]).localeCompare(String(a[0])));
+  const nf=n=>Number(n||0).toLocaleString('en-IN');
+  document.getElementById('wpk-n-prod').textContent=all.filter(x=>x[8]==='in_production').length;
+  document.getElementById('wpk-n-pack').textContent=all.filter(x=>x[8]==='packing').length;
+  document.getElementById('wpk-q-prod').textContent=nf(items.reduce((t,x)=>t+(Number(x[4])||0),0));
+  document.getElementById('wpk-q-pack').textContent=nf(items.reduce((t,x)=>t+(packed[x[0]]?.qty||0),0));
   const slice=pgr(items,'packing','R.packing','wpk-pg','wpk-cnt');
-  document.getElementById('wpk-body').innerHTML=slice.map(p=>`<tr>
-    <td class="mono">${p[0]}</td><td>${p[1]||'—'}</td><td title="${p[2]}">${tr(p[2],26)}</td>
-    <td>${tr(p[3]||'—',20)}</td><td>${p[4]?Number(p[4]).toLocaleString():'—'}</td>
-    <td><button class="ab ab-g" onclick="genPackingSlip(${esc(p[0])})">📋 Generate Slip</button></td>
-  </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No PROs awaiting packing</td></tr>';
-  // FG inventory records (actual packed batches)
-  const fgItems=sortItems([...D.fg],'winv');
-  document.getElementById('wpk-db').innerHTML=fgItems.slice(0,30).map(f=>`<tr>
-    <td class="mono" style="font-size:10px">${f[3]||f[2]||'—'}</td>
-    <td class="mono">${f[2]||'—'}</td>
-    <td title="${f[7]||''}">${tr(f[7]||'—',26)}</td>
-    <td style="text-align:right">${f[4]?Number(f[4]).toLocaleString():'—'}</td>
-    <td style="text-align:right">${f[15]?Number(f[15]).toLocaleString():'0'}</td>
-    <td>${badge(f[14]||'in_stock')}</td>
-  </tr>`).join('')||'<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--t3)">No packed inventory</td></tr>';
+  document.getElementById('wpk-body').innerHTML=slice.map(x=>{
+    const prod=Number(x[4])||0,pk=packed[x[0]]?.qty||0,bal=prod-pk;
+    const stB=x[8]==='packing'?'<span class="b by">In Packing</span>':'<span class="b bp">In Production</span>';
+    return `<tr onclick="selPR(event,${esc(x[0])})" style="cursor:pointer">
+    <td class="mono">${x[0]}</td><td>${x[1]||'—'}</td><td title="${x[2]||''}">${tr(x[2]||'—',28)}</td>
+    <td>${tr(x[3]||'—',20)}</td><td class="mono" style="font-size:11px">${x[9]||'—'}</td><td>${stB}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums">${prod?nf(prod):'—'}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums">${pk?nf(pk):'—'}${packed[x[0]]?`<div style="font-size:10px;color:var(--t3)">${packed[x[0]].n} lot${packed[x[0]].n>1?'s':''}</div>`:''}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;color:${bal>0?'var(--t2)':'var(--grn,#16a34a)'}">${prod?nf(bal):'—'}</td>
+    <td style="white-space:nowrap" onclick="event.stopPropagation()">
+      <button class="ab ab-b" onclick="pkAddPacked(${esc(x[0])})" title="Enter a packed lot (goes to FG stock)">+ Packed</button>
+      <button class="ab" onclick="genPackingSlip(${esc(x[0])})" title="Packing slip">📋 Slip</button>
+      <button class="ab ab-g" onclick="pkComplete(${esc(x[0])})" title="Tally packed vs production and close">✓ Complete</button>
+    </td></tr>`;}).join('')||'<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--t3)">No PROs in production or packing</td></tr>';
 };
+// packed qty per PRO from FG batches
+function pkPackedMap(){const m={};(D.fg||[]).forEach(f=>{if(!f[2])return;const o=m[f[2]]||(m[f[2]]={qty:0,pkts:0,n:0,wast:0});o.qty+=Number(f[5])||0;o.pkts+=Number(f[4])||0;o.wast+=Number(f[9])||0;o.n++;});return m;}
+// + Packed: new FG batch with the PRO filled in
+function pkAddPacked(pid){
+  const c=CRUD.fg,old=c.defaults,raw=(D.pros_raw||[]).find(r=>r.id===pid)||{};
+  c.defaults=Object.assign({},old||{},{prod_order_id:pid,date:new Date(Date.now()+19800000).toISOString().slice(0,10),ups:raw.ups||null,fg_status:'in_stock'});
+  try{crudOpen('fg',null);}finally{c.defaults=old;}
+}
+// ✓ Complete: show production vs packed, wastage, then close the PRO
+function pkComplete(pid){
+  const x=D.pr.find(r=>r[0]===pid);if(!x)return;
+  const prod=Number(x[4])||0,pk=pkPackedMap()[pid]||{qty:0,pkts:0,n:0,wast:0},w=prod-pk.qty;
+  const open=pwStepsOf(pid).filter(r=>PS_STATE[r.process_status]==='pending'||PS_STATE[r.process_status]==='in_progress');
+  const nf=n=>Number(n||0).toLocaleString('en-IN');
+  const pct=prod?Math.round(w/prod*1000)/10:0;
+  let m=document.getElementById('crud-modal');if(!m){m=document.createElement('div');m.id='crud-modal';document.body.appendChild(m);}
+  m.style.display='block';
+  m.innerHTML=`<div class="cm-bg" onclick="if(event.target===this)crudClose()"><div class="cm-box" role="dialog" aria-label="Complete production" style="max-width:460px">
+    <div class="cm-h"><b>Mark production complete</b><span class="cm-id">${pid}</span><button class="cm-x" onclick="crudClose()" aria-label="Close">✕</button></div>
+    <div class="cm-b" style="display:block">
+      <div style="font-weight:600;margin-bottom:10px">${x[2]||''} <span style="color:var(--t3);font-weight:400">· ${x[3]||''}</span></div>
+      <table style="width:100%;font-size:13px"><tbody>
+        <tr><td style="padding:6px 0">Production qty <span style="color:var(--t3);font-size:11px">(sheets × ups × blocks)</span></td><td style="text-align:right;font-weight:600">${nf(prod)}</td></tr>
+        <tr><td style="padding:6px 0">Packed qty <span style="color:var(--t3);font-size:11px">(${pk.n} lot${pk.n===1?'':'s'}, ${nf(pk.pkts)} packets)</span></td><td style="text-align:right;font-weight:600">${nf(pk.qty)}</td></tr>
+        <tr style="border-top:1px solid var(--bdr)"><td style="padding:8px 0;font-weight:700">${w>=0?'Wastage':'Packed extra'}</td><td style="text-align:right;font-weight:800;color:${w>0?'#dc2626':'#16a34a'}">${nf(Math.abs(w))} <span style="font-size:11px;font-weight:600">(${Math.abs(pct)}%)</span></td></tr>
+      </tbody></table>
+      ${!pk.n?'<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:#fef3c7;color:#92400e;font-size:12px">Nothing packed yet — add the packed lots first, or close it only if this PRO will not be packed.</div>':''}
+      ${open.length?`<div style="margin-top:10px;font-size:12px;color:var(--t2)">${open.length} open process${open.length>1?'es':''} (${open.map(r=>PROC_LABEL[r.process_name]||r.process_name).join(', ')}) will be marked <b>Moved</b>.</div>`:''}
+    </div>
+    <div class="cm-f"><span style="flex:1"></span><button class="cm-c" onclick="crudClose()">Cancel</button><button class="cm-s" id="pk-cbtn" onclick="pkDoComplete(${esc(pid)})">✓ Mark complete</button></div>
+  </div></div>`;
+}
+async function pkDoComplete(pid){
+  const b=document.getElementById('pk-cbtn');if(b){b.disabled=true;b.textContent='Saving…';}
+  try{
+    const R_=window._RAW;
+    const open=pwStepsOf(pid).filter(r=>PS_STATE[r.process_status]==='pending'||PS_STATE[r.process_status]==='in_progress');
+    for(const r of open){await apiWrite('pro_steps','update',r.id,{process_status:'Moved'});const rr=(R_.procs||[]).find(z=>z.id===r.id);if(rr){rr.process_status='Moved';rr.step_status='done';}}
+    await apiWrite('production_orders','update',pid,{pro_status:'complete'});
+    const pr=(R_.pros||[]).find(z=>z.id===pid);if(pr){pr.pro_status='complete';pr.pro_status_stored='complete';}
+    crudClose();buildData(R_);R.packing();toast('✓ '+pid+' marked complete');
+  }catch(e){toast('❌ '+e.message);if(b){b.disabled=false;b.textContent='✓ Mark complete';}}
+}
 
 function genPackingSlip(proid){
   const p=D.pr.find(x=>x[0]===proid);
