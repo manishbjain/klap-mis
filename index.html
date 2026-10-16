@@ -1807,7 +1807,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-044615';
+const APP_BUILD='20261017-044822';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2524,6 +2524,7 @@ function buildData(raw){
     try{R._fgOut=null;}catch(e){}
 
     // D.fg: [0]id [1]date [2]prod_order_id [3]inv_batch_id [4]packets [5]qty [6]qty_units [7]pname [8]cname [9]qty_wastage [10]last_entry [11]d_no [12]ups [13]sheets [14]fg_status [15]pkts_in_stock
+    const _ordProd={};orders.forEach(o=>{_ordProd[o.id]=o.product_id;});
     D.fg=fg_inv.map(r=>{
       const pro=pros.find(p=>p.id===r.prod_order_id)||{};
       const pname=prodMap[pro.product_id]?.product_name||pro.job_name||r.prod_order_id||'';
@@ -2536,7 +2537,8 @@ function buildData(raw){
       const pktsInStock=isOld?0:Math.max(0,(r.packets||0)-pktsOut);
       // pieces still in stock: packets left × pieces per packet (whole lot if the batch has no packet count and nothing despatched)
       const perPkt=(Number(r.sheets)||0)*(Number(r.ups)||0)||((r.packets||0)>0?(r.qty||0)/(r.packets):0);
-      const pcsInStock=isOld||!pro.product_id?0:Math.max(0,Math.round((r.qty||0)-pktsDespatched*perPkt-(adjQty[r.inv_batch_id]||((adjMap[r.inv_batch_id]||0)*perPkt))));
+      // old app: Product_ID comes from the PRO's order — lots whose order has no product are not counted
+      const pcsInStock=isOld||!pro.product_id||!_ordProd[pro.order_id]?0:Math.max(0,Math.round((r.qty||0)-pktsDespatched*perPkt-(adjQty[r.inv_batch_id]||((adjMap[r.inv_batch_id]||0)*perPkt))));
       return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry,r.d_no||'',r.ups||0,r.sheets||0,r.fg_status||'',pktsInStock,pcsInStock,pro.product_id||''];
     });
 
