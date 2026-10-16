@@ -1980,22 +1980,26 @@ async function loadData(){
     procs.forEach(r=>{const m=PS_STATE[r.process_status];if(m)r.step_status=m;});
     pwBuildStepIndex(procs,D.step_links);
     // PRO status is WORKED OUT here every time (like the old app's virtual column), never trusted from storage:
-    //   cancelled  → Is_Cancelled
-    //   complete   → stock packed in FG
+    //   cancelled     → Is_Cancelled
+    //   complete      → FG packed ≥ 90% of the PRO qty (sheets × ups × blocks)
     //   in_production → any process still open (To Send / Job Order Sent / Job Approved / Part Processed)
-    //   packing    → all processes Moved/Complete, nothing in FG yet (ready to pack)
-    //   planned    → no processes yet (new PRO); very old PROs with nothing recorded keep their stored value
+    //   complete      → history already marked complete, nothing open
+    //   packing       → part packed in FG, or all processes Moved/Complete (ready to pack)
+    //   planned       → no processes yet (new PRO)
     // "On hold" stays its own flag (Is_On_Hold), as before.
     {
-      const fgPro=new Set(fg_inv.map(f=>f.prod_order_id).filter(Boolean));
+      const fgQty={};fg_inv.forEach(f=>{if(f.prod_order_id)fgQty[f.prod_order_id]=(fgQty[f.prod_order_id]||0)+(Number(f.qty)||0);});
+      const hasFg=new Set(fg_inv.map(f=>f.prod_order_id).filter(Boolean));
       pros.forEach(p=>{
-        p.pro_status_stored=p.pro_status;
+        const stored=p.pro_status;p.pro_status_stored=stored;
         if(p.is_cancelled){p.pro_status='cancelled';return;}
-        if(fgPro.has(p.id)){p.pro_status='complete';return;}
+        const q=(Number(p.sheet_qty)||0)*(Number(p.ups)||1)*(Number(p.blocks)||1);
+        if(hasFg.has(p.id)&&(!q||fgQty[p.id]>=q*0.9)){p.pro_status='complete';return;}
         const st=pwStepsOf(p.id).filter(r=>r.step_status!=='cancelled'&&r.step_status!=='skipped');
         if(st.some(r=>r.step_status==='pending'||r.step_status==='in_progress')){p.pro_status='in_production';return;}
-        if(st.length){p.pro_status='packing';return;}
-        if(p.pro_status==='legacy'||!p.pro_status)p.pro_status='planned';
+        if(stored==='complete'){p.pro_status='complete';return;}
+        if(hasFg.has(p.id)||st.length){p.pro_status='packing';return;}
+        p.pro_status=(stored==='legacy'||!stored)?'planned':stored;
       });
     }
     const accMap={};accounts.forEach(a=>{accMap[a.id]=a;});
