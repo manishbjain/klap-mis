@@ -101,7 +101,7 @@ Deno.serve(async(req)=>{
       const body=await req.json().catch(()=>({}))
       const table=String(body.table||''),op=String(body.op||''),id=body.id!=null?String(body.id):'',data=body.data||{}
       const RULES:Record<string,{ops:string[],fields:string[]}>={
-        pro_steps:{ops:['insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
+        pro_steps:{ops:['insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','process_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
         jobs:{ops:['update'],fields:['job_name','job_type','status']}
       }
       const rule=RULES[table]
@@ -125,8 +125,13 @@ Deno.serve(async(req)=>{
       }
       const STEP_ST=['pending','in_progress','done','skipped','cancelled']
       const LEGACY:Record<string,string>={pending:'To Send',in_progress:'Part Processed',done:'Moved',skipped:'Skipped',cancelled:'Cancelled'}
+      // One status only: process_status holds the sheet's values; step_status is kept in step with it automatically
+      const PS_STATE:Record<string,string>={'To Send':'pending','Job Order Sent':'in_progress','Job Approved':'in_progress','Part Processed':'in_progress','Moved':'done','Complete':'done','Cancelled':'cancelled'}
       if(table==='pro_steps'){
-        if('step_status' in clean){
+        if('process_status' in clean){
+          if(!(clean.process_status in PS_STATE))return J({error:'Invalid process status'},400)
+          clean.step_status=PS_STATE[clean.process_status]
+        }else if('step_status' in clean){
           if(!STEP_ST.includes(clean.step_status))return J({error:'Invalid step status'},400)
           clean.process_status=LEGACY[clean.step_status]
         }
@@ -176,9 +181,9 @@ Deno.serve(async(req)=>{
         row=r.data
       }else if(op==='delete'){
         if(table==='pro_steps'){
-          if((old.qty_out||0)>0||!['pending',null,''].includes(old.step_status))return J({error:'Only an unstarted step can be deleted — mark it Skipped instead'},400)
+          if((old.qty_out||0)>0||!['To Send',null,''].includes(old.process_status))return J({error:'Only an unstarted step can be deleted — mark it Cancelled instead'},400)
           const{count}=await supabase.from('rm_out').select('id',{count:'exact',head:true}).eq('prod_proc_id',id)
-          if(count&&count>0)return J({error:'Material has been issued against this step — mark it Skipped instead'},400)
+          if(count&&count>0)return J({error:'Material has been issued against this step — mark it Cancelled instead'},400)
         }
         if(table==='pro_steps')await supabase.from('pro_step_orders').delete().eq('step_id',id)
         const r=await supabase.from(table).delete().eq('id',id)

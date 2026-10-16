@@ -831,7 +831,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option><option value="skipped">Skipped</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="To Send">To Send</option><option value="Job Order Sent">Job Order Sent</option><option value="Job Approved">Job Approved</option><option value="Part Processed">Part Processed</option><option value="Moved">Moved</option><option value="Complete">Complete</option><option value="Cancelled">Cancelled</option></select>
         <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-processes" onclick="openFD('processes')">⚙ Filters</button>
       </div>
@@ -1976,6 +1976,8 @@ async function loadData(){
     // Step ↔ PRO links (pro_step_orders, from the sheet's Prod_Process_Items). One step can cover several PROs.
     // A step that has link rows uses ONLY those; a step without any falls back to its prod_order_id.
     D.step_links=raw.step_links||[];
+    // One status only: the sheet's Process_Status. The app's internal state is read from it.
+    procs.forEach(r=>{const m=PS_STATE[r.process_status];if(m)r.step_status=m;});
     pwBuildStepIndex(procs,D.step_links);
     const accMap={};accounts.forEach(a=>{accMap[a.id]=a;});
     const prodMap={};products.forEach(p=>{prodMap[p.id]=p;});
@@ -3614,7 +3616,7 @@ function selPR(e,pid){try{
       <td style="padding:5px 8px;font-size:11px">${machStr}</td>
       <td style="padding:5px 8px;font-size:11px;text-align:right;font-variant-numeric:tabular-nums">${qtyStr}</td>
       ${r.wastage?'<td style="padding:5px 8px;font-size:11px;text-align:right;color:var(--t3)">-'+Number(r.wastage).toLocaleString()+'</td>':'<td></td>'}
-      <td style="padding:5px 8px;font-size:11px">${badge(effStatus)}</td>
+      <td style="padding:5px 8px;font-size:11px">${badge(r.process_status||'—')}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="7" style="padding:8px;font-size:11px;color:var(--t3)">No processes yet</td></tr>';
   const matRows=rmOut.length?rmOut.map(x=>{
@@ -3768,7 +3770,9 @@ function joToggle(jid,rawId){
 // ── JOB MANAGE PANEL ───────────────────────────────────────
 // Process codes as stored in pro_steps (most used first)
 const JO_PROC_CODES=['PRT','PUN','CUT','RW','COAT','LMN','EMB','DVD','STRG','CCLD','SPT','WPT','TLBL','TSMG','CRCT','TBND','TDSC','SHT'];
-const JO_STEP_ST=[['pending','Pending'],['in_progress','In progress'],['done','Done'],['skipped','Skipped']];
+// Process status = exactly the values used in the sheet (old data). Nothing else.
+const PS_LIST=['To Send','Job Order Sent','Job Approved','Part Processed','Moved','Complete','Cancelled'];
+const PS_STATE={'To Send':'pending','Job Order Sent':'in_progress','Job Approved':'in_progress','Part Processed':'in_progress','Moved':'done','Complete':'done','Cancelled':'cancelled'};
 function joStepSt(r){const s=(r.step_status||'').toLowerCase();return ['pending','in_progress','done','skipped','cancelled'].includes(s)?s:'pending';}
 function joVendors(){return (D.ve||[]).filter(v=>v[3]==='vendor').slice().sort((a,b)=>a[1].localeCompare(b[1]));}
 function joMachines(){return [...new Set((D.procs_raw||[]).map(r=>r.machine).filter(Boolean).map(m=>String(m).trim()))].sort();}
@@ -3809,8 +3813,8 @@ function selJob(e,jid){try{
           </select>
           <input value="${(r.machine||'').replace(/"/g,'&quot;')}" placeholder="Machine" list="jo-machines" ${r.vendor_id?'disabled title="Outsourced — no machine"':''} onchange="joSetMachine(${esc(r.id)},this.value,${esc(jid)})" style="${inp};width:120px">
           <select onchange="joSetProcStatus(${esc(r.id)},this.value,${esc(jid)})" style="${inp};font-weight:700;color:${isDone?'#16a34a':st==='in_progress'?'var(--blu)':'var(--t2)'}">
-            ${JO_STEP_ST.map(([v,l])=>`<option value="${v}"${st===v?' selected':''}>${l}</option>`).join('')}
-            ${st==='cancelled'?'<option value="cancelled" selected>Cancelled</option>':''}
+            ${r.process_status&&PS_LIST.includes(r.process_status)?'':`<option value="" selected>${r.process_status||'— not set —'}</option>`}
+            ${PS_LIST.map(v=>`<option value="${v}"${r.process_status===v?' selected':''}>${v}</option>`).join('')}
           </select>
           <input type="number" min="0" value="${r.qty_out||''}" placeholder="Qty out" onchange="joSetNum(${esc(r.id)},'qty_out',this.value,${esc(jid)})" style="${inp};width:84px" title="Output quantity">
           <input type="number" min="0" value="${r.wastage||''}" placeholder="Wastage" onchange="joSetNum(${esc(r.id)},'wastage',this.value,${esc(jid)})" style="${inp};width:76px" title="Wastage">
@@ -3926,6 +3930,7 @@ async function joToggleStepPro(sid,pid,jid){
 // ---- Job management actions (all saves go through apiWrite → server checks login + role) ----
 function joApplyStep(row){
   if(!row)return;
+  if(PS_STATE[row.process_status])row.step_status=PS_STATE[row.process_status];
   const i=D.procs_raw.findIndex(x=>x.id===row.id);
   if(i>=0)D.procs_raw[i]=Object.assign({},D.procs_raw[i],row);
   else{D.procs_raw.push(row);if(row.prod_order_id)D.step_links.push({step_id:row.id,prod_order_id:row.prod_order_id});}
@@ -3947,7 +3952,7 @@ async function joSave(procId,data,jid,okMsg){
 }
 function joSetVendor(procId,vendorId,jid){return joSave(procId,{vendor_id:vendorId||null},jid,vendorId?'✓ Outsourced to '+((D.ve.find(v=>v[0]===vendorId)||[])[1]||vendorId):'✓ Set to in-house');}
 function joSetMachine(procId,machine,jid){return joSave(procId,{machine:(machine||'').trim()||null},jid,'✓ Machine saved');}
-function joSetProcStatus(procId,status,jid){return joSave(procId,{step_status:status},jid,'✓ Step → '+((JO_STEP_ST.find(x=>x[0]===status)||[])[1]||status));}
+function joSetProcStatus(procId,status,jid){if(!status)return;return joSave(procId,{process_status:status},jid,'✓ Status → '+status);}
 function joSetNum(procId,field,val,jid){
   if(val!==''&&(isNaN(Number(val))||Number(val)<0)){toast('❌ Enter a valid number');return;}
   return joSave(procId,{[field]:val===''?null:Number(val)},jid,'✓ '+(field==='qty_out'?'Qty out':'Wastage')+' saved');
@@ -4402,11 +4407,9 @@ R.processes=function(p){
   const q=(document.getElementById('proc-q')?.value||'').toLowerCase();
   const proMap={};D.pr.forEach(r=>{proMap[r[0]]={pname:r[2],cname:r[3]};});
   // normalize procs_raw to array format for FD filters: [id,name,pro_id,date,mat,qty_out,machine,vendor,status]
-  const toArr=r=>[r.id,r.process_name,r.prod_order_id,r.date,r.material_id,r.qty_out,r.machine,r.vendor_id,r.step_status||r.process_status];
+  const toArr=r=>[r.id,r.process_name,r.prod_order_id,r.date,r.material_id,r.qty_out,r.machine,r.vendor_id,r.process_status];
   let items=D.procs_raw.filter(r=>{
-    const effStatus=r.step_status||r.process_status||'pending';
-    if(st===FE){if(!isE(r.step_status)||!isE(r.process_status))return false;}
-    else if(st&&effStatus!==st)return false;
+    if(!fm(st,r.process_status))return false;
     if(q&&![r.id,r.process_name,r.prod_order_id,proMap[r.prod_order_id]?.pname||'',proMap[r.prod_order_id]?.cname||''].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
@@ -4426,7 +4429,7 @@ R.processes=function(p){
       <td>${r.date||'—'}</td><td class="mono" style="font-size:11px">${r.material_id||'—'}</td>
       <td>${r.qty_out?Number(r.qty_out).toLocaleString():'—'}</td>
       <td style="font-size:11px">${vname}</td>
-      <td>${badge(r.step_status||r.process_status||'pending')}</td>
+      <td>${badge(r.process_status||'—')}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No processes found</td></tr>';
 };
@@ -4450,7 +4453,7 @@ function selProc(e,pid){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
     ${rpRow('Process',r.process_name||'—')}
     ${rpRow('Process ID',r.id||'—')}
-    ${rpRow('Status',badge(r.step_status||r.process_status||'pending'))}
+    ${rpRow('Status',badge(r.process_status||'—'))}
     ${rpRow('Date',r.date||'—')}
     ${rpRow('PRO',r.prod_order_id||'—')}
     ${rpRow('Product',proRec?proRec[2]:'—')}
@@ -4931,7 +4934,7 @@ function selRMOut(e,oid){
       ${rpRow('Process',PROC_LABEL[proc.process_name]||proc.process_name||'—')}
       ${rpRow('Machine',proc.machine||'—')}
       ${rpRow('Vendor',vendor)}
-      ${rpRow('Status',badge(proc.process_status||proc.step_status||'pending'))}
+      ${rpRow('Status',badge(proc.process_status||'—'))}
       ${proc.qty_out?rpRow('Qty Out',Number(proc.qty_out).toLocaleString()):''}
       ${proc.wastage?rpRow('Process Wastage',Number(proc.wastage).toLocaleString()):''}
     </div>
