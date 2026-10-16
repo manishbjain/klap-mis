@@ -1807,7 +1807,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-042936';
+const APP_BUILD='20261017-044615';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2384,8 +2384,9 @@ function buildData(raw){
     {const dsp={};(raw.do_items||[]).forEach(i=>{if(i.inv_batch_id)dsp[i.inv_batch_id]=(dsp[i.inv_batch_id]||0)+(Number(i.packet_qty)||0);});
      (raw.fg_adj||[]).forEach(a=>{if(a.inv_batch_id)dsp[a.inv_batch_id]=(dsp[a.inv_batch_id]||0)+(Number(a.packets)||0);});
      const proProd={};pros.forEach(p=>{proProd[p.id]=p.product_id;});
-     fg_inv.forEach(r=>{const pid=proProd[r.prod_order_id];if(!pid)return;const d=dsp[r.inv_batch_id]||0,pk=r.packets||0;
-       const left=pk>0?Math.round((r.qty||0)*Math.max(0,pk-d)/pk):(d?0:(r.qty||0));if(left>0)fgStockQty[pid]=(fgStockQty[pid]||0)+left;});}
+     fg_inv.forEach(r=>{const pid=proProd[r.prod_order_id];if(!pid||String(r.old_data||'').toUpperCase()==='TRUE')return;const d=dsp[r.inv_batch_id]||0;
+       const per=(Number(r.sheets)||0)*(Number(r.ups)||0)||((r.packets||0)>0?(r.qty||0)/r.packets:0);
+       const left=Math.round((r.qty||0)-d*per);if(left>0)fgStockQty[pid]=(fgStockQty[pid]||0)+left;});}
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
       const oid=o[0];
       const orderRow=orders.find(x=>x.id===oid);
@@ -2528,10 +2529,14 @@ function buildData(raw){
       const pname=prodMap[pro.product_id]?.product_name||pro.job_name||r.prod_order_id||'';
       const cname=prodMap[pro.product_id]?.customer_name||'';
       const pktsDespatched=despatchedMap[r.inv_batch_id]||0;
+      // Same rule as the old app (Inv_Products.Qty_In_Stock): Old_Data lots are closed; otherwise
+      // pcs in stock = Qty − despatched packets × Sheets × Ups (then minus any adjustment)
+      const isOld=String(r.old_data||'').toUpperCase()==='TRUE';
       const pktsOut=pktsDespatched+(adjMap[r.inv_batch_id]||0);
-      const pktsInStock=Math.max(0,(r.packets||0)-pktsOut);
+      const pktsInStock=isOld?0:Math.max(0,(r.packets||0)-pktsOut);
       // pieces still in stock: packets left × pieces per packet (whole lot if the batch has no packet count and nothing despatched)
-      const pcsInStock=(r.packets||0)>0?Math.round((r.qty||0)*pktsInStock/(r.packets||1)):(pktsDespatched?0:Math.max(0,(r.qty||0)-(adjQty[r.inv_batch_id]||0)));
+      const perPkt=(Number(r.sheets)||0)*(Number(r.ups)||0)||((r.packets||0)>0?(r.qty||0)/(r.packets):0);
+      const pcsInStock=isOld||!pro.product_id?0:Math.max(0,Math.round((r.qty||0)-pktsDespatched*perPkt-(adjQty[r.inv_batch_id]||((adjMap[r.inv_batch_id]||0)*perPkt))));
       return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry,r.d_no||'',r.ups||0,r.sheets||0,r.fg_status||'',pktsInStock,pcsInStock,pro.product_id||''];
     });
 
@@ -5109,7 +5114,7 @@ R.fg_instock=function(p){
   }
   const despMap=_fgDespMap();
   // Only items with stock
-  let items=D.fg.filter(r=>(Number(r[15])||0)>0||(Number(r[16])||0)>0);
+  let items=D.fg.filter(r=>(Number(r[16])||0)>0);
   if(custF)items=items.filter(r=>fm(custF,r[8]));
   if(prodF)items=items.filter(r=>fm(prodF,r[7]));
   if(q)items=items.filter(r=>[r[0],r[3],r[7],r[8],r[11],r[2]].join(' ').toLowerCase().includes(q));
@@ -5245,9 +5250,9 @@ R.fg_inventory=function(p){
   const despMap=_fgDespMap();
   let items=D.fg;
   if(custF)items=items.filter(r=>fm(custF,r[8]));
-  if(statusF==='instock')items=items.filter(r=>(Number(r[15])||0)>0);
-  else if(statusF==='partial')items=items.filter(r=>{const d=despMap[r[3]]||0;return d>0&&(Number(r[15])||0)>0;});
-  else if(statusF==='despatched')items=items.filter(r=>(Number(r[15])||0)===0&&(despMap[r[3]]||0)>0);
+  if(statusF==='instock')items=items.filter(r=>(Number(r[16])||0)>0);
+  else if(statusF==='partial')items=items.filter(r=>{const d=despMap[r[3]]||0;return d>0&&(Number(r[16])||0)>0;});
+  else if(statusF==='despatched')items=items.filter(r=>(Number(r[16])||0)===0&&(despMap[r[3]]||0)>0);
   if(q)items=items.filter(r=>[r[0],r[2],r[7],r[8],r[3],r[11]].join(' ').toLowerCase().includes(q));
   items=applyFDFilters('fg-inv',items);
   items=sortItems(items,'winv');
@@ -5276,9 +5281,9 @@ R.fg_inventory=function(p){
     </tr>`;
   };
   el.innerHTML=fgGroupHtml('fg_inventory',items,_rowFn,{cols:12,pg:['R.fg_inventory','winv-pg','winv-cnt'],sum:r=>[Number(r[4])||0,Number(r[5])||0],name:r=>r[7],cust:r=>r[8],date:r=>r[1]})||'<tr><td colspan="12" style="padding:24px;text-align:center;color:var(--t3)">No lots match</td></tr>';
-  const inStockCount=D.fg.filter(r=>(Number(r[15])||0)>0).length;
-  const partDespCount=D.fg.filter(r=>(despMap[r[3]]||0)>0&&(Number(r[15])||0)>0).length;
-  const fullDespCount=D.fg.filter(r=>(Number(r[15])||0)===0&&(despMap[r[3]]||0)>0).length;
+  const inStockCount=D.fg.filter(r=>(Number(r[16])||0)>0).length;
+  const partDespCount=D.fg.filter(r=>(despMap[r[3]]||0)>0&&(Number(r[16])||0)>0).length;
+  const fullDespCount=D.fg.filter(r=>(Number(r[16])||0)===0&&(despMap[r[3]]||0)>0).length;
   const s=document.getElementById('winv-s');if(s)s.textContent=D.fg.length;
   const is=document.getElementById('winv-is');if(is)is.textContent=inStockCount;
   const pd=document.getElementById('winv-pd');if(pd)pd.textContent=partDespCount;
