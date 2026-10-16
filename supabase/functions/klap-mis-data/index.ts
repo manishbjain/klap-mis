@@ -270,10 +270,47 @@ Deno.serve(async(req)=>{
       if(!au||!au.is_active)return J({error:'You are not authorised to make changes'},403)
       const body=await req.json().catch(()=>({}))
       const table=String(body.table||''),op=String(body.op||''),id=body.id!=null?String(body.id):'',data=body.data||{}
-      const RULES:Record<string,{ops:string[],fields:string[]}>={
-        pro_steps:{ops:['insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','process_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
-        jobs:{ops:['update'],fields:['job_name','job_type','status']}
+      // Every table the app can change, with the columns it may write (id/created_at are never written by hand)
+      const COLS:Record<string,string[]>={
+        orders:['date','customer_id','is_repeat','has_changes','product_id','party_reference','order_type','order_status','pplan_group','qty','units','bt','price','ledger_id','freight','transport_id','due_ds','billing_detail','billing_approved','despatch_location_1','despatch_location_2','despatch_detail','despatch_approved'],
+        production_orders:['date','product_id','order_id','job_id','job_id_temp','job_name','imposition_type','job_type','imp_group','sheet_portion_l','sheet_portion_b','sheet_portion_units','sheet_qty','ups','blocks','qty','qty_units','is_cancelled','is_on_hold','packing_status','sent_for_packing'],
+        products:['date','product_code','first_oid','product_class','customer_id','customer_name','category','version_type','old_reference','product_name','base_product','version_no','design_status','design_assigned','has_changes','change_desc','size_l','size_b','size_h','size_units','material','gsm','lamination','coating','foil','foil_color','emboss','gumming','gumming_type','border','data_clear','specs_final','thread_link','approval_proof'],
+        accounts:['account_type','name','brand','alias','city','state','country','out_id'],
+        jobs:['date','job_name','job_type','status'],
+        dies:['date','die_type','die_name','up_size_l','up_size_b','total_ups','sheet_size','blocks','image_url','punch_type','status','vendor_id','face_stock','release','rule_ht','comments'],
+        plates:['date','plate_name','job_size_b','cylinder','status'],
+        rm_categories:['name'],
+        rm_subcategories:['name','category_id','description'],
+        rm_list:['date','category_id','subcategory_id','alias','brand','vendor_id','vendor_ref','color','top_or_base','top_coating','base_coating','inner_dia','outer_dia','height_mm','inner_circum','outer_circum','inner_liner'],
+        rm_in:['date','entry_type','purchase_id','base_rm_in_id','category_id','subcategory_id','rm_item_id','despatch_date','recd_date','vendor_id','vendor_ref','current_inv_loc','carton_no','transfer_date','qty','qty_units','wt_per_pc','transport','total_pkgs','total_wt','freight_amt','status','comments','convert_kg_mtr','roll_width','roll_gross_wt','core_length','core_thickness','roll_sample_wt'],
+        rm_out:['date','rm_in_id','out_for','prod_proc_id','conversion_vendor','temp_prod_proc_id','qty','comments'],
+        purchase_orders:['date','rm_id','vendor_id','pur_unit','pur_qty','rate','rate_units','bill_ref','status','comments'],
+        fg_inventory:['date','prod_order_id','d_no','ups','sheets','packets','qty','qty_units','qty_wastage','wastage_problem','last_entry','comment','fg_status'],
+        delivery_orders:['date','order_id','price','taxation'],
+        delivery_order_items:['delivery_order_id','ds_item_pl_id','inv_batch_id','packet_qty'],
       }
+      const RULES:Record<string,{ops:string[],fields:string[]}>={
+        pro_steps:{ops:['get','insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','process_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
+      }
+      for(const t of Object.keys(COLS))RULES[t]={ops:['get','insert','update','delete'],fields:COLS[t]}
+      // Before a delete: where else this record is used (table, column, which value of the record to look for)
+      const REFS:Record<string,[string,string,string][]>={
+        accounts:[['orders','customer_id','id'],['orders','transport_id','id'],['products','customer_id','id'],['pro_steps','vendor_id','id'],['rm_list','vendor_id','id'],['rm_in','vendor_id','id'],['purchase_orders','vendor_id','id'],['dies','vendor_id','id']],
+        products:[['orders','product_id','id'],['production_orders','product_id','id']],
+        orders:[['production_orders','order_id','id'],['delivery_orders','order_id','id']],
+        production_orders:[['pro_step_orders','prod_order_id','id'],['fg_inventory','prod_order_id','id']],
+        jobs:[['production_orders','job_id','id']],
+        dies:[['pro_steps','die_id','id']],
+        plates:[['pro_steps','plate_id','id']],
+        rm_categories:[['rm_subcategories','category_id','id'],['rm_list','category_id','id'],['rm_in','category_id','id']],
+        rm_subcategories:[['rm_list','subcategory_id','id'],['rm_in','subcategory_id','id']],
+        rm_list:[['rm_in','rm_item_id','id'],['purchase_orders','rm_id','id']],
+        rm_in:[['rm_out','rm_in_id','rm_in_id']],
+        purchase_orders:[['rm_in','purchase_id','id']],
+        fg_inventory:[['delivery_order_items','inv_batch_id','inv_batch_id']],
+        delivery_orders:[['delivery_order_items','delivery_order_id','id']],
+      }
+      const LABEL:Record<string,string>={orders:'orders',products:'products',production_orders:'production orders',pro_steps:'processes',pro_step_orders:'processes',rm_list:'RM items',rm_in:'GRNs',rm_out:'RM issues',purchase_orders:'purchase orders',dies:'dies',fg_inventory:'FG batches',delivery_orders:'despatches',delivery_order_items:'despatch items',rm_subcategories:'sub-categories'}
       const rule=RULES[table]
       if(!rule||!rule.ops.includes(op))return J({error:`Not allowed: ${op} on ${table}`},400)
       if(au.role_id!=='owner'){
@@ -308,7 +345,7 @@ Deno.serve(async(req)=>{
         for(const k of ['seq','qty_in','qty_out','wastage'])if(k in clean&&clean[k]!=null){const n=Number(clean[k]);if(!Number.isFinite(n)||n<0)return J({error:`Invalid ${k}`},400);clean[k]=Math.round(n)}
         if(clean.vendor_id&&clean.machine)return J({error:'A step is either in-house (machine) or outsourced (vendor), not both'},400)
       }
-      if(table==='jobs'&&'job_type' in clean&&clean.job_type!=null&&!['Machine','Sheet','Tupax','Direct','Direct5'].includes(clean.job_type))return J({error:'Invalid job type'},400)
+      if(table==='jobs'&&'job_type' in clean&&clean.job_type&&!['Machine','Sheet','Tupax','Direct','Direct5'].includes(clean.job_type))return J({error:'Invalid job type'},400)
       if(table==='jobs'&&'status' in clean&&clean.status!=null&&!['planned','in_progress','done'].includes(clean.status))return J({error:'Invalid job status'},400)
       let row:any=null,old:any=null
       if(op!=='insert'){
@@ -317,7 +354,12 @@ Deno.serve(async(req)=>{
         if(!o)return J({error:'Record not found'},404)
         old=o
       }
-      if(op==='insert'){
+      if(op==='get')return J({ok:true,row:old})
+      // types: blank → null; numbers checked
+      if(table!=='pro_steps'){
+        for(const k of Object.keys(clean)){const v=clean[k];if(typeof v==='string')clean[k]=v.trim()===''?null:v.trim()}
+      }
+      if(table==='pro_steps'&&op==='insert'){
         if(!clean.prod_order_id&&proIds)clean.prod_order_id=proIds[0]
         if(!clean.prod_order_id||!clean.process_name)return J({error:'PRO and process are required'},400)
         const{data:pro}=await supabase.from('production_orders').select('id').eq('id',clean.prod_order_id).single()
@@ -332,6 +374,21 @@ Deno.serve(async(req)=>{
           else if(!String(r.error.message).includes('duplicate'))return J({error:r.error.message},400)
         }
         if(!row)return J({error:'Could not create step id'},500)
+      }else if(op==='insert'){
+        if(table==='accounts'&&(!clean.name||!clean.account_type))return J({error:'Name and account type are required'},400)
+        if(table==='products'&&!clean.product_name)return J({error:'Product name is required'},400)
+        if(COLS[table].includes('date')&&!clean.date)clean.date=new Date(Date.now()+19800000).toISOString().slice(0,10)
+        for(let i=0;i<4&&!row;i++){
+          const{data:nid,error:ie}=await supabase.rpc('next_app_id',{p_table:table,p_type:table==='accounts'?clean.account_type:table==='jobs'?clean.job_type:null})
+          if(ie)return J({error:ie.message},500)
+          const rec:any={...clean,id:nid}
+          if(table==='rm_in')rec.rm_in_id='RM'+String(nid).padStart(5,'0')
+          if(table==='fg_inventory')rec.inv_batch_id='INV_'+nid
+          const r=await supabase.from(table).insert(rec).select().single()
+          if(!r.error)row=r.data
+          else if(!String(r.error.message).includes('duplicate'))return J({error:r.error.message},400)
+        }
+        if(!row)return J({error:'Could not create a new id'},500)
       }else if(op==='set_pros'){
         if(!proIds)return J({error:'pro_ids required'},400)
         await supabase.from('pro_step_orders').delete().eq('step_id',id)
@@ -354,8 +411,16 @@ Deno.serve(async(req)=>{
           if((old.qty_out||0)>0||!['To Send',null,''].includes(old.process_status))return J({error:'Only an unstarted step can be deleted — mark it Cancelled instead'},400)
           const{count}=await supabase.from('rm_out').select('id',{count:'exact',head:true}).eq('prod_proc_id',id)
           if(count&&count>0)return J({error:'Material has been issued against this step — mark it Cancelled instead'},400)
+          await supabase.from('pro_step_orders').delete().eq('step_id',id)
+        }else{
+          const used:string[]=[]
+          for(const [t,c,key] of (REFS[table]||[])){
+            const val=old[key];if(val==null||val==='')continue
+            const{count}=await supabase.from(t).select(t==='pro_step_orders'?'step_id':'id',{count:'exact',head:true}).eq(c,val)
+            if(count&&count>0)used.push(count+' '+(LABEL[t]||t))
+          }
+          if(used.length)return J({error:'Can\'t delete — it is used in '+used.join(', ')+'. Edit it instead.'},400)
         }
-        if(table==='pro_steps')await supabase.from('pro_step_orders').delete().eq('step_id',id)
         const r=await supabase.from(table).delete().eq('id',id)
         if(r.error)return J({error:r.error.message},400)
       }
@@ -395,7 +460,7 @@ Deno.serve(async(req)=>{
     const rm_cats=await fetchAll('rm_categories','id,name','id')
     const rm_subcats=await fetchAll('rm_subcategories','id,name,category_id','id')
     const rm_list=await fetchAll('rm_list','id,alias,brand,category_id,subcategory_id,vendor_id','id')
-    const rm_in=await fetchAll('rm_in','rm_in_id,date,rm_item_id,vendor_id,qty,qty_units,vendor_ref,status,category_id,subcategory_id,purchase_id,recd_date,freight_amt,carton_no','rm_in_id')
+    const rm_in=await fetchAll('rm_in','id,rm_in_id,date,rm_item_id,vendor_id,qty,qty_units,vendor_ref,status,category_id,subcategory_id,purchase_id,recd_date,freight_amt,carton_no','rm_in_id')
     const rm_out=await fetchAll('rm_out','id,date,rm_in_id,prod_proc_id,out_for,qty','id')
     const fg_inv=await fetchAll('fg_inventory','id,date,prod_order_id,inv_batch_id,d_no,ups,sheets,packets,qty,qty_units,qty_wastage,last_entry,fg_status','id')
     const dos=await fetchAll('delivery_orders','id,date,order_id,price,taxation')
