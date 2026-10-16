@@ -2168,7 +2168,8 @@ async function crudSave(){
     const row=await apiWrite(cfg.t,_crud.id?'update':'insert',_crud.id,out);
     crudPatch(cfg,row,false);
     toast('✓ '+cfg.title+' '+(_crud.id?'saved':'added')+' — '+row.id);
-    crudClose();
+    const after=_crud.after;crudClose();
+    if(typeof after==='function')try{after(row);}catch(e){console.warn(e);}
   }catch(e){toast('❌ '+e.message);if(btn){btn.disabled=false;btn.textContent=_crud&&_crud.id?'Save':'Add';}}
 }
 async function crudDelete(){
@@ -5952,8 +5953,6 @@ function openNewOrderForm(prefill){
   const f=prefill||{};
   // Build customer options from D.cu
   const custOpts=D.cu.map(c=>`<option value="${c[0]}" ${f.cust===c[0]?'selected':''}>${c[1]}${c[3]?' — '+c[3]:''}</option>`).join('');
-  // Build product options from D.pd
-  const prodOpts=D.pd.map(p=>`<option value="${p[0]}" ${f.prod===p[0]?'selected':''}>${p[0]} — ${p[1]} (${p[2]||'—'})</option>`).join('');
 
   const modal=document.getElementById('new-order-modal');
   modal.innerHTML=`
@@ -5986,10 +5985,9 @@ function openNewOrderForm(prefill){
     <div class="nof-sec">PRODUCT</div>
     <div class="nof-row">
       <div class="nof-field" style="flex:2">
-        <label class="nof-lbl">Product *</label>
+        <label class="nof-lbl" style="display:flex;align-items:center">Product *<a href="#" onclick="event.preventDefault();nofNewProduct()" style="margin-left:auto;font-size:11px;font-weight:700;color:var(--acc);text-decoration:none;text-transform:none">+ New product</a></label>
         <select class="f" id="nof-prod" style="width:100%" onchange="nofProdChange()">
-          <option value="">— Select Product —</option>
-          ${prodOpts}
+          ${nofProdOpts(f.cust,f.prod)}
         </select>
       </div>
       <div class="nof-field">
@@ -6063,8 +6061,30 @@ function openNewOrderForm(prefill){
   if(f.prod) nofProdChange();
 }
 
+// Product list for the order form: the chosen customer's products first, then all others
+function nofProdOpts(cid,sel){
+  const cname=(D.cu.find(c=>c[0]===cid)?.[1]||'').trim().toLowerCase();
+  const opt=p=>`<option value="${p[0]}" ${sel===p[0]?'selected':''}>${p[0]} — ${p[1]} (${p[2]||'—'})</option>`;
+  const mine=cname?D.pd.filter(p=>(p[2]||'').trim().toLowerCase()===cname):[];
+  const rest=cname?D.pd.filter(p=>(p[2]||'').trim().toLowerCase()!==cname):D.pd;
+  return '<option value="">— Select Product —</option>'+(mine.length?`<optgroup label="${(D.cu.find(c=>c[0]===cid)?.[1]||'').replace(/"/g,'')} (${mine.length})">${mine.map(opt).join('')}</optgroup><optgroup label="All other products">${rest.map(opt).join('')}</optgroup>`:rest.map(opt).join(''));
+}
+// "+ New product" inside the order form: product form opens on top, customer filled in; after saving it is selected
+function nofNewProduct(){
+  const cid=document.getElementById('nof-cust')?.value||'';
+  const c=CRUD.products,old=c.defaults;
+  c.defaults=Object.assign({},old||{},{customer_id:cid||null,date:new Date(Date.now()+19800000).toISOString().slice(0,10),design_status:'to_process'});
+  Promise.resolve(crudOpen('products',null)).finally(()=>{c.defaults=old;});
+  if(_crud)_crud.after=row=>{
+    const sel=document.getElementById('nof-prod');if(!sel)return;
+    sel.innerHTML=nofProdOpts(document.getElementById('nof-cust')?.value||'',row.id);
+    sel.value=row.id;nofProdChange();
+    const rep=document.getElementById('nof-repeat');if(rep)rep.value='0';
+  };
+}
 function nofCustChange(){
   const cid=document.getElementById('nof-cust')?.value;
+  const ps=document.getElementById('nof-prod');if(ps){const cur=ps.value;ps.innerHTML=nofProdOpts(cid,cur);}
   if(!cid) return;
   // Filter products to this customer
   const sel=document.getElementById('nof-prod');
