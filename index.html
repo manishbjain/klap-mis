@@ -1020,7 +1020,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="sg" style="grid-template-columns:repeat(4,1fr)">
     <div class="sc grn"><div class="l">✅ In Stock (Batches)</div><div class="v" id="fgis-batches">—</div></div>
     <div class="sc acc"><div class="l">📦 Pkts In Stock</div><div class="v" id="fgis-pkts">—</div></div>
-    <div class="sc org"><div class="l">👥 Customers</div><div class="v" id="fgis-custs">—</div></div>
+    <div class="sc org"><div class="l">🔢 Pcs In Stock</div><div class="v" id="fgis-pcs">—</div></div>
     <div class="sc pur"><div class="l">🏷 Products</div><div class="v" id="fgis-prods">—</div></div>
   </div>
   <div class="tc">
@@ -1034,8 +1034,8 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <div style="overflow-x:auto"><table><thead><tr>
       <th>Batch ID</th><th>Packed Date</th><th>Product</th><th>Customer</th>
       <th>Design No</th><th>Ups×Sheets</th><th>Total Pkts</th>
-      <th style="background:rgba(16,185,129,.08);color:var(--grn)">In Stock ✅</th>
-      <th>Despatched</th><th>PRO</th>
+      <th style="background:rgba(16,185,129,.08);color:var(--grn)">Pkts In Stock ✅</th>
+      <th style="text-align:right">Pcs In Stock</th><th>Despatched</th><th>PRO</th>
     </tr></thead><tbody id="fgis-body"></tbody></table></div>
     <div class="pg-bar" id="fgis-pg"></div>
   </div>
@@ -1779,7 +1779,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-034807';
+const APP_BUILD='20261017-040645';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2087,7 +2087,7 @@ const CRUD={
   po_list:{t:'purchase_orders',raw:'pos',title:'Purchase order',tbody:'po-body',render:['po_list','wp'],fields:[
     'date|d|Date','rm_id|r:rmitem|Material*','vendor_id|r:vendor|Vendor*','pur_qty|n|Quantity','pur_unit|l|Unit','rate|n|Rate','rate_units|l|Rate per','bill_ref|t|Bill ref','status|l|Status','comments|a|Comments']},
   wp_po:{alias:'po_list',tbody:'wp-po-body'},
-  fg:{t:'fg_inventory',raw:'fg_inv',title:'FG batch',tbody:'winv-body',render:['fg_inventory','fg_instock','despatch_live','packing'],fields:[
+  fg:{t:'fg_inventory',raw:'fg_inv',title:'FG batch',tbody:'winv-body',idKey:'inv_batch_id',render:['fg_inventory','fg_instock','despatch_live','packing'],fields:[
     'prod_order_id|r:pro|Production order*','date|d|Packed date','d_no|t|Design no.','ups|n|Ups','sheets|n|Sheets','packets|n|Packets','qty|n|Quantity','qty_units|l|Units','qty_wastage|n|Wastage','wastage_problem|t|Wastage problem','last_entry|t|Last entry','comment|a|Comment','fg_status|l|FG status']},
   fg_instock:{alias:'fg',tbody:'fgis-body'},
   despatch:{t:'delivery_orders',raw:'dos',title:'Despatch (DO)',tbody:'wdep-body',render:['despatch_live','despatch','despatched'],fields:['order_id|r:order|Order*','date|d|Date','price|n|Price','taxation|n|Tax']},
@@ -2350,13 +2350,12 @@ function buildData(raw){
       if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status==='planned'?'in_production':p.pro_status};
     });
     // FG stock: map product_id → total qty in hand (no status — fg_inventory is just stock count)
+    // FG stock per product = pieces still in stock (packed minus despatched), not everything ever packed
     const fgStockQty={};
-    fg_inv.forEach(r=>{
-      const pro=pros.find(p=>p.id===r.prod_order_id);
-      if(pro?.product_id){
-        fgStockQty[pro.product_id]=(fgStockQty[pro.product_id]||0)+(r.qty||0);
-      }
-    });
+    {const dsp={};(raw.do_items||[]).forEach(i=>{if(i.inv_batch_id)dsp[i.inv_batch_id]=(dsp[i.inv_batch_id]||0)+(Number(i.packet_qty)||0);});
+     const proProd={};pros.forEach(p=>{proProd[p.id]=p.product_id;});
+     fg_inv.forEach(r=>{const pid=proProd[r.prod_order_id];if(!pid)return;const d=dsp[r.inv_batch_id]||0,pk=r.packets||0;
+       const left=pk>0?Math.round((r.qty||0)*Math.max(0,pk-d)/pk):(d?0:(r.qty||0));if(left>0)fgStockQty[pid]=(fgStockQty[pid]||0)+left;});}
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
       const oid=o[0];
       const orderRow=orders.find(x=>x.id===oid);
@@ -2495,7 +2494,9 @@ function buildData(raw){
       const cname=prodMap[pro.product_id]?.customer_name||'';
       const pktsDespatched=despatchedMap[r.inv_batch_id]||0;
       const pktsInStock=Math.max(0,(r.packets||0)-pktsDespatched);
-      return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry,r.d_no||'',r.ups||0,r.sheets||0,r.fg_status||'',pktsInStock];
+      // pieces still in stock: packets left × pieces per packet (whole lot if the batch has no packet count and nothing despatched)
+      const pcsInStock=(r.packets||0)>0?Math.round((r.qty||0)*pktsInStock/(r.packets||1)):(pktsDespatched?0:(r.qty||0));
+      return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry,r.d_no||'',r.ups||0,r.sheets||0,r.fg_status||'',pktsInStock,pcsInStock,pro.product_id||''];
     });
 
     // D.dos: delivery orders [0]id [1]date [2]order_id [3]customer_name [4]price [5]taxation [6]item_count
@@ -5070,7 +5071,7 @@ R.fg_instock=function(p){
   }
   const despMap=_fgDespMap();
   // Only items with stock
-  let items=D.fg.filter(r=>(Number(r[15])||0)>0);
+  let items=D.fg.filter(r=>(Number(r[15])||0)>0||(Number(r[16])||0)>0);
   if(custF)items=items.filter(r=>fm(custF,r[8]));
   if(prodF)items=items.filter(r=>fm(prodF,r[7]));
   if(q)items=items.filter(r=>[r[0],r[3],r[7],r[8],r[11],r[2]].join(' ').toLowerCase().includes(q));
@@ -5081,7 +5082,7 @@ R.fg_instock=function(p){
   const uniqueProds=new Set(items.map(r=>r[7]).filter(Boolean));
   const el=document.getElementById('fgis-batches');if(el)el.textContent=items.length;
   const ep=document.getElementById('fgis-pkts');if(ep)ep.textContent=totalPkts.toLocaleString();
-  const ec=document.getElementById('fgis-custs');if(ec)ec.textContent=uniqueCusts.size;
+  const ec=document.getElementById('fgis-pcs');if(ec)ec.textContent=items.reduce((s,r)=>s+(Number(r[16])||0),0).toLocaleString('en-IN');
   const epr=document.getElementById('fgis-prods');if(epr)epr.textContent=uniqueProds.size;
   const slice=pgr(items,'fg_instock','R.fg_instock','fgis-pg','fgis-cnt');
   const tbody=document.getElementById('fgis-body');if(!tbody)return;
@@ -5100,10 +5101,11 @@ R.fg_instock=function(p){
       <td style="text-align:center">${upsSheets}</td>
       <td style="text-align:right;color:var(--t2)">${totalPkts2||0}</td>
       <td style="text-align:right;font-weight:700;color:var(--grn);background:rgba(16,185,129,.06)">${pktsIn}<span style="font-size:9px;color:var(--t3);font-weight:400;margin-left:3px">${pctLeft}%</span></td>
+      <td style="text-align:right;font-weight:600">${(Number(r[16])||0).toLocaleString('en-IN')}</td>
       <td style="text-align:right;color:var(--t2)">${pktsDesp||0}</td>
       <td class="mono" style="font-size:11px;color:var(--acc);cursor:pointer" onclick="event.stopPropagation();selPR(event,${esc(r[2])})">${r[2]||'—'}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3)">No items in stock</td></tr>';
+  }).join('')||'<tr><td colspan="11" style="padding:30px;text-align:center;color:var(--t3)">No items in stock</td></tr>';
 };
 
 R.fg_inventory=function(p){
@@ -6290,7 +6292,7 @@ function kbRenderBoard(data){
         // For to_despatch: look up FG stock quantity
         let extraLine='';
         if(col.key==='to_despatch'){
-          const fgQ=D.fg.filter(f=>f[7]===c[3]).reduce((s,f)=>s+(Number(f[5])||0),0);
+          const fgQ=D.fg.filter(f=>f[7]===c[3]).reduce((s,f)=>s+(Number(f[16])||0),0);
           if(fgQ>0) extraLine='<div style="font-size:10px;color:var(--grn);font-weight:700;margin-top:2px">📦 Stock: '+Number(fgQ).toLocaleString()+' pcs</div>';
         }
         const prodName=c[3]||'—';
