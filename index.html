@@ -6116,7 +6116,7 @@ function pwRender(){
     var top=by(rows,lv[0]),order=Object.keys(top).sort(sorter(lv[0],top));
     _pwGids=order.map(function(g){return _pwMode+':'+g;});
     order.forEach(function(g){
-      var rs=top[g],gid=_pwMode+':'+g,closed=!!_pwClosed[gid];
+      var rs=top[g],gid=_pwMode+':'+g,closed=!_pwOpen[gid]; // groups start collapsed
       var q=rs.reduce(function(a,r){return a+r.qty;},0);
       html+='<tr class="pwt-grp'+(closed?' closed':'')+'" onclick="pwToggleGrp('+pwJS(gid)+')"><td colspan="3"><span class="car">▾</span><b>'+pwH(nm(lv[0],g))+'</b><span class="gc">'+rs.length+(rs.length===1?' job':' jobs')+'</span></td><td class="num"><b>'+pwFmt(q)+'</b></td><td colspan="7" class="gs">'+sum(rs)+'</td></tr>';
       if(closed)return;
@@ -6135,9 +6135,9 @@ function pwRender(){
   }
   board.innerHTML='<div class="pwt-wrap"><table class="pwt"><thead><tr><th></th><th>Job</th><th>PROs / Product</th><th class="num">Qty (pcs)</th><th>Progress</th><th>Now</th><th>Vendor</th><th>Machine</th><th>Job date</th><th class="num">Days here</th><th class="num">Job age</th></tr></thead><tbody>'+html+'</tbody></table></div>';
 }
-var _pwClosed={},_pwGids=[];
-function pwToggleGrp(g){_pwClosed[g]=!_pwClosed[g];pwRender();}
-function pwExpandAll(open){_pwGids.forEach(function(g){_pwClosed[g]=!open;});pwRender();}
+var _pwOpen={},_pwGids=[];
+function pwToggleGrp(g){_pwOpen[g]=!_pwOpen[g];pwRender();}
+function pwExpandAll(open){_pwGids.forEach(function(g){_pwOpen[g]=!!open;});pwRender();}
 function pwDays(d){if(!d)return null;var t=new Date();t.setHours(0,0,0,0);return Math.max(0,Math.round((t-new Date(String(d).slice(0,10)+'T00:00:00'))/864e5));}
 function pwRowModel(m,g){
   var j=m.job,cur=g.plan?null:g.items[0].cur;
