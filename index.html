@@ -656,7 +656,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="__EMPTY__">(Empty)</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="__EMPTY__">(Empty)</option><option value="active">Active</option><option value="to_process">To Process (last 90 days)</option><option value="to_process_old">No job — older history</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pr-q" placeholder="Search PRO / product / order…" oninput="R.pros(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-pros" onclick="openFD('pros')">⚙ Filters</button>
       </div>
@@ -679,7 +679,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Jobs</h3><span class="tc-cnt" id="jo-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All PPC</option><option value="__EMPTY__">(Empty)</option><option value="Machine">PPC1 — Flexo</option><option value="Sheet">PPC2 — Hybrid</option><option value="Tupax">PPC3 — TUPAX</option><option value="Direct">PPC4 — Direct</option><option value="Direct5">PPC5 — Direct</option><option value="none">No PPC set</option></select>
+        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All PPC</option><option value="__EMPTY__">(Empty)</option><option value="Machine">PPC1 — Flexo</option><option value="Sheet">PPC2 — Hybrid</option><option value="Tupax">PPC3 — TUPAX</option><option value="Direct">PPC4 — Direct</option><option value="Direct5">PPC5 — Direct</option><option value="legacy">Legacy (before Mar 2023)</option><option value="none">No PPC set</option></select>
         <input class="f" id="jo-q" placeholder="Search job ID / name…" oninput="R.jobs(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-jobs" onclick="openFD('jobs')">⚙ Filters</button>
       </div>
@@ -897,7 +897,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         </div>
       </div>
       <div class="fd-active-bar" id="fd-bar-rm-grn"><span id="fd-bar-rm-grn-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('rm-grn')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>GRN ID</th><th>Date</th><th>Material</th><th>Brand</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Vendor Ref</th><th>Status</th></tr></thead><tbody id="rmin-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>GRN ID</th><th>Date</th><th>Material</th><th>Brand</th><th>Vendor</th><th>Qty</th><th>Unit</th><th>Vendor Ref</th><th>Received</th></tr></thead><tbody id="rmin-body"></tbody></table></div>
       <div class="pg-bar" id="rmin-pg"></div>
     </div>
   </div>
@@ -2582,7 +2582,6 @@ const FD_CFG={
       {id:'fd_grn_brand',label:'Brand',type:'select',opts:()=>[...new Set(D.rm_in.map(x=>x[3]).filter(Boolean))].sort()},
       {id:'fd_grn_vendor',label:'Vendor',type:'select',opts:()=>[...new Set(D.rm_in.map(x=>x[4]).filter(Boolean))].sort()},
       {id:'fd_grn_unit',label:'Unit',type:'select',opts:()=>[...new Set(D.rm_in.map(x=>x[6]).filter(Boolean))].sort()},
-      {id:'fd_grn_st',label:'Status',type:'tags',opts:()=>['pending','received','partial']},
       {id:'fd_grn_d1',label:'Date From',type:'date',pair:'fd_grn_d2'},
       {id:'fd_grn_d2',label:'Date To',type:'date',pair:'fd_grn_d1'},
     ]
@@ -2791,7 +2790,7 @@ function tagFieldVal(tk,fid,row){
     'plates':{'fd_pl_st':2},
     'vendors':{'fd_ve_type':3},
     'processes':{'fd_proc_st':8},
-    'rm-grn':{'fd_grn_st':8},
+    'rm-grn':{},
     'purchase':{'fd_po_st':7},
   };
   // special: orders type
@@ -3546,7 +3545,8 @@ R.pros=function(p){
     if(st==='on_hold')   return x[6];
     if(st==='active')    return !x[5]&&!x[6]&&(x[8]!=='complete');
     if(st==='complete')  return x[8]==='complete';
-    if(st==='to_process')   return !x[5]&&!x[6]&&!x[9]&&x[8]!=='packing'&&x[8]!=='complete';
+    if(st==='to_process')   return !x[5]&&!x[6]&&!x[9]&&x[8]!=='packing'&&x[8]!=='complete'&&String(x[1]||'')>=PRO_HIST_CUTOFF();
+    if(st==='to_process_old') return !x[5]&&!x[6]&&!x[9]&&x[8]!=='packing'&&x[8]!=='complete'&&String(x[1]||'')<PRO_HIST_CUTOFF();
     if(st==='in_production') return !x[5]&&!x[6]&&x[8]==='in_production';
     if(st==='packing'||st==='in_packing') return !x[5]&&!x[6]&&x[8]==='packing';
     return true;
@@ -3714,7 +3714,7 @@ R.jobs=function(p){
   if(p)pp.jobs=p;
   const t=document.getElementById('jo-t')?.value||'';
   const q=(document.getElementById('jo-q')?.value||'').toLowerCase();
-  let items=D.jo.filter(x=>(!t||(t===FE?isE(x[2]):t==='none'?!['Machine','Sheet','Tupax','Direct','Direct5'].includes(x[2]):x[2]===t))&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.jo.filter(x=>(!t||(t===FE?isE(x[2]):t==='legacy'?isLegacyJob(x):t==='none'?(!['Machine','Sheet','Tupax','Direct','Direct5'].includes(x[2])&&!isLegacyJob(x)):x[2]===t))&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('jobs',items);
   items=sortItems(items,'jobs');
   const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
@@ -3731,7 +3731,7 @@ R.jobs=function(p){
         <span id="joarr_${jid}" style="font-size:11px;color:var(--t3);transition:transform .15s;flex-shrink:0">▶</span>
         <span class="mono" style="font-size:11px;font-weight:700;color:var(--acc);flex-shrink:0;min-width:60px">${j[0]}</span>
         <span style="font-size:10px;color:var(--t3);flex-shrink:0">${j[1]||'—'}</span>
-        ${pwPPCB(j[2])}
+        ${pwPPCB(j[2],j[1])}
         <span style="font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j[3]||''}">${j[3]||'—'}</span>
         <span style="display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0;max-width:260px">${joProcChips(allProcs)}</span>
         <span style="flex-shrink:0;font-size:11px;font-weight:700;color:${statusCol};min-width:28px;text-align:right">${activePros.length||'✓'}</span>
@@ -3860,7 +3860,7 @@ function selJob(e,jid){try{
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:700;margin-bottom:3px" id="jname_disp">${j[3]||'—'}</div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${pwPPCB(j[2])}<span class="mono" style="font-size:11px;color:var(--t3)">${j[0]}</span><span style="font-size:11px;color:var(--t3)">${j[1]||''}</span></div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${pwPPCB(j[2],j[1])}<span class="mono" style="font-size:11px;color:var(--t3)">${j[0]}</span><span style="font-size:11px;color:var(--t3)">${j[1]||''}</span></div>
       </div>
       <button onclick="joEditHeader(${esc(jid)})" style="font-size:10px;padding:3px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--s1);color:var(--t2);cursor:pointer">✏ Edit</button>
     </div>
@@ -4532,7 +4532,7 @@ R.rm_in=function(p){
     <td class="mono">${r[0]}</td><td>${r[1]||'—'}</td><td>${tr(r[2]||'—',20)}</td>
     <td>${r[3]||'—'}</td><td>${tr(r[4]||'—',18)}</td>
     <td>${r[5]?Number(r[5]).toLocaleString():'—'}</td><td>${r[6]||'—'}</td>
-    <td class="mono">${r[7]||'—'}</td><td>${badge(r[8]||'pending')}</td>
+    <td class="mono">${r[7]||'—'}</td><td>${r[10]?String(r[10]).slice(0,10):'—'}</td>
   </tr>`).join('');
   const grn=document.getElementById('rmi-grn');if(grn)grn.textContent=D.rm_in.length;
 };
@@ -5971,8 +5971,12 @@ var PW_CORE=['PRT','PUN'];
 var _pwPPC=null,_pwMode='vendor',_pwAllCols=false,_pwShowOld=false;
 function pwH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function pwJS(s){return pwH(JSON.stringify(String(s)));}
-function pwPPCB(t){
+const PRO_HIST_CUTOFF=()=>{const d=new Date();d.setDate(d.getDate()-90);return d.toISOString().slice(0,10);};
+const PPC_START='2023-03-01'; // PPC types started in March 2023; older jobs without one are "Legacy"
+function isLegacyJob(j){return !PW_PPC[j[2]]&&String(j[1]||'')<PPC_START;}
+function pwPPCB(t,d){
   var p=PW_PPC[t];
+  if(!p&&d&&String(d)<PPC_START)return '<span class="jb-badge" style="background:var(--s2);color:var(--t3)" title="Job made before PPC types were used (before March 2023)">Legacy</span>';
   return p?'<span class="jb-badge '+p.cls+'">'+p.code+' '+p.lbl+'</span>':'<span class="jb-badge" style="background:var(--s2);color:var(--t3)">No PPC set</span>';
 }
 // Step index: PRO → steps, built from the link table (see loadData)
