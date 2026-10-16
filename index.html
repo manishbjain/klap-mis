@@ -5979,11 +5979,11 @@ function pwStepSt(r){
 function pwVendorName(id){var v=(D.ve||[]).find(function(x){return x[0]===id;});return v?(v[1]||v[2]||id):id;}
 function pwWho(r){
   if(r.vendor_id)return pwVendorName(r.vendor_id);
-  return r.machine?String(r.machine).trim():'In-house';
+  return r.machine?String(r.machine).trim():''; // blank when both null — matches sheet data
 }
 function pwIsInHouse(r){
-  if(!r.vendor_id)return true;
-  return /^in\s*house/i.test(pwVendorName(r.vendor_id));
+  if(r.vendor_id)return /^in\s*house/i.test(pwVendorName(r.vendor_id));
+  return !!r.machine; // machine set = in-house; both null = unassigned
 }
 function pwProcName(c){return (typeof PROC_LABEL!=='undefined'&&PROC_LABEL[c])||c;}
 function pwFmt(n){return n?Number(n).toLocaleString('en-IN'):'—';}
