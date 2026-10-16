@@ -1979,6 +1979,25 @@ async function loadData(){
     // One status only: the sheet's Process_Status. The app's internal state is read from it.
     procs.forEach(r=>{const m=PS_STATE[r.process_status];if(m)r.step_status=m;});
     pwBuildStepIndex(procs,D.step_links);
+    // PRO status is WORKED OUT here every time (like the old app's virtual column), never trusted from storage:
+    //   cancelled  → Is_Cancelled
+    //   complete   → stock packed in FG
+    //   in_production → any process still open (To Send / Job Order Sent / Job Approved / Part Processed)
+    //   packing    → all processes Moved/Complete, nothing in FG yet (ready to pack)
+    //   planned    → no processes yet (new PRO); very old PROs with nothing recorded keep their stored value
+    // "On hold" stays its own flag (Is_On_Hold), as before.
+    {
+      const fgPro=new Set(fg_inv.map(f=>f.prod_order_id).filter(Boolean));
+      pros.forEach(p=>{
+        p.pro_status_stored=p.pro_status;
+        if(p.is_cancelled){p.pro_status='cancelled';return;}
+        if(fgPro.has(p.id)){p.pro_status='complete';return;}
+        const st=pwStepsOf(p.id).filter(r=>r.step_status!=='cancelled'&&r.step_status!=='skipped');
+        if(st.some(r=>r.step_status==='pending'||r.step_status==='in_progress')){p.pro_status='in_production';return;}
+        if(st.length){p.pro_status='packing';return;}
+        if(p.pro_status==='legacy'||!p.pro_status)p.pro_status='planned';
+      });
+    }
     const accMap={};accounts.forEach(a=>{accMap[a.id]=a;});
     const prodMap={};products.forEach(p=>{prodMap[p.id]=p;});
 
@@ -2028,10 +2047,10 @@ async function loadData(){
     const orderProStatus={};
     pros.filter(p=>!p.is_cancelled&&!p.is_on_hold).forEach(p=>{
       if(!p.order_id) return;
-      const rank={in_production:1,packing:2,complete:3};
+      const rank={planned:1,in_production:1,packing:2,complete:3};
       const cur=orderProStatus[p.order_id];
       const newR=rank[p.pro_status]||0;
-      if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status};
+      if(!cur||newR>(rank[cur.ps]||0)) orderProStatus[p.order_id]={ps:p.pro_status==='planned'?'in_production':p.pro_status};
     });
     // FG stock: map product_id → total qty in hand (no status — fg_inventory is just stock count)
     const fgStockQty={};
@@ -2111,9 +2130,10 @@ async function loadData(){
     const liveJob=new Set();
     pros.forEach(p=>{
       if(!p.job_id||p.is_cancelled) return;
-      if(['planned','in_production','legacy'].includes(p.pro_status)||openStepPro.has(p.id)) liveJob.add(p.job_id);
+      if(p.pro_status==='planned'||p.pro_status==='in_production') liveJob.add(p.job_id);
     });
-    jobs.forEach(j=>{if(j.status==='planned'||j.status==='in_progress')liveJob.add(j.id);});
+    // A job created but with no PROs yet is live too
+    jobs.forEach(j=>{if((j.status==='planned'||j.status==='in_progress')&&!prosByJob[j.id])liveJob.add(j.id);});
     const _nowJ=Date.now();
     D.pj=jobs.filter(j=>liveJob.has(j.id)).map(j=>{
       const age=j.date?Math.max(0,Math.round((_nowJ-new Date(j.date))/86400000)):0;
@@ -6017,7 +6037,8 @@ function pwProcName(c){return (typeof PROC_LABEL!=='undefined'&&PROC_LABEL[c])||
 function pwFmt(n){return n?Number(n).toLocaleString('en-IN'):'—';}
 // Where each PRO of a job is now, grouped into board positions (one per process+vendor; >1 = split)
 function pwJobModel(j){
-  var pros=(D.pp||[]).filter(function(p){return p[9]===j[0];});
+  // Only PROs still in production (worked-out status) take part; packed/complete/cancelled ones are done
+  var pros=(D.pp||[]).filter(function(p){return p[9]===j[0]&&(p[16]==='planned'||p[16]==='in_production');});
   var per=pros.map(function(p){
     var steps=pwStepsOf(p[0]).filter(function(r){return pwStepSt(r)!=='cancelled';});
     var cur=steps.find(function(r){var s=pwStepSt(r);return s==='pending'||s==='in_progress';})||null;
