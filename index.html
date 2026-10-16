@@ -166,6 +166,31 @@ tr.sel td{background:var(--acc-lt)}
 .pwx-empty{padding:16px 8px;text-align:center;color:var(--t3);font-size:12px}
 .fd-empty{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);margin-top:6px;cursor:pointer}
 .fd-tag-e{border-style:dashed!important;font-style:italic}
+#crud-modal{display:none;position:fixed;inset:0;z-index:3000}
+.cm-bg{position:absolute;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow-y:auto}
+.cm-box{background:var(--s1);color:var(--txt);border-radius:14px;width:680px;max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;max-height:92vh}
+.cm-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--bdr);font-size:15px}
+.cm-id{font-family:monospace;font-size:11px;color:var(--t3)}
+.cm-x{margin-left:auto;border:0;background:none;font-size:16px;cursor:pointer;color:var(--t2)}
+.cm-b{padding:14px 18px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.cf-f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.cf-l{font-size:11px;font-weight:600;color:var(--t2)}
+.cf-f input,.cf-f select,.cf-f textarea{border:1px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:13px;background:var(--bg);color:var(--txt);width:100%;box-sizing:border-box}
+.cf-f textarea{resize:vertical}
+.cf-h{font-size:11px;color:var(--t3);min-height:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-b{display:flex;align-items:center;gap:8px;font-size:13px;padding-top:18px}
+.cm-f{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--bdr)}
+.cm-f button{border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--bdr);background:var(--s2);color:var(--txt)}
+.cm-f .cm-s{background:var(--acc);border-color:var(--acc);color:#fff}
+.cm-f .cm-s:disabled{opacity:.6}
+.cm-f .cm-del{color:#dc2626;border-color:#fca5a5;background:transparent}
+.cm-f .cm-del.sure{background:#dc2626;color:#fff}
+.crud-rb{display:inline-flex;gap:2px;white-space:nowrap}
+.crud-rb button{border:1px solid var(--bdr);background:var(--s1);border-radius:6px;padding:2px 7px;font-size:12px;cursor:pointer;color:var(--t2);line-height:1.4}
+.crud-rb button:hover{border-color:var(--acc);color:var(--acc)}
+.crud-td{width:1%;white-space:nowrap;text-align:right}
+.crud-add{font-size:12px;padding:5px 12px;white-space:nowrap}
+@media (max-width:620px){.cm-b{grid-template-columns:1fr}}
 .pwt-wrap{width:100%;overflow-x:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:12px}
 .pwt{width:100%;min-width:1100px;border-collapse:collapse;font-size:13px}
 .pwt th{position:sticky;top:0;background:var(--s2);text-align:left;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--bdr);white-space:nowrap;z-index:1}
@@ -1943,6 +1968,209 @@ async function apiWrite(table,op,id,data){
   return j.row;
 }
 function showToast(msg){toast(msg);}
+
+// ── ADD / EDIT / DELETE for every table ─────────────────────────────────────
+// One form for every table, driven by CRUD below. Saves go through apiWrite → /write
+// (login + role check + audit on the server). After a save the raw table is patched and
+// buildData() re-runs, so the screen refreshes instantly without reloading everything.
+// Field spec: 'column|type|Label' — types: t text, a long text, n number, d date, b yes/no,
+//   l text with suggestions (from existing values), s:<list> fixed choices, r:<ref> pick a record.
+//   A trailing * on the label = required.
+const CRUD_LISTS={
+  ppc:[['Machine','PPC1 Flexo'],['Sheet','PPC2 Hybrid'],['Tupax','PPC3 TUPAX'],['Direct','PPC4 Direct'],['Direct5','PPC5 Direct']],
+  acct:[['Customer','Customer'],['Vendor','Vendor'],['Transport','Transporter']],
+  jobst:[['planned','Planned'],['in_progress','In progress'],['done','Done']],
+  // read lazily: these lists are defined further down the file
+  pstat:()=>PS_LIST.map(x=>[x,x]),
+  proc:()=>JO_PROC_CODES.map(x=>[x,(PROC_LABEL[x]||x)+' ('+x+')'])
+};
+const CRUD={
+  orders:{t:'orders',raw:'orders',title:'Order',tbody:'o-body',render:['orders','dash'],fields:[
+    'date|d|Order date','customer_id|r:customer|Customer*','product_id|r:product|Product','qty|n|Quantity','units|l|Units','order_type|l|Order type','order_status|l|Order status','is_repeat|b|Repeat order','has_changes|b|Has changes','party_reference|t|Party reference (PO no.)','pplan_group|l|PPlan group','price|n|Price','bt|t|BT','ledger_id|t|Ledger','freight|t|Freight','transport_id|r:transport|Transporter','due_ds|t|Due date','billing_detail|a|Billing detail','billing_approved|b|Billing approved','despatch_location_1|t|Despatch location 1','despatch_location_2|t|Despatch location 2','despatch_detail|a|Despatch detail','despatch_approved|b|Despatch approved']},
+  products:{t:'products',raw:'products',title:'Product',tbody:'pd-body',render:['products','dq'],fields:[
+    'product_name|t|Product name*','customer_id|r:customer|Customer','date|d|Date','product_code|t|Product code','category|l|Category','product_class|l|Product class','design_status|l|Design status','design_assigned|t|Design assigned to','version_type|l|Version type','version_no|t|Version no.','base_product|r:product|Base product','old_reference|t|Old reference','first_oid|r:order|First order','has_changes|b|Has changes','change_desc|a|Change description','size_l|n|Size L','size_b|n|Size B','size_h|n|Size H','size_units|l|Size units','material|l|Material','gsm|t|GSM','lamination|t|Lamination','coating|t|Coating','foil|t|Foil','foil_color|t|Foil colour','emboss|b|Emboss','gumming|b|Gumming','gumming_type|t|Gumming type','border|t|Border','data_clear|b|Data clear','specs_final|b|Specs final','thread_link|t|Telegram thread link','approval_proof|t|Approval proof']},
+  dq:{alias:'products',tbody:'dq-body'},
+  customers:{t:'accounts',raw:'accounts',title:'Customer',tbody:'cu-body',render:['customers','vendors','transporters'],defaults:{account_type:'Customer'},fields:[
+    'account_type|s:acct|Account type*','name|t|Name*','brand|t|Brand','alias|t|Alias','city|t|City','state|t|State','country|t|Country','out_id|t|Outside ID']},
+  vendors:{alias:'customers',title:'Vendor',tbody:'ve-body',defaults:{account_type:'Vendor'}},
+  transporters:{alias:'customers',title:'Transporter',tbody:'tr-body',defaults:{account_type:'Transport'}},
+  pros:{t:'production_orders',raw:'pros',title:'Production order',tbody:'pr-body',render:['pros','jobs','dash'],fields:[
+    'date|d|Date','order_id|r:order|Order','product_id|r:product|Product*','job_id|r:job|Job','job_name|t|Job name','job_type|s:ppc|PPC type','imposition_type|l|Imposition type','imp_group|t|Imposition group','sheet_qty|n|Sheets','ups|n|Ups','blocks|n|Blocks','qty_units|l|Qty units','sheet_portion_l|n|Sheet portion L','sheet_portion_b|n|Sheet portion B','sheet_portion_units|l|Sheet portion units','is_on_hold|b|On hold','is_cancelled|b|Cancelled','packing_status|t|Packing status','sent_for_packing|b|Sent for packing','job_id_temp|t|Temp job ID']},
+  jobs:{t:'jobs',raw:'jobs',title:'Job',addTo:'#pg-jobs .th .flt-row',render:['jobs'],fields:['date|d|Date','job_name|t|Job name*','job_type|s:ppc|PPC type','status|s:jobst|Status']},
+  dies:{t:'dies',raw:'dies',title:'Die',tbody:'di-body',render:['dies'],fields:[
+    'die_name|t|Die name*','date|d|Date','die_type|l|Die type','punch_type|l|Punch type','total_ups|n|Total ups','up_size_l|n|Up size L','up_size_b|n|Up size B','sheet_size|t|Sheet size','blocks|n|Blocks','status|l|Status','vendor_id|r:vendor|Made by (vendor)','face_stock|t|Face stock','release|t|Release','rule_ht|t|Rule height','image_url|t|Image link','comments|a|Comments']},
+  plates:{t:'plates',raw:'plates',title:'Plate',tbody:'pl-body',render:['plates'],fields:['plate_name|t|Plate name*','date|d|Date','job_size_b|n|Job size B','cylinder|t|Cylinder','status|l|Status']},
+  processes:{t:'pro_steps',raw:'procs',title:'Process step',tbody:'proc-body',render:['processes','jobs'],fields:[
+    'prod_order_id|r:pro|Production order*','process_name|s:proc|Process*','process_status|s:pstat|Status','vendor_id|r:vendor|Vendor (blank = in-house)','machine|t|Machine (in-house only)','date|d|Date','qty_in|n|Qty in','qty_out|n|Qty out','wastage|n|Wastage','die_id|r:die|Die','plate_id|r:plate|Plate','material_id|r:rmitem|Material','varnish|t|Varnish','foil|t|Foil','done_by|t|Done by','seq|n|Order in job']},
+  rm_cats:{t:'rm_categories',raw:'rm_cats',title:'RM category',tbody:'rmc-body',render:['rm_cats','rm_subcats','rm_list'],fields:['name|t|Category name*']},
+  rm_subcats:{t:'rm_subcategories',raw:'rm_subcats',title:'RM sub-category',tbody:'rmsc-body',render:['rm_subcats','rm_list'],fields:['name|t|Sub-category name*','category_id|r:rmcat|Category*','description|a|Description']},
+  rm_list:{t:'rm_list',raw:'rm_list',title:'RM item',tbody:'rmi-body',render:['rm_list'],fields:[
+    'alias|t|Name / alias*','brand|t|Brand','category_id|r:rmcat|Category','subcategory_id|r:rmsub|Sub-category','vendor_id|r:vendor|Vendor','vendor_ref|t|Vendor ref','color|t|Colour','top_or_base|t|Top or base','top_coating|t|Top coating','base_coating|t|Base coating','inner_dia|n|Inner dia','outer_dia|n|Outer dia','height_mm|n|Height (mm)','inner_circum|n|Inner circumference','outer_circum|n|Outer circumference','inner_liner|t|Inner liner','date|d|Date']},
+  rm_in:{t:'rm_in',raw:'rm_in',title:'GRN (stock in)',tbody:'rmin-body',idKey:'rm_in_id',render:['rm_in','rm_list'],fields:[
+    'date|d|Date','rm_item_id|r:rmitem|Material*','vendor_id|r:vendor|Vendor','purchase_id|r:po|Purchase order','qty|n|Quantity','qty_units|l|Units','vendor_ref|t|Vendor ref / bill','recd_date|d|Received date','despatch_date|d|Despatch date','entry_type|l|Entry type','category_id|r:rmcat|Category','subcategory_id|r:rmsub|Sub-category','current_inv_loc|t|Location','carton_no|t|Carton no.','transfer_date|d|Transfer date','wt_per_pc|n|Weight per piece','transport|t|Transport','total_pkgs|n|Total packages','total_wt|n|Total weight','freight_amt|n|Freight amount','status|t|Status / note','comments|a|Comments','convert_kg_mtr|t|Convert kg↔mtr','roll_width|n|Roll width','roll_gross_wt|n|Roll gross weight','core_length|n|Core length','core_thickness|n|Core thickness','roll_sample_wt|n|Roll sample weight','base_rm_in_id|t|Base GRN']},
+  rm_out:{t:'rm_out',raw:'rm_out',title:'RM issue (stock out)',tbody:'rmout-body',render:['rm_out','rm_list'],fields:[
+    'date|d|Date','rm_in_id|r:grn|GRN*','prod_proc_id|r:step|Process step','qty|n|Quantity*','out_for|t|Issued for','conversion_vendor|r:vendor|Conversion vendor','comments|a|Comments','temp_prod_proc_id|t|Temp process ID']},
+  po_list:{t:'purchase_orders',raw:'pos',title:'Purchase order',tbody:'po-body',render:['po_list','wp'],fields:[
+    'date|d|Date','rm_id|r:rmitem|Material*','vendor_id|r:vendor|Vendor*','pur_qty|n|Quantity','pur_unit|l|Unit','rate|n|Rate','rate_units|l|Rate per','bill_ref|t|Bill ref','status|l|Status','comments|a|Comments']},
+  wp_po:{alias:'po_list',tbody:'wp-po-body'},
+  fg:{t:'fg_inventory',raw:'fg_inv',title:'FG batch',tbody:'winv-body',render:['fg_inventory','fg_instock','despatch_live'],fields:[
+    'prod_order_id|r:pro|Production order*','date|d|Packed date','d_no|t|Design no.','ups|n|Ups','sheets|n|Sheets','packets|n|Packets','qty|n|Quantity','qty_units|l|Units','qty_wastage|n|Wastage','wastage_problem|t|Wastage problem','last_entry|t|Last entry','comment|a|Comment','fg_status|l|FG status']},
+  fg_instock:{alias:'fg',tbody:'fgis-body'},
+  despatch:{t:'delivery_orders',raw:'dos',title:'Despatch (DO)',tbody:'wdep-body',render:['despatch_live','despatch','despatched'],fields:['order_id|r:order|Order*','date|d|Date','price|n|Price','taxation|n|Tax']},
+  despatched:{alias:'despatch',tbody:'wdep-done-body',noAdd:true},
+  pack_pros:{alias:'pros',tbody:'wpk-body',noAdd:true},
+  pack_fg:{alias:'fg',tbody:'wpk-db',noAdd:true},
+  do_items:{t:'delivery_order_items',addTo:'#pg-wdep .th .flt-row',raw:'do_items',title:'Despatch item',render:['despatch_live'],fields:['delivery_order_id|r:do|Despatch (DO)*','inv_batch_id|r:batch|FG batch*','packet_qty|n|Packets','ds_item_pl_id|t|Packing list item']}
+};
+function crudCfg(k){const c=CRUD[k];if(!c)return null;if(!c.alias)return Object.assign({key:k},c);const b=CRUD[c.alias];return Object.assign({key:c.alias},b,c,{key:c.alias,tbody:c.tbody,title:c.title||b.title,defaults:c.defaults||b.defaults});}
+// Reference pickers: [value,label] from the loaded data
+function crudRefs(ref){
+  const R_=window._RAW||{},acc=t=>(R_.accounts||[]).filter(a=>a.account_type===t).map(a=>[a.id,a.name]);
+  switch(ref){
+    case 'customer':return acc('Customer');
+    case 'vendor':return acc('Vendor');
+    case 'transport':return acc('Transport');
+    case 'product':return (R_.products||[]).map(p=>[p.id,p.product_name+(p.customer_name?' · '+p.customer_name:'')]);
+    case 'order':{const am={};(R_.accounts||[]).forEach(a=>am[a.id]=a.name);const pm={};(R_.products||[]).forEach(p=>pm[p.id]=p.product_name);return (R_.orders||[]).slice(0,3000).map(o=>[o.id,(am[o.customer_id]||'')+' · '+(pm[o.product_id]||'')]);}
+    case 'job':return (R_.jobs||[]).slice(0,3000).map(j=>[j.id,j.job_name||'']);
+    case 'pro':{const pm={};(R_.products||[]).forEach(p=>pm[p.id]=p.product_name);return (R_.pros||[]).slice(0,3000).map(p=>[p.id,(pm[p.product_id]||'')+(p.job_id?' · '+p.job_id:'')]);}
+    case 'rmcat':return (R_.rm_cats||[]).map(c=>[c.id,c.name]);
+    case 'rmsub':return (R_.rm_subcats||[]).map(c=>[c.id,c.name]);
+    case 'rmitem':return (R_.rm_list||[]).map(r=>[r.id,(r.alias||'')+(r.brand?' · '+r.brand:'')]);
+    case 'grn':return (R_.rm_in||[]).slice(0,3000).map(r=>[r.rm_in_id,(r.date||'')+' · '+(r.qty||'')+' '+(r.qty_units||'')]);
+    case 'po':return (R_.pos||[]).slice(0,3000).map(r=>[r.id,(r.date||'')+' · '+(r.pur_qty||'')+' '+(r.pur_unit||'')]);
+    case 'step':return (R_.procs||[]).slice(0,3000).map(r=>[r.id,(r.process_name||'')+' · '+(r.prod_order_id||'')]);
+    case 'die':return (R_.dies||[]).map(r=>[r.id,r.die_name||'']);
+    case 'plate':return (R_.plates||[]).map(r=>[r.id,r.plate_name||'']);
+    case 'do':return (R_.dos||[]).slice(0,3000).map(r=>[r.id,(r.date||'')+' · '+(r.order_id||'')]);
+    case 'batch':return (R_.fg_inv||[]).slice(0,3000).map(r=>[r.inv_batch_id,(r.prod_order_id||'')+' · '+(r.packets||'')+' pkts']);
+  }
+  return [];
+}
+function crudSuggest(rawKey,col){const s=new Set();((window._RAW||{})[rawKey]||[]).forEach(r=>{const v=r[col];if(v!=null&&v!=='')s.add(String(v));});return [...s].sort().slice(0,300);}
+function crudEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function crudField(cfg,spec,row){
+  const [col,type,label0]=spec.split('|');const req=/\*$/.test(label0),label=label0.replace(/\*$/,'');
+  const v=row[col],id='cf_'+col,lbl=`<label for="${id}" class="cf-l">${crudEsc(label)}${req?' <b style="color:#dc2626">*</b>':''}</label>`;
+  let inp='';
+  if(type==='b')return `<label class="cf-b"><input type="checkbox" id="${id}" data-col="${col}" data-t="b"${v===true||v==='TRUE'||v==='true'?' checked':''}> ${crudEsc(label)}</label>`;
+  if(type==='a')inp=`<textarea id="${id}" data-col="${col}" data-t="a" rows="2">${crudEsc(v)}</textarea>`;
+  else if(type==='n')inp=`<input id="${id}" data-col="${col}" data-t="n" type="number" step="any" value="${crudEsc(v)}">`;
+  else if(type==='d')inp=`<input id="${id}" data-col="${col}" data-t="d" type="date" value="${crudEsc(String(v||'').slice(0,10))}">`;
+  else if(type.startsWith('s:')){let L=CRUD_LISTS[type.slice(2)]||[];if(typeof L==='function')L=L();inp=`<select id="${id}" data-col="${col}" data-t="s"><option value="">—</option>${L.map(([a,b])=>`<option value="${crudEsc(a)}"${String(v)===a?' selected':''}>${crudEsc(b)}</option>`).join('')}${v&&!L.some(x=>x[0]===String(v))?`<option selected value="${crudEsc(v)}">${crudEsc(v)}</option>`:''}</select>`;}
+  else if(type.startsWith('r:')){const opts=crudRefs(type.slice(2)),dl='dl_'+col,cur=opts.find(o=>String(o[0])===String(v));
+    inp=`<input id="${id}" data-col="${col}" data-t="r" list="${dl}" value="${crudEsc(v)}" placeholder="Type to search, pick from the list" oninput="crudRefHint(this)"><datalist id="${dl}">${opts.map(o=>`<option value="${crudEsc(o[0])}">${crudEsc(o[1])}</option>`).join('')}</datalist><div class="cf-h" id="${id}_h">${cur?crudEsc(cur[1]):''}</div>`;}
+  else if(type==='l'){const dl='dl_'+col,sug=crudSuggest(cfg.raw,col);inp=`<input id="${id}" data-col="${col}" data-t="t" list="${dl}" value="${crudEsc(v)}"><datalist id="${dl}">${sug.map(x=>`<option value="${crudEsc(x)}">`).join('')}</datalist>`;}
+  else inp=`<input id="${id}" data-col="${col}" data-t="t" value="${crudEsc(v)}">`;
+  return `<div class="cf-f${req?' req':''}" data-req="${req?1:0}" data-label="${crudEsc(label)}">${lbl}${inp}</div>`;
+}
+function crudRefHint(el){const dl=document.getElementById(el.getAttribute('list'));const h=document.getElementById(el.id+'_h');if(!dl||!h)return;const o=[...dl.options].find(x=>x.value===el.value);h.textContent=o?o.textContent:(el.value?'Not found — pick from the list':'');h.style.color=o||!el.value?'':'#dc2626';}
+let _crud=null;
+async function crudOpen(key,id){
+  const cfg=crudCfg(key);if(!cfg)return;
+  let row=Object.assign({},cfg.defaults||{});
+  if(id!=null&&id!==''){
+    try{toast('Loading…');row=await apiWrite(cfg.t,'get',id,{});}catch(e){toast('❌ '+e.message);return;}
+  }
+  _crud={cfg,id:id||null,row};
+  let m=document.getElementById('crud-modal');
+  if(!m){m=document.createElement('div');m.id='crud-modal';document.body.appendChild(m);}
+  const isNew=!_crud.id;
+  m.innerHTML=`<div class="cm-bg" onclick="if(event.target===this)crudClose()"><div class="cm-box" role="dialog" aria-label="${isNew?'Add':'Edit'} ${crudEsc(cfg.title)}">
+    <div class="cm-h"><b>${isNew?'Add':'Edit'} ${crudEsc(cfg.title)}</b>${isNew?'<span class="cm-id">ID is given automatically</span>':`<span class="cm-id">${crudEsc(id)}</span>`}<button class="cm-x" onclick="crudClose()" aria-label="Close">✕</button></div>
+    <div class="cm-b">${cfg.fields.map(f=>crudField(cfg,f,row)).join('')}</div>
+    <div class="cm-f">${isNew?'':`<button class="cm-del" id="cm-del" onclick="crudDelete()">Delete</button>`}<span style="flex:1"></span><button class="cm-c" onclick="crudClose()">Cancel</button><button class="cm-s" id="cm-save" onclick="crudSave()">${isNew?'Add':'Save'}</button></div>
+  </div></div>`;
+  m.style.display='block';
+  setTimeout(()=>{const f=m.querySelector('.cm-b input,.cm-b select,.cm-b textarea');if(f)f.focus();},50);
+}
+function crudClose(){const m=document.getElementById('crud-modal');if(m)m.style.display='none';_crud=null;}
+function crudCollect(){
+  const out={},miss=[];
+  document.querySelectorAll('#crud-modal [data-col]').forEach(el=>{
+    const c=el.dataset.col,t=el.dataset.t;let v=t==='b'?el.checked:el.value;
+    if(t!=='b')v=String(v).trim();
+    if(t==='n'&&v!==''){const n=Number(v);if(!Number.isFinite(n)){miss.push('“'+(el.closest('.cf-f')?.dataset.label||c)+'” must be a number');return;}v=n;}
+    const wrap=el.closest('.cf-f');if(wrap&&wrap.dataset.req==='1'&&(v===''||v==null))miss.push('“'+wrap.dataset.label+'” is required');
+    if(t==='r'&&v!==''){const dl=document.getElementById(el.getAttribute('list'));if(dl&&![...dl.options].some(o=>o.value===v))miss.push('“'+(wrap?.dataset.label||c)+'” — pick a value from the list');}
+    const norm=x=>(x==null||x===''||x===false)?'':String(x);
+    if(!_crud.id||norm(_crud.row[c])!==norm(v))out[c]=v===''?null:v;
+  });
+  return {out,miss};
+}
+async function crudSave(){
+  if(!_crud)return;const {cfg}=_crud;const {out,miss}=crudCollect();
+  if(miss.length){toast('⚠️ '+miss[0]);return;}
+  if(cfg.t==='products'&&out.customer_id){const a=((window._RAW||{}).accounts||[]).find(x=>x.id===out.customer_id);if(a)out.customer_name=a.name;}
+  if(_crud.id&&!Object.keys(out).length){toast('Nothing changed');return;}
+  const btn=document.getElementById('cm-save');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const row=await apiWrite(cfg.t,_crud.id?'update':'insert',_crud.id,out);
+    crudPatch(cfg,row,false);
+    toast('✓ '+cfg.title+' '+(_crud.id?'saved':'added')+' — '+row.id);
+    crudClose();
+  }catch(e){toast('❌ '+e.message);if(btn){btn.disabled=false;btn.textContent=_crud&&_crud.id?'Save':'Add';}}
+}
+async function crudDelete(){
+  if(!_crud||!_crud.id)return;const b=document.getElementById('cm-del');
+  if(b&&!b.dataset.sure){b.dataset.sure='1';b.textContent='Click again to delete';b.classList.add('sure');setTimeout(()=>{if(b&&b.isConnected){delete b.dataset.sure;b.textContent='Delete';b.classList.remove('sure');}},4000);return;}
+  const {cfg,id,row}=_crud;
+  try{await apiWrite(cfg.t,'delete',id,{});crudPatch(cfg,row,true);toast('✓ '+cfg.title+' '+id+' deleted');crudClose();}
+  catch(e){toast('❌ '+e.message);if(b){delete b.dataset.sure;b.textContent='Delete';b.classList.remove('sure');}}
+}
+// Patch the loaded raw table and rebuild every view, then redraw what is on screen
+function crudPatch(cfg,row,isDel){
+  const R_=window._RAW;if(!R_)return;const arr=R_[cfg.raw]||(R_[cfg.raw]=[]);
+  const i=arr.findIndex(x=>String(x.id)===String(row.id));
+  if(isDel){if(i>=0)arr.splice(i,1);}else if(i>=0)arr[i]=Object.assign({},arr[i],row);else arr.unshift(row);
+  if(cfg.t==='pro_steps'&&!isDel&&i<0&&row.prod_order_id){(R_.step_links=R_.step_links||[]).push({step_id:row.id,prod_order_id:row.prod_order_id});}
+  try{buildData(R_);}catch(e){console.error(e);toast('Saved — refresh the page to see it');return;}
+  crudRedraw(cfg);
+}
+function crudRedraw(cfg){
+  (cfg.render||[]).forEach(k=>{try{if(R[k])R[k]();}catch(e){}});
+  try{if(typeof _curTab!=='undefined'&&_curTab==='wflow-prod'&&typeof pwRender==='function')pwRender();}catch(e){}
+  try{if(typeof kbFilter==='function'&&document.getElementById('kb-board'))kbFilter();}catch(e){}
+}
+// Row buttons + "Add" button on every list (added after each list draws)
+function crudBtns(key,id){const a=crudEsc(JSON.stringify(String(id)));return `<span class="crud-rb"><button title="Edit" aria-label="Edit" onclick="event.stopPropagation();crudOpen('${key}',${a})">✎</button><button title="Delete" aria-label="Delete" onclick="event.stopPropagation();crudQuickDelete('${key}',${a})">🗑</button></span>`;}
+async function crudQuickDelete(key,id){
+  const cfg=crudCfg(key);if(!cfg)return;
+  if(!confirm('Delete '+cfg.title+' '+id+'?\n\nIf it is used anywhere else, the app will stop you.'))return;
+  try{const old=await apiWrite(cfg.t,'get',id,{});await apiWrite(cfg.t,'delete',id,{});crudPatch(cfg,old,true);toast('✓ '+cfg.title+' '+id+' deleted');}
+  catch(e){toast('❌ '+e.message);}
+}
+function crudRowId(cfg,tr,ids){
+  // Each list shows the record's id in one of its cells; find it
+  for(const td of tr.cells){const t=(td.textContent||'').trim();if(ids.has(t))return t;const m=t.match(/^[A-Za-z0-9_\/-]+/);if(m&&ids.has(m[0]))return m[0];}
+  return null;
+}
+function crudDecorate(){
+  Object.keys(CRUD).forEach(k=>{
+    const cfg=crudCfg(k);
+    if(cfg.addTo){const at=document.querySelector(cfg.addTo);if(at&&!at.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+String(cfg.title).toLowerCase();b.onclick=()=>crudOpen(k,null);at.appendChild(b);}}
+    if(!cfg.tbody)return;const tb=document.getElementById(cfg.tbody);if(!tb)return;
+    // header: one "+ Add" button per list, and an empty header cell for the buttons column
+    const tc=tb.closest('.tc')||tb.closest('.pg');const th=tc&&tc.querySelector('.th');
+    if(th&&!CRUD[k].noAdd&&!th.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+String(cfg.title).toLowerCase();b.onclick=()=>crudOpen(k,null);const fr=th.querySelector('.flt-row');(fr||th).appendChild(b);}
+    const table=tb.closest('table');const hr=table&&table.tHead&&table.tHead.rows[0];
+    if(hr&&!hr.querySelector('.crud-th')){const h=document.createElement('th');h.className='crud-th';hr.appendChild(h);}
+    const ids=new Set(((window._RAW||{})[cfg.raw]||[]).map(r=>String(cfg.idKey?r[cfg.idKey]:r.id)));
+    const idMap=cfg.idKey?Object.fromEntries(((window._RAW||{})[cfg.raw]||[]).map(r=>[String(r[cfg.idKey]),r.id])):null;
+    [...tb.rows].forEach(tr=>{
+      if(tr.dataset.crud||tr.cells.length<2)return;tr.dataset.crud='1';
+      const shown=crudRowId(cfg,tr,ids);const td=document.createElement('td');td.className='crud-td';
+      if(shown){const rid=idMap?idMap[shown]:shown;if(rid!=null)td.innerHTML=crudBtns(k,rid);}
+      tr.appendChild(td);
+    });
+  });
+}
+function crudInstall(){
+  if(window._crudInstalled)return;window._crudInstalled=true;
+  Object.keys(R).forEach(k=>{const f=R[k];if(typeof f!=='function')return;R[k]=function(){const r=f.apply(this,arguments);try{crudDecorate();}catch(e){console.warn('crud',e);}return r;};});
+  try{crudDecorate();}catch(e){}
+}
+
 (function(){try{const el=document.getElementById('top-today');if(el)el.textContent='Today, '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch(e){}})();
 
 function showLoader(msg){
@@ -1958,19 +2186,8 @@ function showLoader(msg){
 function setProgress(pct){const el=document.getElementById('sb-prog');if(el)el.style.width=pct+'%';}
 function hideLoader(){const el=document.getElementById('sb-loader');if(el)el.remove();}
 
-async function loadData(){
-  showLoader('Loading Krishiv MIS…');
-  try{
-    setProgress(10);
-    showLoader('Fetching all data…');
-    const r=await fetch(EDGE_URL,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-    if(!r.ok){const txt=await r.text();throw new Error(`Edge function ${r.status}: ${txt.slice(0,300)}`);}
-    const raw=await r.json();
-    if(raw.error)throw new Error('Edge function error: '+raw.error);
-    console.log('Edge fn counts:',raw._counts);
-    setProgress(70);
-
-    showLoader('Building data…');
+// Builds every D.* view array from the raw tables. Re-run after a save to refresh without reloading.
+function buildData(raw){
     const {orders,pros,products,accounts,jobs,dies,plates,procs,
       rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos}=raw;
     // Step ↔ PRO links (pro_step_orders, from the sheet's Prod_Process_Items). One step can cover several PROs.
@@ -1991,7 +2208,7 @@ async function loadData(){
       const fgQty={};fg_inv.forEach(f=>{if(f.prod_order_id)fgQty[f.prod_order_id]=(fgQty[f.prod_order_id]||0)+(Number(f.qty)||0);});
       const hasFg=new Set(fg_inv.map(f=>f.prod_order_id).filter(Boolean));
       pros.forEach(p=>{
-        const stored=p.pro_status;p.pro_status_stored=stored;
+        if(p.pro_status_stored===undefined)p.pro_status_stored=p.pro_status;const stored=p.pro_status_stored;
         if(p.is_cancelled){p.pro_status='cancelled';return;}
         const q=(Number(p.sheet_qty)||0)*(Number(p.ups)||1)*(Number(p.blocks)||1);
         if(hasFg.has(p.id)&&(!q||fgQty[p.id]>=q*0.9)){p.pro_status='complete';return;}
@@ -2221,6 +2438,24 @@ async function loadData(){
       return [r.id,r.date,rm[1]||r.rm_id||'',ven?.name||r.vendor_id||'',r.pur_qty||0,r.pur_unit||'',r.rate||0,r.status||'',r.bill_ref||''];
     });
 
+}
+
+async function loadData(){
+  showLoader('Loading Krishiv MIS…');
+  try{
+    setProgress(10);
+    showLoader('Fetching all data…');
+    const r=await fetch(EDGE_URL,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    if(!r.ok){const txt=await r.text();throw new Error(`Edge function ${r.status}: ${txt.slice(0,300)}`);}
+    const raw=await r.json();
+    if(raw.error)throw new Error('Edge function error: '+raw.error);
+    console.log('Edge fn counts:',raw._counts);
+    setProgress(70);
+
+    showLoader('Building data…');
+    window._RAW=raw;
+    buildData(raw);
+    setTimeout(()=>{try{crudInstall();}catch(e){console.warn(e);}},0);
     setProgress(100);
     hideLoader();
   }catch(err){
@@ -3761,7 +3996,7 @@ R.jobs=function(p){
         <span style="font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j[3]||''}">${j[3]||'—'}</span>
         <span style="display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0;max-width:260px">${joProcChips(allProcs)}</span>
         <span style="flex-shrink:0;font-size:11px;font-weight:700;color:${statusCol};min-width:28px;text-align:right">${activePros.length||'✓'}</span>
-        <button onclick="event.stopPropagation();selJob(null,${esc(j[0])})" style="flex-shrink:0;border:1px solid var(--bdr);background:var(--s1);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--t2)">Manage</button>
+        <button onclick="event.stopPropagation();selJob(null,${esc(j[0])})" style="flex-shrink:0;border:1px solid var(--bdr);background:var(--s1);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--t2)">Manage</button>${crudBtns('jobs',j[0])}
       </div>
       <div id="joexp_${jid}" style="display:none;border-top:1px solid var(--bdr);background:var(--s1);padding:10px 12px">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -5678,14 +5913,6 @@ function openNewOrderForm(prefill){
       <textarea class="f" id="nof-chg-desc" style="width:100%;height:60px;resize:none;padding:6px 8px" placeholder="What has changed from last order?"></textarea>
     </div>
 
-    <!-- NOTES -->
-    <div class="nof-sec">ADDITIONAL INFO</div>
-    <div class="nof-row">
-      <div class="nof-field" style="flex:1">
-        <label class="nof-lbl">Notes / Remarks</label>
-        <textarea class="f" id="nof-notes" style="width:100%;height:54px;resize:none;padding:6px 8px" placeholder="Any special instructions…"></textarea>
-      </div>
-    </div>
 
     <!-- FOOTER -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:14px;border-top:1px solid var(--bdr)">
@@ -5745,17 +5972,21 @@ function nofSaveDraft(){
   toast('Draft saved ✅ — visible in Captured queue');
 }
 
-function nofSubmit(){
-  const cust=document.getElementById('nof-cust')?.value;
-  const prod=document.getElementById('nof-prod')?.value;
-  const qty=document.getElementById('nof-qty')?.value;
+async function nofSubmit(){
+  const v=id=>document.getElementById(id)?.value||'';
+  const cust=v('nof-cust'),prod=v('nof-prod'),qty=v('nof-qty');
   if(!cust){toast('⚠️ Please select a customer');return;}
   if(!prod){toast('⚠️ Please select a product');return;}
   if(!qty||Number(qty)<1){toast('⚠️ Please enter a valid quantity');return;}
-  const custName=D.cu.find(c=>c[0]===cust)?.[1]||cust;
-  const prodName=D.pd.find(p=>p[0]===prod)?.[1]||prod;
-  closeNewOrderForm();
-  toast('✅ Order confirmed — OID assigned · Customer: '+custName.slice(0,20)+' · '+Number(qty).toLocaleString()+' pcs');
+  const data={customer_id:cust,product_id:prod,qty:Math.round(Number(qty)),units:v('nof-qunit')||null,
+    is_repeat:v('nof-repeat')==='1',has_changes:v('nof-chg')==='1',party_reference:v('nof-ref')||null,order_status:'active'};
+  try{
+    const row=await apiWrite('orders','insert',null,data);
+    if(data.has_changes&&v('nof-chg-desc').trim()){try{await apiWrite('products','update',prod,{has_changes:true,change_desc:v('nof-chg-desc').trim()});}catch(e){}}
+    crudPatch(crudCfg('orders'),row,false);
+    closeNewOrderForm();
+    toast('✅ Order '+row.id+' saved');
+  }catch(e){toast('❌ '+e.message);}
 }
 
 function closeNewOrderForm(){
