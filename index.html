@@ -6109,6 +6109,7 @@ function pwRender(){
     var by=function(rs,f){var g={};rs.forEach(function(r){var x=f(r);(g[x]=g[x]||[]).push(r);});return g;};
     var sorter=function(f,g){return function(a,b){
       if(a==='PLAN'||a==='To plan')return 1;if(b==='PLAN'||b==='To plan')return -1;
+      if(a==='Not assigned')return 1;if(b==='Not assigned')return -1;
       if(f===pk){var ia=PW_SEQ.indexOf(a),ib=PW_SEQ.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);}
       if(a==='In house')return -1;if(b==='In house')return 1;
       return g[b].length-g[a].length||a.localeCompare(b);};};
@@ -6147,7 +6148,7 @@ function pwRowModel(m,g){
   var ih=cur?pwIsInHouse(cur):true;
   var jd=String(j[1]||'').slice(0,10),sd=cur?String(cur.date||'').slice(0,10):'';
   return {m:m,g:g,job:j,cur:cur,items:g.items,proc:g.proc,
-    vendor:g.plan?'To plan':(ih?'In house':pwVendorName(cur.vendor_id)),
+    vendor:g.plan?'To plan':(ih?'In house':(cur.vendor_id?pwVendorName(cur.vendor_id):'Not assigned')),
     machine:(cur&&ih&&cur.machine)?String(cur.machine).trim():'—',
     kind:g.plan?'plan':(pwStepSt(cur)==='in_progress'?(ih?'run':'ven'):'wait'),
     done:done,n:steps.length,pct:steps.length?Math.round(done/steps.length*100):0,
