@@ -55,9 +55,179 @@ async function getDriveFileId(productId:string,token:string):Promise<string|null
   return _driveCache[productId]||null
 }
 
+// Job images: Drive folder "Jobs - Final" (shared with the service account as Viewer).
+// File names start with the job ID, then " - V<n> - ...". Latest version wins.
+const JOB_IMG_FOLDER_ID='1vnKyWlz60YW2f_UqHyDK3oCyzEA6_P5d'
+async function findJobImage(jobId:string,token:string):Promise<any|null>{
+  const qs=new URLSearchParams({
+    q:`'${JOB_IMG_FOLDER_ID}' in parents and trashed=false and name contains '${jobId.replace(/'/g,'')}'`,
+    fields:'files(id,name,thumbnailLink,modifiedTime,mimeType)',pageSize:'50'
+  })
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files?${qs}`,{headers:{Authorization:'Bearer '+token}})
+  const d=await r.json()
+  const esc=jobId.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')
+  const re=new RegExp('^'+esc+'(?![0-9A-Za-z])','i')
+  const files=(d.files||[]).filter((x:any)=>re.test(x.name)&&String(x.mimeType||'').startsWith('image/'))
+  if(!files.length)return null
+  const ver=(n:string)=>{const m=n.match(/\bV\s*(\d+)\b/i);return m?parseInt(m[1]):0}
+  files.sort((a:any,b:any)=>(ver(b.name)-ver(a.name))||String(b.modifiedTime).localeCompare(String(a.modifiedTime)))
+  return {...files[0],version:ver(files[0].name),count:files.length}
+}
+
+// ── JOB DRAFTS (AI reads a job image → draft in job_drafts; never touches live tables) ──
+const AI_KEY=Deno.env.get('ANTHROPIC_API_KEY')??''
+const AI_MODEL_DEFAULT=Deno.env.get('JOB_AI_MODEL')??'claude-sonnet-5-5'
+const PROC_CODES=['PRT','COAT','LMN','EMB','FOIL','DVD','STRG','PUN','CUT','RW','SEAL','OTHER']
+const JOB_DRAFT_TOOL={
+  name:'record_job_draft',
+  description:'Record the production plan read from the job image.',
+  input_schema:{type:'object',properties:{
+    job_type:{type:'string',enum:['Machine','Sheet','Tupax','Direct','Direct5','unknown']},
+    job_type_conf:{type:'string',enum:['high','medium','low']},
+    sheets:{type:'integer',description:'Sheets to print for the job (0 if not shown)'},
+    sheets_conf:{type:'string',enum:['high','medium','low']},
+    pros:{type:'array',items:{type:'object',properties:{
+      ref:{type:'string',description:'Short ref A, B, C… used in processes'},
+      pro_id:{type:'string',description:'Production order number written on the image, e.g. PROD10862 (empty if none)'},
+      die_text:{type:'string',description:'Die code written for this PRO, e.g. D438 (empty if none)'},
+      steps_text:{type:'string',description:'The process list written for this PRO exactly as on the image, e.g. "PRINTING - COATING - PUNCHING"'},
+      product_text:{type:'string',description:'Product name exactly as it appears (artwork/label text or file name part)'},
+      product_conf:{type:'string',enum:['high','medium','low']},
+      ups:{type:'integer'},ups_conf:{type:'string',enum:['high','medium','low']},
+      blocks:{type:'integer'},blocks_conf:{type:'string',enum:['high','medium','low']},
+      sheets:{type:'integer',description:'Sheets for this product if different from the job total, else same as job'},
+      evidence:{type:'string'}
+    },required:['ref','product_text','product_conf','ups','ups_conf','blocks','blocks_conf']}},
+    processes:{type:'array',description:'In order. Each process lists the PRO refs that go through it.',items:{type:'object',properties:{
+      seq:{type:'integer'},
+      process:{type:'string',enum:PROC_CODES},
+      process_other:{type:'string'},
+      pros:{type:'array',items:{type:'string'}},
+      conf:{type:'string',enum:['high','medium','low']},
+      evidence:{type:'string'}
+    },required:['seq','process','pros','conf']}},
+    visible_text:{type:'string',description:'Production-relevant text you can read on the image (job notes, marks, sizes, ups counts), max 1500 characters'},
+    notes:{type:'string'}
+  },required:['job_type','job_type_conf','pros','processes']}
+}
+const JOB_DRAFT_SYSTEM=`You read JOB IMAGES of Krishiv Labels & Packaging (Ahmedabad), a label and packaging printer.
+A job image is the print-sheet layout exported from CorelDRAW for one print run (a "job"). Several products (labels/wrappers/cartons) can be printed together on the same sheet; each product printed in a job is one production order (PRO).
+The file name follows: "<JobID> - V<version> - <date> - <product names...> - <material> - <sheet size> - <sheets> (<GSM>)". Use it as strong evidence for products, material, sheet size and sheet count.
+
+Most job images carry a text note for every production order, like "PROD10862 - PRINTING - COATING - PUNCHING - D939": the PRO number, its processes in order, and the die code. These notes are the most reliable source: copy the PRO number into pro_id, the process words into steps_text and the die into die_text, and build the processes from them (PRINTING=PRT, COATING/UV/VARNISH=COAT, LAMINATION=LMN, EMBOSS=EMB, FOIL=FOIL, DIVIDE/DIVIDING=DVD, STRIP GUM=STRG, PUNCHING=PUN, CUTTING=CUT, REWINDING=RW). Make one PRO per PRO number.
+
+Read the image carefully (artwork, text, marks, notes) and fill:
+1. job_type (PPC type): Machine = roll-fed flexo label press (PPC1); Sheet = sheet-fed / hybrid sheet job (PPC2); Tupax = PPC3; Direct / Direct5 = bought-in, no in-house printing. Sheet sizes like "20 x 28" inches and GSM papers (Art Paper, Chromo, Duplex, Maplitho) mean Sheet.
+2. PROs: one per distinct product on the sheet. ups = how many copies of that product are on one sheet. blocks = how many finished pieces each up gives (usually 1; e.g. a wrapper up that is later divided into 2 pieces → 2). pieces per sheet = ups × blocks. Count copies on the layout; do not guess.
+3. processes in order, each with the PROs (refs) that go through it. All PROs start together at PRT. After that they may split (different PROs take different steps) and never rejoin. Codes:
+ PRT print · COAT UV/varnish coating · LMN film lamination · EMB emboss · FOIL foil stamping · DVD divide (cut the big sheet into smaller portions, usually before punching/cutting) · STRG strip gumming (gum strips, for wrappers / non-adhesive labels) · PUN die punching (die-cut shapes) · CUT straight cutting/trimming to size (rectangles, no die) · RW rewinding rolls · SEAL sealing · OTHER (describe).
+ Clues: shaped outlines/die lines → PUN; plain rectangles → CUT; "Strip Gum" / gum marks → STRG; lamination text (PVC/BOPP/Lamination) → LMN; UV/varnish → COAT. Packing is NOT a process.
+Give a confidence for every field: high = clearly visible, medium = inferred from strong clues, low = guess. Never invent products that are not on the image or file name.`
+
+async function bytesToB64(buf:ArrayBuffer):Promise<string>{
+  const b=new Uint8Array(buf);let s='';const C=0x8000
+  for(let i=0;i<b.length;i+=C)s+=String.fromCharCode(...b.subarray(i,i+C))
+  return btoa(s)
+}
+
+async function runJobDraft(draftId:string){
+  const upd=(o:any)=>supabase.from('job_drafts').update({...o,updated_at:new Date().toISOString()}).eq('id',draftId)
+  try{
+    const{data:d}=await supabase.from('job_drafts').select('*').eq('id',draftId).single()
+    if(!d)return
+    const token=await getServiceAccountToken()
+    const f=await findJobImage(d.job_id,token)
+    if(!f||!f.thumbnailLink){await upd({status:'error',error:'Job image not found in Drive'});return}
+    const tl=f.thumbnailLink.replace(/=s\d+(-[a-z0-9-]+)?$/i,'')+'=s2000'
+    const ir=await fetch(tl,{headers:{Authorization:'Bearer '+token}})
+    if(!ir.ok){await upd({status:'error',error:'Could not load image preview'});return}
+    const mt=(ir.headers.get('Content-Type')||'image/jpeg').split(';')[0]
+    const b64=await bytesToB64(await ir.arrayBuffer())
+    // PROs already linked to this job (if any) help the AI name products the same way
+    const{data:known}=await supabase.from('production_orders').select('id,product_id,ups,blocks,sheet_qty').eq('job_id',d.job_id)
+    const model=d.model||AI_MODEL_DEFAULT
+    const content:any[]=[
+      {type:'image',source:{type:'base64',media_type:mt,data:b64}},
+      {type:'text',text:`File name: ${f.name}\nJob ID: ${d.job_id}\nRead this job image and call record_job_draft.`}
+    ]
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'x-api-key':AI_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
+      body:JSON.stringify({model,max_tokens:6000,system:JOB_DRAFT_SYSTEM+'\n\nAlways respond by calling the record_job_draft tool exactly once.',tools:[JOB_DRAFT_TOOL],tool_choice:{type:'auto'},messages:[{role:'user',content}]})})
+    const j=await r.json()
+    if(!r.ok){await upd({status:'error',error:'AI error: '+JSON.stringify(j).slice(0,400),file_id:f.id,file_name:f.name,model});return}
+    let out:any=(j.content||[]).find((b:any)=>b.type==='tool_use')?.input
+    const text=(j.content||[]).filter((b:any)=>b.type==='text').map((b:any)=>b.text).join('\n')
+    if(!out){const s=text.indexOf('{'),e=text.lastIndexOf('}');if(s>=0&&e>s){try{out=JSON.parse(text.slice(s,e+1))}catch{}}}
+    if(!out){await upd({status:'error',error:'AI gave no draft',raw_output:text.slice(0,4000),file_id:f.id,file_name:f.name,model});return}
+    // Some models return arrays as JSON strings — normalise
+    for(const k of ['pros','processes'])if(typeof out[k]==='string'){try{out[k]=JSON.parse(out[k])}catch{out[k]=[]}}
+    if(!Array.isArray(out.pros))out.pros=[]
+    if(!Array.isArray(out.processes))out.processes=[]
+    for(const x of out.processes)if(typeof x.pros==='string'){try{x.pros=JSON.parse(x.pros)}catch{x.pros=String(x.pros).split(/[ ,]+/).filter(Boolean)}}
+    // Link to existing production orders (by PRO number) or suggest products from the master
+    for(const p of out.pros){
+      const pid=String(p.pro_id||'').toUpperCase().replace(/\s+/g,'').match(/PROD\d{4,6}/)?.[0]||''
+      p.pro_id=pid||null
+      p.pro_found=false
+      if(pid){
+        const{data:po}=await supabase.from('production_orders').select('id,product_id,ups,blocks,sheet_qty,job_id,products(product_name,customer_name)').eq('id',pid).maybeSingle()
+        if(po){p.pro_found=true;p.pro={id:po.id,product_id:po.product_id,product_name:(po as any).products?.product_name,customer:(po as any).products?.customer_name,ups:po.ups,blocks:po.blocks,sheets:po.sheet_qty,job_id:po.job_id};p.product_id=po.product_id}
+      }
+      if(!p.product_id){
+        const{data:m}=await supabase.rpc('tg_search_products',{p_customer:null,q:p.product_text||'',n:3})
+        p.matches=(m||[]).map((x:any)=>({id:x.id,name:x.product_name,customer:x.customer_name,score:x.score}))
+        p.product_id=p.matches[0]?.id||null
+      }
+      const s=Number(p.sheets||out.sheets||0)
+      p.qty=s&&p.ups?s*p.ups*(p.blocks||1):null
+    }
+    out.known_pros=known||[]
+    out.usage=j.usage
+    await upd({status:'ready',draft:out,file_id:f.id,file_name:f.name,model,error:null})
+  }catch(e:any){await upd({status:'error',error:String(e?.message||e)})}
+}
+
 Deno.serve(async(req)=>{
   if(req.method==='OPTIONS')return new Response(null,{headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'GET,POST,OPTIONS'}})
   const url=new URL(req.url)
+
+  // ── JOB IMAGES: /job-image/{jobId}?sz=1600  (shrunken copy only — never the full-size file)
+  //    /job-image/{jobId}?info=1 → JSON with the latest version's file name
+  const jobImgMatch=url.pathname.match(/\/job-image\/([^/]+)$/)
+  if(jobImgMatch){
+    const CH={'Access-Control-Allow-Origin':'*'}
+    try{
+      const jobId=decodeURIComponent(jobImgMatch[1]).trim()
+      if(!/^[A-Za-z0-9_-]{2,20}$/.test(jobId))return new Response('Bad job id',{status:400,headers:CH})
+      const token=await getServiceAccountToken()
+      const f=await findJobImage(jobId,token)
+      if(!f)return new Response('Not found',{status:404,headers:CH})
+      if(url.searchParams.get('info')){
+        return new Response(JSON.stringify({job_id:jobId,file_id:f.id,name:f.name,version:f.version,modified:f.modifiedTime,versions:f.count}),{headers:{...CH,'Content-Type':'application/json','Cache-Control':'private, max-age=300'}})
+      }
+      const sz=Math.max(200,Math.min(2400,parseInt(url.searchParams.get('sz')||'1600')||1600))
+      if(!f.thumbnailLink)return new Response('Preview not ready yet',{status:404,headers:CH})
+      const tl=f.thumbnailLink.replace(/=s\d+(-[a-z0-9-]+)?$/i,'')+`=s${sz}`
+      const r=await fetch(tl,{headers:{Authorization:'Bearer '+token}})
+      if(!r.ok)return new Response('Preview not available',{status:502,headers:CH})
+      return new Response(await r.blob(),{headers:{...CH,'Content-Type':r.headers.get('Content-Type')||'image/jpeg','Cache-Control':'private, max-age=3600'}})
+    }catch(e:any){
+      return new Response(JSON.stringify({error:e.message}),{status:500,headers:{...CH,'Content-Type':'application/json'}})
+    }
+  }
+
+  // ── Run a requested job draft. Needs the one-time run_token stored on the draft row.
+  if(url.pathname.endsWith('/job-draft/run')){
+    const CH={'Access-Control-Allow-Origin':'*','Content-Type':'application/json'}
+    const id=url.searchParams.get('id')||'',tk=url.searchParams.get('token')||''
+    if(!id||!tk)return new Response(JSON.stringify({error:'id and token required'}),{status:400,headers:CH})
+    const{data:d}=await supabase.from('job_drafts').select('id,status,run_token').eq('id',id).single()
+    if(!d||d.run_token!==tk||d.status!=='requested')return new Response(JSON.stringify({error:'Not allowed'}),{status:403,headers:CH})
+    await supabase.from('job_drafts').update({status:'running',run_token:null,updated_at:new Date().toISOString()}).eq('id',id)
+    // @ts-ignore EdgeRuntime is provided by Supabase
+    EdgeRuntime.waitUntil(runJobDraft(id))
+    return new Response(JSON.stringify({ok:true,id,status:'running'}),{headers:CH})
+  }
 
   const imageMatch=url.pathname.match(/\/image\/([^/]+)$/)
   if(imageMatch){
