@@ -271,21 +271,29 @@ Deno.serve(async(req)=>{
       const img=String(body.image||''),mt=String(body.media_type||'image/jpeg')
       if(!img||img.length>8_000_000)return J({error:'Photo missing or too large'},400)
       const hint=body.pro_id?`The slip was opened for production order ${body.pro_id} (production qty ${body.prod_qty||'?'} pcs).`:''
-      const tool={name:'record_packing_slip',description:'Record what is written on the packing slip.',input_schema:{type:'object',properties:{
-        pro_id:{type:'string',description:'Production order number printed/written on the slip, e.g. PROD10870'},
-        job_id:{type:'string'},
-        packing_date:{type:'string',description:'Date written for packing, as YYYY-MM-DD (empty if none)'},
-        rows:{type:'array',items:{type:'object',properties:{pcs_per_packet:{type:'number'},packets:{type:'number'},total_pcs:{type:'number'},remarks:{type:'string'}}}},
-        total_packets:{type:'number'},total_pcs:{type:'number'},
-        wastage_pcs:{type:'number'},wastage_reason:{type:'string'},
-        packed_by:{type:'string'},checked_by:{type:'string'},
-        notes:{type:'string',description:'Anything else written, or what was unclear'},
+      const tool={name:'record_packing_slip',description:'Record every handwritten row of the packing slip.',input_schema:{type:'object',properties:{
+        pro_id:{type:'string',description:'Production order number printed at the top, e.g. PROD10815'},
+        rows:{type:'array',description:'One entry per handwritten row, top to bottom',items:{type:'object',properties:{
+          date:{type:'string',description:'Date of this row as YYYY-MM-DD. Rows with an empty date column take the date of the row above.'},
+          d_no:{type:'string',description:'D.No column (design number)'},
+          ups:{type:'number'},
+          sheets:{type:'number',description:'Sheets column = pieces (or sheets) in each packet'},
+          packets:{type:'number',description:'Pkts column'},
+          total:{type:'number',description:'Total column as written'},
+          checked:{type:'string',description:'Checked column (initials), empty if blank'},
+          entered:{type:'boolean',description:'true if the Status column has the mark \"e\" (already entered in the system)'},
+          remarks:{type:'string',description:'Notes written beside this row (e.g. weights, \"parted\")'},
+          doubt:{type:'string',description:'What is unclear in this row, empty if clear'}
+        },required:['sheets','packets','total']}},
+        written_grand_total:{type:'number',description:'A grand total written anywhere on the slip, 0 if none'},
+        notes:{type:'string',description:'Other notes on the slip (e.g. \"75000 ok with vendor\"), and any arithmetic mismatch'},
         confidence:{type:'string',enum:['high','medium','low']}
-      },required:['rows','total_packets','total_pcs','confidence']}}
-      const sys=`You read photos of hand-filled PACKING SLIPS from Krishiv Labels & Packaging. The printed part shows the production order (PRO ID, job, product, production qty). The handwritten part lists packed lots: pieces per packet, number of packets, total pieces, plus totals, wastage, packer and checker names and date. Read only what is written; never invent numbers. Check the arithmetic (pcs per packet × packets = row total; rows add up to the total). If the written total disagrees with the rows, report the written total and say so in notes. Use 0 / empty for anything not filled.`
+      },required:['rows','confidence']}}
+      const today=new Date(Date.now()+19800000).toISOString().slice(0,10)
+      const sys=`You read photos of PACKING SLIPS of Krishiv Labels & Packaging. The top is printed: PRO ID (e.g. PROD10815), a QR code, the product picture and a box with product name/size, Order ID, Product ID, Job ID, Ups/Blocks/Sheets and Total Qty. Below is a table filled BY HAND with columns: Dt | D.No | Ups | Sheets | Pkts | Total | Checked | Status. Each handwritten row is one packed lot: Sheets = pieces per packet, Pkts = number of packets, Total = Sheets × Pkts. Dates are written short like 13/10 or 5/10/26 (day/month, India); today is ${today}, so use the current year unless another is written, and a blank date means same as the row above. A small \"e\" in Status means the row is already entered in the system. Ignore the printed header text when reading rows. Read only what is written; never invent rows or numbers. If Sheets × Pkts does not equal Total, keep the written values and describe it in that row's doubt.`
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':AI_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
-        body:JSON.stringify({model:AI_MODEL_DEFAULT,max_tokens:2000,system:sys+'\n\nAlways respond by calling the record_packing_slip tool exactly once.',tools:[tool],tool_choice:{type:'auto'},
-          messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:img}},{type:'text',text:(hint+' Read this packing slip.').trim()}]}]})})
+        body:JSON.stringify({model:AI_MODEL_DEFAULT,max_tokens:4000,system:sys+'\n\nAlways respond by calling the record_packing_slip tool exactly once.',tools:[tool],tool_choice:{type:'auto'},
+          messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:img}},{type:'text',text:(hint+' Read every handwritten row of this packing slip.').trim()}]}]})})
       const j=await r.json()
       if(!r.ok)return J({error:'AI error: '+JSON.stringify(j).slice(0,300)},502)
       let out:any=(j.content||[]).find((b:any)=>b.type==='tool_use')?.input

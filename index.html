@@ -1779,7 +1779,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-033522';
+const APP_BUILD='20261017-034336';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -4636,23 +4636,65 @@ function pkReadSlip(pid){
       const r=await fetch(EDGE_URL+'/read-slip',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({image:b64,media_type:'image/jpeg',pro_id:pid,prod_qty:x[4]||null})});
       const j=await r.json().catch(()=>({error:'Server error '+r.status}));
       if(!r.ok||j.error)throw new Error(j.error||'Could not read the slip');
-      const sl=j.slip||{};
-      const slipPro=String(sl.pro_id||'').toUpperCase().replace(/\s+/g,'');
-      const useP=(slipPro&&slipPro!==pid&&D.pr.find(r=>r[0]===slipPro))?slipPro:pid;
-      if(slipPro&&slipPro!==pid)toast('⚠️ Slip says '+slipPro+' — check the PRO before saving');
-      const rows=(sl.rows||[]).filter(r=>r&&(r.packets||r.total_pcs));
-      const note=[rows.map(r=>`${r.packets||'?'} × ${r.pcs_per_packet||'?'}`).join(' + '),sl.packed_by?'Packed by '+sl.packed_by:'',sl.checked_by?'Checked by '+sl.checked_by:'',sl.notes||'','(read from slip photo, confidence '+(sl.confidence||'?')+')'].filter(Boolean).join(' · ');
-      const raw=(D.pros_raw||[]).find(r=>r.id===useP)||{};
-      const c=CRUD.fg,old=c.defaults;
-      c.defaults=Object.assign({},old||{},{prod_order_id:useP,date:/^\d{4}-\d\d-\d\d$/.test(sl.packing_date||'')?sl.packing_date:new Date(Date.now()+19800000).toISOString().slice(0,10),
-        ups:raw.ups||null,packets:sl.total_packets||rows.reduce((t,r)=>t+(Number(r.packets)||0),0)||null,
-        qty:sl.total_pcs||rows.reduce((t,r)=>t+(Number(r.total_pcs)||(Number(r.packets)||0)*(Number(r.pcs_per_packet)||0)),0)||null,
-        qty_units:'pcs',qty_wastage:sl.wastage_pcs||null,wastage_problem:sl.wastage_reason||null,comment:note,fg_status:'in_stock'});
-      try{await crudOpen('fg',null);}finally{c.defaults=old;}
-      toast('✓ Slip read — check the numbers, then Add');
+      pkSlipReview(pid,j.slip||{});
     }catch(e){toast('❌ '+e.message);}
   };
   inp.click();
+}
+// Review what was read: one row per packed lot. Rows marked "e" or already in FG are unticked. Save ticked rows as FG entries.
+let _pkSlip=null;
+function pkSlipReview(pid,sl){
+  const slipPro=String(sl.pro_id||'').toUpperCase().replace(/\s+/g,'');
+  const useP=(slipPro&&slipPro!==pid&&D.pr.find(r=>r[0]===slipPro))?slipPro:pid;
+  const x=D.pr.find(r=>r[0]===useP)||[];
+  const have=(D.fg||[]).filter(f=>f[2]===useP);
+  let last='';
+  const rows=(sl.rows||[]).map(r=>{
+    const d=/^\d{4}-\d\d-\d\d$/.test(r.date||'')?r.date:last;last=d||last;
+    const tot=Number(r.total)||((Number(r.sheets)||0)*(Number(r.packets)||0));
+    const dup=have.some(f=>Number(f[5])===tot&&(!d||String(f[1]||'')===d));
+    return {date:d,d_no:r.d_no||'',ups:r.ups||'',sheets:r.sheets||'',packets:r.packets||'',qty:tot,checked:r.checked||'',remarks:[r.remarks,r.doubt].filter(Boolean).join(' · '),entered:!!r.entered,dup,tick:!r.entered&&!dup};
+  });
+  _pkSlip={pid:useP,rows,sl};
+  const nf=n=>Number(n||0).toLocaleString('en-IN');
+  const inp=(i,k,w,t)=>`<input data-i="${i}" data-k="${k}" value="${String(rows[i][k]??'').replace(/"/g,'&quot;')}" ${t?'type="'+t+'"':''} oninput="pkSlipSet(this)" style="width:${w}px;padding:4px 5px;border:1px solid var(--bdr);border-radius:6px;background:var(--s1);color:var(--txt);font-size:12px">`;
+  let m=document.getElementById('crud-modal');if(!m){m=document.createElement('div');m.id='crud-modal';document.body.appendChild(m);}
+  m.style.display='block';
+  m.innerHTML=`<div class="cm-bg" onclick="if(event.target===this)crudClose()"><div class="cm-box" role="dialog" aria-label="Packing slip read" style="max-width:860px">
+    <div class="cm-h"><b>Packing slip read</b><span class="cm-id">${useP}</span><button class="cm-x" onclick="crudClose()" aria-label="Close">✕</button></div>
+    <div class="cm-b" style="display:block">
+      ${slipPro&&slipPro!==pid?`<div style="margin-bottom:8px;padding:8px 10px;border-radius:6px;background:#fef3c7;color:#92400e;font-size:12px">The slip says <b>${slipPro}</b>, you opened ${pid}. Rows will be saved against <b>${useP}</b>.</div>`:''}
+      <div style="font-size:12px;color:var(--t2);margin-bottom:8px">${x[2]||''} · Production qty <b>${nf(x[4])}</b> · Already in FG <b>${nf(have.reduce((t,f)=>t+(Number(f[5])||0),0))}</b> (${have.length} entr${have.length===1?'y':'ies'}) · Read with ${sl.confidence||'?'} confidence</div>
+      <div style="overflow-x:auto"><table style="width:100%;font-size:12px"><thead><tr><th></th><th>Date</th><th>D.No</th><th>Ups</th><th>Sheets / pkt</th><th>Pkts</th><th>Total</th><th>Note</th></tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr style="${r.tick?'':'opacity:.6'}"><td><input type="checkbox" data-i="${i}" ${r.tick?'checked':''} onchange="_pkSlip.rows[${i}].tick=this.checked;this.closest('tr').style.opacity=this.checked?1:.6;pkSlipSum()"></td>
+        <td>${inp(i,'date',128,'date')}</td><td>${inp(i,'d_no',44)}</td><td>${inp(i,'ups',44)}</td><td>${inp(i,'sheets',74)}</td><td>${inp(i,'packets',54)}</td><td>${inp(i,'qty',84)}</td>
+        <td style="font-size:11px;color:var(--t2);max-width:180px">${r.entered?'<span class="b bg">e · entered</span> ':''}${r.dup&&!r.entered?'<span class="b by">already in FG</span> ':''}${(r.remarks||'').replace(/</g,'&lt;')}${r.checked?' · ✓ '+r.checked:''}</td></tr>`).join('')||'<tr><td colspan="8" style="padding:14px;color:var(--t3)">No handwritten rows found</td></tr>'}
+      </tbody></table></div>
+      ${sl.notes?`<div style="margin-top:8px;font-size:12px;color:var(--t2)">📝 ${String(sl.notes).replace(/</g,'&lt;')}</div>`:''}
+      <div id="pk-slip-sum" style="margin-top:10px;font-size:13px;font-weight:700"></div>
+    </div>
+    <div class="cm-f"><span style="font-size:11px;color:var(--t3)">Rows marked “e” or already in FG are left unticked.</span><span style="flex:1"></span><button class="cm-c" onclick="crudClose()">Cancel</button><button class="cm-s" id="pk-slip-save" onclick="pkSlipSave()">Save ticked rows</button></div>
+  </div></div>`;
+  pkSlipSum();
+}
+function pkSlipSet(el){const r=_pkSlip.rows[+el.dataset.i],k=el.dataset.k;r[k]=el.value;
+  if(k==='sheets'||k==='packets'){const q=(Number(r.sheets)||0)*(Number(r.packets)||0);if(q){r.qty=q;const t=document.querySelector(`#crud-modal input[data-i="${el.dataset.i}"][data-k="qty"]`);if(t)t.value=q;}}
+  pkSlipSum();}
+function pkSlipSum(){const t=_pkSlip.rows.filter(r=>r.tick);const el=document.getElementById('pk-slip-sum');
+  if(el)el.textContent=`${t.length} row${t.length===1?'':'s'} to save · ${t.reduce((a,r)=>a+(Number(r.packets)||0),0)} packets · ${t.reduce((a,r)=>a+(Number(r.qty)||0),0).toLocaleString('en-IN')} pcs`;}
+async function pkSlipSave(){
+  const t=_pkSlip.rows.filter(r=>r.tick);if(!t.length){toast('Tick at least one row');return;}
+  if(t.some(r=>!r.date||!Number(r.qty))){toast('Every ticked row needs a date and a total');return;}
+  const b=document.getElementById('pk-slip-save');b.disabled=true;
+  const cfg=crudCfg('fg');let n=0;
+  try{
+    for(const r of t){
+      b.textContent=`Saving ${n+1} of ${t.length}…`;
+      const row=await apiWrite('fg_inventory','insert',null,{prod_order_id:_pkSlip.pid,date:r.date,d_no:r.d_no||null,ups:Number(r.ups)||null,sheets:Number(r.sheets)||null,packets:Number(r.packets)||null,qty:Number(r.qty),qty_units:'pcs',fg_status:'in_stock',comment:['From packing slip photo',r.checked?'checked by '+r.checked:'',r.remarks].filter(Boolean).join(' · ')});
+      const R_=window._RAW;(R_.fg_inv=R_.fg_inv||[]).unshift(row);n++;
+    }
+    crudClose();buildData(window._RAW);crudRedraw(cfg);toast(`✓ ${n} packed lot${n===1?'':'s'} saved to FG`);
+  }catch(e){toast('❌ '+e.message+(n?` (${n} saved before this)`:''));if(n){buildData(window._RAW);crudRedraw(cfg);}b.disabled=false;b.textContent='Save ticked rows';}
 }
 // shrink a photo to a JPEG (base64, no prefix) so it uploads fast
 function pkShrink(file,max){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
@@ -4709,50 +4751,48 @@ async function pkDoComplete(pid,w){
   }catch(e){toast('❌ '+e.message);if(b){b.disabled=false;b.textContent='✓ Mark complete';}}
 }
 
-function genPackingSlip(proid){
-  // Blank packing slip: only the production details are printed; packers fill the rest by hand.
+// QR code as a picture (data URL); the small QR library is loaded only when first needed
+function qrDataUrl(text){return new Promise(res=>{
+  const make=()=>{try{const d=document.createElement('div');new QRCode(d,{text,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});
+    const c=d.querySelector('canvas');res(c?c.toDataURL('image/png'):(d.querySelector('img')||{}).src||'');}catch(e){res('');}};
+  if(window.QRCode)return make();
+  const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=make;sc.onerror=()=>res('');document.head.appendChild(sc);
+});}
+async function genPackingSlip(proid){
+  // Blank packing slip in the shop's own layout (A5): printed header, handwritten rows (one row = one packed lot)
   const p=D.pr.find(x=>x[0]===proid);
   if(!p){toast('PRO not found');return;}
   const raw=(D.pros_raw||[]).find(x=>x.id===proid)||{};
   const prod=(D.products_raw||[]).find(x=>x.id===p[10])||{};
-  const job=p[9]?(D.jo||[]).find(j=>j[0]===p[9]):null;
-  const pk=pkPackedMap()[proid]||{qty:0,n:0};
   const nf=n=>Number(n||0).toLocaleString('en-IN');
   const e=v=>String(v==null||v===''?'—':v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const size=prod.size_l?`${prod.size_l} × ${prod.size_b}${prod.size_h?' × '+prod.size_h:''} ${prod.size_units||'mm'}`:'';
-  const rows=Array.from({length:12},(_,i)=>`<tr><td class="c">${i+1}</td><td></td><td></td><td></td><td></td></tr>`).join('');
+  const size=prod.size_l?` - ${prod.size_l} x ${prod.size_b} x ${prod.size_h||0} ${prod.size_units||'mm'}`:'';
+  const img=p[10]?getProductImageUrl(p[10]):'';
+  const rows=Array.from({length:11},()=>'<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>').join('');
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to print the slip');return;}
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Packing slip ${e(proid)} (A5)</title><style>
-  @page{size:A5 portrait;margin:7mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0 auto;font-size:10px;max-width:134mm}
-  .hd{display:flex;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}
-  .hd h1{font-size:14px;margin:0;letter-spacing:1px}.hd .co{margin-left:auto;text-align:right;font-size:9px}
-  .pro{font-size:19px;font-weight:800;font-family:monospace;letter-spacing:1px}
-  table{border-collapse:collapse;width:100%}td,th{border:1px solid #000;padding:3px 5px;vertical-align:top}
-  .info td{font-size:10px}.info td.l{width:18%;font-weight:700;background:#f2f2f2}
-  .grid th{background:#f2f2f2;font-size:8.5px;text-transform:uppercase}.grid td{height:25px}.c{text-align:center;width:6%}
-  .tot td{height:24px;font-weight:700;font-size:9.5px}.tot td.l{width:22%;background:#f2f2f2}
-  .sig{display:flex;gap:10px;margin-top:20px}.sig div{flex:1;border-top:1px solid #000;padding-top:3px;text-align:center;font-size:9px}
-  .note{font-size:8px;color:#444;margin-top:5px}.np{margin:10px 0;text-align:center}@media print{.np{display:none}}
+  w.document.write('<p style="font-family:Arial;padding:20px">Preparing slip…</p>');
+  const qr=await qrDataUrl(proid);
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Packing slip ${e(proid)} (A5)</title>
+  <style>
+  @page{size:A5 portrait;margin:8mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0 auto;max-width:132mm;font-size:10px}
+  .top{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}.pro{margin-left:auto;margin-right:auto;font-size:15px;font-weight:800;padding-top:4px}
+  #qr{width:26mm;height:26mm}#qr img,#qr canvas{width:26mm!important;height:26mm!important}
+  table{border-collapse:collapse;width:100%}td,th{border:1px solid #000}
+  .box td{padding:4px 6px;vertical-align:top}.box .pic{width:42%;text-align:center;vertical-align:middle}.box .pic img{max-width:100%;max-height:34mm;object-fit:contain}
+  .box b{font-size:11px}.grid{margin-top:7px}.grid th{font-size:9.5px;padding:3px;text-align:left;vertical-align:top;height:9mm}.grid td{height:8.6mm}
+  .np{margin:10px 0;text-align:center}@media print{.np{display:none}}
   </style></head><body>
-  <div class="np"><button onclick="window.print()" style="font-size:14px;padding:8px 18px">🖨 Print</button></div>
-  <div class="hd"><div><h1>PACKING SLIP</h1><div class="pro">${e(proid)}</div></div><div class="co"><b>Krishiv Labels &amp; Packaging</b><br>Printed ${new Date().toLocaleDateString('en-GB')}</div></div>
-  <table class="info">
-    <tr><td class="l">Product</td><td colspan="3"><b>${e(p[2])}</b> ${prod.id?'<span style="font-family:monospace">('+e(prod.id)+')</span>':''}</td></tr>
-    <tr><td class="l">Customer</td><td>${e(p[3])}</td><td class="l">Order</td><td style="font-family:monospace">${e(p[7])}</td></tr>
-    <tr><td class="l">Job</td><td style="font-family:monospace">${e(p[9])}${job&&job[2]?' · '+e(job[2]):''}</td><td class="l">PRO date</td><td>${e(p[1])}</td></tr>
-    <tr><td class="l">Sheets</td><td>${raw.sheet_qty?nf(raw.sheet_qty):'—'}</td><td class="l">Ups × Blocks</td><td>${raw.ups||1} × ${raw.blocks||1}</td></tr>
-    <tr><td class="l">Production qty</td><td><b style="font-size:12px">${nf(p[4])} pcs</b></td><td class="l">Already packed</td><td>${pk.n?nf(pk.qty)+' pcs ('+pk.n+' lot'+(pk.n>1?'s':'')+')':'—'}</td></tr>
-    ${size||prod.material?`<tr><td class="l">Size</td><td>${e(size)}</td><td class="l">Material</td><td>${e(prod.material)}</td></tr>`:''}
+  <div class="np"><button onclick="window.print()" style="font-size:14px;padding:8px 18px">🖨 Print (A5)</button></div>
+  <div class="top"><div id="qr">${qr?`<img src="${qr}" alt="QR ${e(proid)}">`:''}</div><div class="pro">${e(proid)}</div></div>
+  <table class="box">
+    <tr><td class="pic" rowspan="4">${img?`<img src="${img}" onerror="this.remove()">`:''}</td><td><b>${e(p[2])}</b>${e(size).replace(/^—$/,'')}</td></tr>
+    <tr><td>Order ID : <b>${e(p[7])}</b> &nbsp;Product ID : <b>${e(p[10])}</b> &nbsp;Job ID: <b>${e(p[9])}</b></td></tr>
+    <tr><td>Ups : <b>${raw.ups||1}</b> &nbsp;Blocks : <b>${raw.blocks||1}</b> &nbsp;Sheets: <b>${raw.sheet_qty?nf(raw.sheet_qty):'—'}</b></td></tr>
+    <tr><td>Total Qty: <b>${nf(p[4])} pcs</b><div style="font-size:9px;margin-top:3px">${e(p[3])}</div></td></tr>
   </table>
-  <div style="display:flex;gap:12px;margin:6px 0 4px;font-size:10px"><div>Packing date: ________________</div><div>☐ Full qty &nbsp; ☐ Part qty (urgent despatch)</div></div>
-  <table class="grid"><thead><tr><th class="c">#</th><th>Pcs per packet</th><th>No. of packets</th><th>Total pcs</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
-  <table class="tot" style="margin-top:8px">
-    <tr><td class="l">Total packets</td><td></td><td class="l">Total pcs packed</td><td></td></tr>
-    <tr><td class="l">Wastage (pcs)</td><td></td><td class="l">Wastage reason</td><td></td></tr>
-  </table>
-  <div class="sig"><div>Packed by</div><div>Checked by</div><div>Entered in app by</div></div>
-  <div class="note">After packing, take a clear photo of this slip and use “📷 Read slip” on the Packing screen — the numbers are filled in for you to check and save.</div>
+  <table class="grid"><thead><tr><th style="width:12%">Dt</th><th style="width:9%">D.No</th><th style="width:8%">Ups</th><th style="width:13%">Sheets</th><th style="width:10%">Pkts</th><th style="width:15%">Total</th><th style="width:13%">Checked</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
   </body></html>`);
   w.document.close();
 }
