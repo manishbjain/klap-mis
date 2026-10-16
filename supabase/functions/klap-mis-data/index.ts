@@ -288,6 +288,7 @@ Deno.serve(async(req)=>{
         fg_inventory:['date','prod_order_id','d_no','ups','sheets','packets','qty','qty_units','qty_wastage','wastage_problem','last_entry','comment','fg_status'],
         delivery_orders:['date','order_id','price','taxation'],
         delivery_order_items:['delivery_order_id','ds_item_pl_id','inv_batch_id','packet_qty'],
+        machines:['name','machine_type','processes','location','status','notes'],
       }
       const RULES:Record<string,{ops:string[],fields:string[]}>={
         pro_steps:{ops:['get','insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','process_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
@@ -309,6 +310,7 @@ Deno.serve(async(req)=>{
         purchase_orders:[['rm_in','purchase_id','id']],
         fg_inventory:[['delivery_order_items','inv_batch_id','inv_batch_id']],
         delivery_orders:[['delivery_order_items','delivery_order_id','id']],
+        machines:[['pro_steps','machine','name']],
       }
       const LABEL:Record<string,string>={orders:'orders',products:'products',production_orders:'production orders',pro_steps:'processes',pro_step_orders:'processes',rm_list:'RM items',rm_in:'GRNs',rm_out:'RM issues',purchase_orders:'purchase orders',dies:'dies',fg_inventory:'FG batches',delivery_orders:'despatches',delivery_order_items:'despatch items',rm_subcategories:'sub-categories'}
       const rule=RULES[table]
@@ -377,6 +379,7 @@ Deno.serve(async(req)=>{
       }else if(op==='insert'){
         if(table==='accounts'&&(!clean.name||!clean.account_type))return J({error:'Name and account type are required'},400)
         if(table==='products'&&!clean.product_name)return J({error:'Product name is required'},400)
+        if(table==='machines'&&!clean.name)return J({error:'Machine name is required'},400)
         if(COLS[table].includes('date')&&!clean.date)clean.date=new Date(Date.now()+19800000).toISOString().slice(0,10)
         for(let i=0;i<4&&!row;i++){
           const{data:nid,error:ie}=await supabase.rpc('next_app_id',{p_table:table,p_type:table==='accounts'?clean.account_type:table==='jobs'?clean.job_type:null})
@@ -399,6 +402,10 @@ Deno.serve(async(req)=>{
         row={...r.data,pro_ids:proIds}
       }else if(op==='update'){
         if(!Object.keys(clean).length)return J({error:'Nothing to update'},400)
+        if(table==='machines'&&'name' in clean&&clean.name!==old.name){
+          const{count}=await supabase.from('pro_steps').select('id',{count:'exact',head:true}).eq('machine',old.name)
+          if(count&&count>0)return J({error:'This machine is already used on '+count+' processes, so its name can\'t change (history keeps the old name). Add a new machine instead.'},400)
+        }
         if(table==='pro_steps'){
           const v=('vendor_id' in clean)?clean.vendor_id:old.vendor_id, m=('machine' in clean)?clean.machine:old.machine
           if(v&&m){ if('vendor_id' in clean&&clean.vendor_id)clean.machine=null; else if('machine' in clean&&clean.machine)clean.vendor_id=null }
@@ -465,8 +472,9 @@ Deno.serve(async(req)=>{
     const fg_inv=await fetchAll('fg_inventory','id,date,prod_order_id,inv_batch_id,d_no,ups,sheets,packets,qty,qty_units,qty_wastage,last_entry,fg_status','id')
     const dos=await fetchAll('delivery_orders','id,date,order_id,price,taxation')
     const do_items=await fetchAll('delivery_order_items','id,delivery_order_id,ds_item_pl_id,inv_batch_id,packet_qty','id')
+    const machines=await fetchAll('machines','id,name,machine_type,processes,location,status,notes')
     const pos=await fetchAll('purchase_orders','id,date,rm_id,vendor_id,pur_qty,rate,pur_unit,rate_units,status,bill_ref,comments')
-    return new Response(JSON.stringify({orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
+    return new Response(JSON.stringify({machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }catch(err:any){
     return new Response(JSON.stringify({error:err.message}),{status:500,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }

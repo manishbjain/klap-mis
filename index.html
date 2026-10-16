@@ -749,8 +749,8 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 
 <!-- MACHINES -->
 <div id="pg-machines" class="pg">
-  <div class="tc"><div class="th"><h3>Machines</h3></div>
-    <table><thead><tr><th>Machine</th><th>Type</th></tr></thead><tbody id="ma-body"></tbody></table>
+  <div class="tc"><div class="th"><h3>Machines</h3><span class="tc-cnt" id="ma-cnt"></span><div class="flt-row"></div></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Machine</th><th>Type</th><th>Processes</th><th>Location</th><th>Status</th><th style="text-align:right">Used on</th><th>Last used</th></tr></thead><tbody id="ma-body"></tbody></table></div>
   </div>
 </div>
 
@@ -1955,7 +1955,7 @@ async function renderProductImage(productId,size=40){
   return `<img src="${url}" style="width:${size}px;height:${size}px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid var(--bdr)" onerror="this.outerHTML='<div style=\\'width:${size}px;height:${size}px;border-radius:6px;background:var(--s2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size/2.5)}px\\'>🏷</div>'">`;
 }
 let D={o:[],pr:[],dq:[],pd:[],cu:[],ve:[],jo:[],di:[],pl:[],
-  rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[["Flexo Press 01","press"],["RF Punching 01","punching"],["RF Punching 02","punching"],["Rewinding 01","rewinding"],["Rewinding 02","rewinding"],["Platen 01","platen"],["Platen 02","platen"],["Tube Labelling 01","tube"],["Core Cutting 01","cutting"],["Core Cutting 02","cutting"],["Tube Seaming 01","tube"]],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
+  rm_cats:[],rm_subcats:[],rm_list:[],rm_in:[],rm_out:[],fg:[],dos:[],do_items:[],pos:[],procs_raw:[],ma:[],oa:[],oh:[],od:[],oc:[],pj:[],pp:[],kb:{to_confirm:[],in_design:[],in_production:[],in_packing:[],ready_despatch:[],despatched:[]},OT:0,OA:0,PT:0,JT:0,PDT:0};
 
 const EDGE_URL=`${SB_URL}/functions/v1/klap-mis-data`;
 // Save through the server (checks login + role permissions). Returns the saved row.
@@ -1980,6 +1980,7 @@ const CRUD_LISTS={
   ppc:[['Machine','PPC1 Flexo'],['Sheet','PPC2 Hybrid'],['Tupax','PPC3 TUPAX'],['Direct','PPC4 Direct'],['Direct5','PPC5 Direct']],
   acct:[['Customer','Customer'],['Vendor','Vendor'],['Transport','Transporter']],
   jobst:[['planned','Planned'],['in_progress','In progress'],['done','Done']],
+  mstat:[['active','Active'],['inactive','Not in use']],
   // read lazily: these lists are defined further down the file
   pstat:()=>PS_LIST.map(x=>[x,x]),
   proc:()=>JO_PROC_CODES.map(x=>[x,(PROC_LABEL[x]||x)+' ('+x+')'])
@@ -2020,6 +2021,7 @@ const CRUD={
   despatched:{alias:'despatch',tbody:'wdep-done-body',noAdd:true},
   pack_pros:{alias:'pros',tbody:'wpk-body',noAdd:true},
   pack_fg:{alias:'fg',tbody:'wpk-db',noAdd:true},
+  machines:{t:'machines',raw:'machines',title:'Machine',tbody:'ma-body',render:['machines'],fields:['name|t|Machine name*','machine_type|l|Type','processes|t|Processes it does (codes, e.g. PRT,RW)','location|t|Location','status|s:mstat|Status','notes|a|Notes']},
   do_items:{t:'delivery_order_items',addTo:'#pg-wdep .th .flt-row',raw:'do_items',title:'Despatch item',render:['despatch_live'],fields:['delivery_order_id|r:do|Despatch (DO)*','inv_batch_id|r:batch|FG batch*','packet_qty|n|Packets','ds_item_pl_id|t|Packing list item']}
 };
 function crudCfg(k){const c=CRUD[k];if(!c)return null;if(!c.alias)return Object.assign({key:k},c);const b=CRUD[c.alias];return Object.assign({key:c.alias},b,c,{key:c.alias,tbody:c.tbody,title:c.title||b.title,defaults:c.defaults||b.defaults});}
@@ -2433,6 +2435,8 @@ function buildData(raw){
       return [r.id,r.date,r.order_id,cname,r.price||0,r.taxation||'',itemCount];
     });
     D.do_items=do_items;
+    // D.ma: machines table [0]name [1]type [2]id [3]processes [4]status [5]location [6]notes
+    if(raw.machines)D.ma=raw.machines.map(m=>[m.name,m.machine_type||'',m.id,m.processes||'',m.status||'active',m.location||'',m.notes||'']);
 
     // D.pos: purchase orders [id, date, rm_name, vendor_name, qty, unit, rate, status]
     D.pos=pos.map(r=>{
@@ -4037,7 +4041,7 @@ const PS_LIST=['To Send','Job Order Sent','Job Approved','Part Processed','Moved
 const PS_STATE={'To Send':'pending','Job Order Sent':'in_progress','Job Approved':'in_progress','Part Processed':'in_progress','Moved':'done','Complete':'done','Cancelled':'cancelled'};
 function joStepSt(r){const s=(r.step_status||'').toLowerCase();return ['pending','in_progress','done','skipped','cancelled'].includes(s)?s:'pending';}
 function joVendors(){return (D.ve||[]).filter(v=>v[3]==='vendor').slice().sort((a,b)=>a[1].localeCompare(b[1]));}
-function joMachines(){return [...new Set((D.procs_raw||[]).map(r=>r.machine).filter(Boolean).map(m=>String(m).trim()))].sort();}
+function joMachines(){const act=(D.ma||[]).filter(m=>(m[4]||'active')==='active').map(m=>m[0]);return [...new Set(act.concat((D.procs_raw||[]).map(r=>r.machine).filter(Boolean).map(m=>String(m).trim())))].sort();}
 function selJob(e,jid){try{
   const j=D.jo.find(x=>x[0]===jid);
   if(!j)return;
@@ -4304,7 +4308,11 @@ R.plates=function(p){
 };
 
 R.machines=function(){
-  document.getElementById('ma-body').innerHTML=D.ma.map(m=>`<tr><td>${m[0]}</td><td>${badge(m[1])}</td></tr>`).join('');
+  const use={};(D.procs_raw||[]).forEach(r=>{const k=String(r.machine||'').trim();if(!k)return;const u=use[k]||(use[k]={n:0,last:''});u.n++;if(String(r.date||'')>u.last)u.last=String(r.date||'');});
+  const el=document.getElementById('ma-body');if(!el)return;
+  const c=document.getElementById('ma-cnt');if(c)c.textContent=D.ma.length+' machines';
+  el.innerHTML=D.ma.map(m=>{const u=use[m[0]]||{n:0,last:''};const pr=String(m[3]||'').split(',').filter(Boolean).map(x=>`<span class="badge" style="background:var(--s2);color:var(--t2);margin-right:3px">${PROC_LABEL[x.trim()]||x}</span>`).join('');
+    return `<tr><td class="mono">${m[2]||'—'}</td><td style="font-weight:600">${m[0]}</td><td>${m[1]||'—'}</td><td>${pr||'—'}</td><td>${m[5]||'—'}</td><td>${badge(m[4]||'active')}</td><td style="text-align:right">${u.n.toLocaleString()}</td><td>${u.last||'—'}</td></tr>`;}).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No machines yet — add one</td></tr>';
 };
 
 function selVendor(e,vid,vname){
