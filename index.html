@@ -1779,7 +1779,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-034336';
+const APP_BUILD='20261017-034807';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -4768,7 +4768,7 @@ async function genPackingSlip(proid){
   const e=v=>String(v==null||v===''?'—':v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const size=prod.size_l?` - ${prod.size_l} x ${prod.size_b} x ${prod.size_h||0} ${prod.size_units||'mm'}`:'';
   const img=p[10]?getProductImageUrl(p[10]):'';
-  const rows=Array.from({length:11},()=>'<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>').join('');
+  const rows=Array.from({length:17},()=>'<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>').join('');
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to print the slip');return;}
   w.document.write('<p style="font-family:Arial;padding:20px">Preparing slip…</p>');
@@ -4777,21 +4777,24 @@ async function genPackingSlip(proid){
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Packing slip ${e(proid)} (A5)</title>
   <style>
   @page{size:A5 portrait;margin:8mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0 auto;max-width:132mm;font-size:10px}
-  .top{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}.pro{margin-left:auto;margin-right:auto;font-size:15px;font-weight:800;padding-top:4px}
-  #qr{width:26mm;height:26mm}#qr img,#qr canvas{width:26mm!important;height:26mm!important}
   table{border-collapse:collapse;width:100%}td,th{border:1px solid #000}
-  .box td{padding:4px 6px;vertical-align:top}.box .pic{width:42%;text-align:center;vertical-align:middle}.box .pic img{max-width:100%;max-height:34mm;object-fit:contain}
-  .box b{font-size:11px}.grid{margin-top:7px}.grid th{font-size:9.5px;padding:3px;text-align:left;vertical-align:top;height:9mm}.grid td{height:8.6mm}
+  .box td{padding:4px 6px;vertical-align:top}.box .qr{width:24mm;text-align:center;padding:3px}.box .qr img{width:21mm;height:21mm;display:block;margin:0 auto}
+  .pro{font-size:12px;font-weight:800;margin-top:2px;letter-spacing:.3px}
+  .box .det div{margin-bottom:3px}.box .det .pn{font-size:12px;font-weight:800}.box .det .pn span{font-weight:400;font-size:10px}
+  .box .det .tq{font-size:11px}.box .det .cu{font-size:9px;color:#333;margin:0}
+  .box .pic{width:30mm;text-align:center;vertical-align:middle;padding:2px}.box .pic img{max-width:29mm;max-height:26mm;object-fit:contain}
+  .grid{margin-top:5px}.grid th{font-size:9.5px;padding:3px;text-align:left;vertical-align:middle;height:6mm}.grid td{height:8.6mm}
   .np{margin:10px 0;text-align:center}@media print{.np{display:none}}
   </style></head><body>
   <div class="np"><button onclick="window.print()" style="font-size:14px;padding:8px 18px">🖨 Print (A5)</button></div>
-  <div class="top"><div id="qr">${qr?`<img src="${qr}" alt="QR ${e(proid)}">`:''}</div><div class="pro">${e(proid)}</div></div>
-  <table class="box">
-    <tr><td class="pic" rowspan="4">${img?`<img src="${img}" onerror="this.remove()">`:''}</td><td><b>${e(p[2])}</b>${e(size).replace(/^—$/,'')}</td></tr>
-    <tr><td>Order ID : <b>${e(p[7])}</b> &nbsp;Product ID : <b>${e(p[10])}</b> &nbsp;Job ID: <b>${e(p[9])}</b></td></tr>
-    <tr><td>Ups : <b>${raw.ups||1}</b> &nbsp;Blocks : <b>${raw.blocks||1}</b> &nbsp;Sheets: <b>${raw.sheet_qty?nf(raw.sheet_qty):'—'}</b></td></tr>
-    <tr><td>Total Qty: <b>${nf(p[4])} pcs</b><div style="font-size:9px;margin-top:3px">${e(p[3])}</div></td></tr>
-  </table>
+  <table class="box"><tr>
+    <td class="qr">${qr?`<img src="${qr}" alt="QR ${e(proid)}">`:''}<div class="pro">${e(proid)}</div></td>
+    <td class="det"><div class="pn">${e(p[2])}<span>${e(size).replace(/^—$/,'')}</span></div>
+      <div>Order: <b>${e(p[7])}</b> · Product: <b>${e(p[10])}</b> · Job: <b>${e(p[9])}</b></div>
+      <div>Ups: <b>${raw.ups||1}</b> · Blocks: <b>${raw.blocks||1}</b> · Sheets: <b>${raw.sheet_qty?nf(raw.sheet_qty):'—'}</b></div>
+      <div class="tq">Total Qty: <b>${nf(p[4])} pcs</b></div><div class="cu">${e(p[3])}</div></td>
+    <td class="pic">${img?`<img src="${img}" onerror="this.remove()">`:''}</td>
+  </tr></table>
   <table class="grid"><thead><tr><th style="width:12%">Dt</th><th style="width:9%">D.No</th><th style="width:8%">Ups</th><th style="width:13%">Sheets</th><th style="width:10%">Pkts</th><th style="width:15%">Total</th><th style="width:13%">Checked</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
   </body></html>`);
   w.document.close();
