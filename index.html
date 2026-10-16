@@ -164,6 +164,40 @@ tr.sel td{background:var(--acc-lt)}
 .pwx-cf .w{font-size:11px;color:var(--t2);font-weight:600}
 .pwx-cf .tq{margin-left:auto;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
 .pwx-empty{padding:16px 8px;text-align:center;color:var(--t3);font-size:12px}
+.pwt-wrap{width:100%;overflow-x:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:12px}
+.pwt{width:100%;min-width:1100px;border-collapse:collapse;font-size:13px}
+.pwt th{position:sticky;top:0;background:var(--s2);text-align:left;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--bdr);white-space:nowrap;z-index:1}
+.pwt td{padding:8px 10px;border-top:1px solid var(--bdr);vertical-align:middle}
+.pwt .num{text-align:right;font-variant-numeric:tabular-nums}
+.pwt .dim{color:var(--t2);font-size:12px;white-space:nowrap}
+.pwt-grp td{background:var(--s2);cursor:pointer;user-select:none;padding:10px}
+.pwt-grp b{font-size:14px}
+.pwt-grp .car{display:inline-block;width:16px;color:var(--t2);transition:transform .15s}
+.pwt-grp.closed .car{transform:rotate(-90deg)}
+.pwt .gc{font-size:11px;font-weight:600;background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:1px 8px;color:var(--t2);margin-left:8px}
+.pwt-grp .gs{color:var(--t2);font-size:12px}
+.pwt-sub td{padding:6px 10px 6px 36px;font-size:12px;font-weight:700;color:var(--t2);background:var(--s1)}
+.pwt-sub3 td{padding-left:60px;font-weight:500}
+.pwt-sub .gc{background:transparent;border:0;padding:0;margin-left:6px}
+.pwt-row{cursor:pointer}
+.pwt-row:hover td{background:var(--s2)}
+.pwt td.th{width:48px;padding-right:0}
+.pwt td.th img,.pwt-noimg{width:42px;height:42px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:18px}
+.pwt .jid{font-weight:700;font-family:monospace;font-size:13px}
+.pwt .ln{line-height:1.6;white-space:nowrap}
+.pwt .pid{font-family:monospace;color:var(--acc);font-weight:600;margin-right:8px}
+.pwt .pn{display:inline-block;max-width:240px;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
+.pwt .who{font-size:12px;color:var(--t2);max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pwt .sub{font-size:11px;color:var(--t2);margin-top:3px}
+.pwt b.hot{color:#dc2626}
+.pwt-prog{display:flex;align-items:center;gap:8px}
+.pwt-prog .tr{width:80px;height:6px;border-radius:3px;background:var(--s2);overflow:hidden}
+.pwt-prog .fl{height:100%;background:#2563eb;border-radius:3px}
+.pwt-prog .fl.full{background:#16a34a}
+.pwt-prog span{font-size:12px;color:var(--t2);font-variant-numeric:tabular-nums}
+.pwt-pill{display:inline-block;border-radius:6px;padding:3px 9px;font-weight:600;font-size:12px;white-space:nowrap}
+.pwt-pill.run{background:#e3ecfd;color:#2563eb}.pwt-pill.ven{background:#fdf0dc;color:#b45309}
+.pwt-pill.wait{background:#eef0f3;color:#6b7280}.pwt-pill.plan{background:#f1eafd;color:#7c3aed}
 .pwx-none{background:var(--s1);border:1px dashed var(--bdr);border-radius:12px;padding:40px 20px;text-align:center;color:var(--t2);width:100%}
 /* job flow (in job panel) */
 .pwf{border:1px solid var(--bdr);border-radius:10px;padding:12px;background:var(--s2);display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
@@ -763,12 +797,14 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <div id="pg-wflow-prod" class="pg">
   <div id="pw-ppc-tabs" class="pwx-tabs"></div>
   <div class="pwx-bar">
-    <div class="pwx-seg" role="group" aria-label="Group columns by">
-      <button type="button" id="pw-mode-process" class="on" onclick="pwSetMode('process')">By process › vendor</button>
-      <button type="button" id="pw-mode-vendor" onclick="pwSetMode('vendor')">By vendor / machine › process</button>
+    <span style="font-size:12px;color:var(--t2)">Group by</span>
+    <div class="pwx-seg" role="group" aria-label="Group by">
+      <button type="button" id="pw-mode-vendor" class="on" onclick="pwSetMode('vendor')">Vendor</button>
+      <button type="button" id="pw-mode-process" onclick="pwSetMode('process')">Process</button>
+      <button type="button" id="pw-mode-none" onclick="pwSetMode('none')">No grouping</button>
     </div>
     <input class="f pwx-q" id="pw-q" type="search" placeholder="Search job, PRO, product…" oninput="pwRender()" aria-label="Search live jobs">
-    <button type="button" class="btn pwx-ghost" id="pw-allcols-btn" onclick="pwToggleAllCols()">Show all processes</button>
+    <div class="pwx-seg" id="pw-exp"><button type="button" onclick="pwExpandAll(true)">Expand all</button><button type="button" onclick="pwExpandAll(false)">Collapse all</button></div>
     <button type="button" class="btn pwx-ghost" id="pw-old-btn" onclick="pwToggleOld()" title="Jobs older than 60 days that still have open steps or PROs — probably finished but never closed"></button>
     <button type="button" class="btn btn-p" style="margin-left:auto" onclick="pwNewJob()">+ New Job</button>
   </div>
@@ -5911,7 +5947,7 @@ var PW_ORDER=['Machine','Sheet','Tupax','Direct','Direct5'];
 // Process order from the Prod_Process_Category sheet
 var PW_SEQ=['PRT','COAT','LMN','EMB','STRG','PUN','CRCT','CUT','RW','SHT','DVD','WPT','SPT','TLBL','TSMG','TBND','TDSC'];
 var PW_CORE=['PRT','PUN'];
-var _pwPPC=null,_pwMode='process',_pwAllCols=false,_pwShowOld=false;
+var _pwPPC=null,_pwMode='vendor',_pwAllCols=false,_pwShowOld=false;
 function pwH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function pwJS(s){return pwH(JSON.stringify(String(s)));}
 function pwPPCB(t){
@@ -6009,72 +6045,108 @@ function pwRender(){
     var on=k===_pwPPC;
     return '<button type="button" class="pwx-tab'+(on?' on':'')+'" style="'+(on?'border-color:'+p.tone+';background:'+p.bg+';color:'+p.tone:'')+'" onclick="pwSetPPC('+pwJS(k)+')"><b>'+p.code+'</b><span>'+p.lbl+'</span><span class="n">'+n+'</span></button>';
   }).join('');
-  ['process','vendor'].forEach(function(m){var b=document.getElementById('pw-mode-'+m);if(b)b.classList.toggle('on',_pwMode===m);});
-  var ac=document.getElementById('pw-allcols-btn');if(ac){ac.classList.toggle('on',_pwAllCols);ac.style.display=_pwMode==='process'?'':'none';}
   var oldN=(D.pj||[]).filter(function(j){return j[5];}).length;
   var ob=document.getElementById('pw-old-btn');
   if(ob){ob.textContent=(_pwShowOld?'Hide':'Show')+' old jobs ('+oldN+')';ob.style.display=oldN?'':'none';ob.classList.toggle('on',_pwShowOld);}
 
   var jobs=pwJobsFor(_pwPPC);
   var models=jobs.map(pwJobModel);
-  // cards
-  var cards=[];
-  models.forEach(function(m){
-    m.groups.forEach(function(g){cards.push({m:m,g:g});});
-  });
-  // stats
+  // One table row per job position (a split job gives one row per branch)
+  var rows=[];
+  models.forEach(function(m){m.groups.forEach(function(g){rows.push(pwRowModel(m,g));});});
   var ppcJobs=all.filter(function(j){return _pwPPC==='none'?!PW_PPC[j[2]]:j[2]===_pwPPC;});
   var ppcPros=(D.pp||[]).filter(function(p){return ppcJobs.some(function(j){return j[0]===p[9];});});
   var qty=ppcPros.reduce(function(a,p){return a+(p[4]||0);},0);
-  var planPros=0;cards.forEach(function(c){if(c.g.plan)planPros+=c.g.items.length;});
-  var stats=[['Live jobs',ppcJobs.length],['PROs',ppcPros.length],['Quantity (pcs)',pwFmt(qty)],
-    ['At jobworkers',cards.filter(function(c){return !c.g.plan&&!c.g.inHouse;}).length],
-    ['Running in-house',cards.filter(function(c){return !c.g.plan&&c.g.inHouse&&c.g.running;}).length],
-    ['PROs to plan',planPros]];
+  var k={run:0,ven:0,wait:0,plan:0};rows.forEach(function(r){k[r.kind]++;});
+  var stats=[['Live jobs',ppcJobs.length],['PROs',ppcPros.length],['Quantity (pcs)',pwFmt(qty)],['Running in-house',k.run],['At vendors',k.ven],['Waiting',k.wait],['To plan',k.plan]];
   document.getElementById('pw-stats').innerHTML=stats.map(function(s){return '<div class="pwx-stat"><div class="l">'+s[0]+'</div><div class="v">'+s[1]+'</div></div>';}).join('');
+  ['vendor','process','none'].forEach(function(m){var b=document.getElementById('pw-mode-'+m);if(b)b.classList.toggle('on',_pwMode===m);});
+  var ex=document.getElementById('pw-exp');if(ex)ex.style.display=_pwMode==='none'?'none':'';
 
   var board=document.getElementById('pw-board');
-  if(!cards.length){
+  if(!rows.length){
     var p=PW_PPC[_pwPPC];
     board.innerHTML='<div class="pwx-none"><div style="font-weight:700;color:var(--txt);font-size:14px">No live jobs here</div><div style="margin-top:4px">'+(ppcJobs.length?'No jobs match your search.':'No '+(p?p.code+' '+p.lbl:'unassigned')+' jobs are live right now.')+'</div></div>';
     return;
   }
-  var sortCards=function(a,b){return (b.g.running?1:0)-(a.g.running?1:0)||(b.m.job[6]||0)-(a.m.job[6]||0);};
-  var cols=[];
-  if(_pwMode==='process'){
-    var present={};cards.forEach(function(c){present[c.g.proc]=1;});
-    var procs=PW_SEQ.filter(function(c){return _pwAllCols||PW_CORE.indexOf(c)>=0||present[c];});
-    Object.keys(present).forEach(function(c){if(c!=='PLAN'&&procs.indexOf(c)<0)procs.push(c);});
-    if(present.PLAN)procs.unshift('PLAN');
-    cols=procs.map(function(pc){
-      var inCol=cards.filter(function(c){return c.g.proc===pc;});
-      var gm={},go=[];
-      inCol.forEach(function(c){var k=c.g.who;if(!gm[k]){gm[k]={label:k,inHouse:c.g.inHouse,plan:c.g.plan,items:[]};go.push(k);}gm[k].items.push(c);});
-      var groups=go.map(function(k){return gm[k];}).sort(function(a,b){return (b.inHouse?1:0)-(a.inHouse?1:0)||b.items.length-a.items.length;});
-      return {title:pc==='PLAN'?'To plan':pwProcName(pc),code:pc==='PLAN'?'':pc,count:inCol.length,groups:groups.map(function(g){
-        return {label:g.label,kind:g.plan?'':(g.inHouse?'<span class="k ih">In-house</span>':'<span class="k jw">Jobworker</span>'),items:g.items.sort(sortCards)};
-      })};
-    });
+  var html='';
+  var bySort=function(rs){return rs.slice().sort(function(a,b){return (b.here||0)-(a.here||0);});};
+  if(_pwMode==='none'){
+    _pwGids=[];
+    bySort(rows).forEach(function(r){html+=pwRowHtml(r);});
   }else{
-    var wm={},wo=[];
-    cards.forEach(function(c){var k=c.g.plan?'To plan':c.g.who;if(!wm[k]){wm[k]={label:k,plan:c.g.plan,inHouse:c.g.inHouse,items:[]};wo.push(k);}wm[k].items.push(c);});
-    var ws=wo.map(function(k){return wm[k];}).sort(function(a,b){return (b.plan?1:0)-(a.plan?1:0)||(b.inHouse?1:0)-(a.inHouse?1:0)||b.items.length-a.items.length;});
-    cols=ws.map(function(w){
-      var gm={},go=[];
-      w.items.forEach(function(c){var k=c.g.proc;if(!gm[k]){gm[k]=[];go.push(k);}gm[k].push(c);});
-      go.sort(function(a,b){return PW_SEQ.indexOf(a)-PW_SEQ.indexOf(b);});
-      return {title:w.label,code:w.plan?'':(w.inHouse?'in-house':'jobworker'),count:w.items.length,groups:go.map(function(k){
-        return {label:k==='PLAN'?'No processes yet':pwProcName(k),kind:k==='PLAN'?'':'<span class="k pc">'+pwH(k)+'</span>',items:gm[k].sort(sortCards)};
-      })};
+    var vk=function(r){return r.vendor;},pk=function(r){return r.proc;},mk=function(r){return r.machine;};
+    var lv=_pwMode==='process'?[pk,vk]:[vk,pk];
+    var nm=function(f,x){return f===pk?(x==='PLAN'?'To plan':pwProcName(x)):x;};
+    var by=function(rs,f){var g={};rs.forEach(function(r){var x=f(r);(g[x]=g[x]||[]).push(r);});return g;};
+    var sorter=function(f,g){return function(a,b){
+      if(a==='PLAN'||a==='To plan')return 1;if(b==='PLAN'||b==='To plan')return -1;
+      if(f===pk){var ia=PW_SEQ.indexOf(a),ib=PW_SEQ.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);}
+      if(a==='In house')return -1;if(b==='In house')return 1;
+      return g[b].length-g[a].length||a.localeCompare(b);};};
+    var sum=function(rs){var c={run:0,ven:0,wait:0};rs.forEach(function(r){if(c[r.kind]!=null)c[r.kind]++;});return [c.run?c.run+' running':'',c.ven?c.ven+' at vendor':'',c.wait?c.wait+' waiting':''].filter(Boolean).join(' · ');};
+    var top=by(rows,lv[0]),order=Object.keys(top).sort(sorter(lv[0],top));
+    _pwGids=order.map(function(g){return _pwMode+':'+g;});
+    order.forEach(function(g){
+      var rs=top[g],gid=_pwMode+':'+g,closed=!!_pwClosed[gid];
+      var q=rs.reduce(function(a,r){return a+r.qty;},0);
+      html+='<tr class="pwt-grp'+(closed?' closed':'')+'" onclick="pwToggleGrp('+pwJS(gid)+')"><td colspan="3"><span class="car">▾</span><b>'+pwH(nm(lv[0],g))+'</b><span class="gc">'+rs.length+(rs.length===1?' job':' jobs')+'</span></td><td class="num"><b>'+pwFmt(q)+'</b></td><td colspan="7" class="gs">'+sum(rs)+'</td></tr>';
+      if(closed)return;
+      if(g==='To plan'||g==='PLAN'){bySort(rs).forEach(function(r){html+=pwRowHtml(r);});return;}
+      var s2=by(rs,lv[1]);
+      Object.keys(s2).sort(sorter(lv[1],s2)).forEach(function(k2){
+        html+='<tr class="pwt-sub"><td colspan="11">'+pwH(nm(lv[1],k2))+'<span class="gc">'+s2[k2].length+'</span></td></tr>';
+        if((lv[0]===vk?g:k2)!=='In house'){bySort(s2[k2]).forEach(function(r){html+=pwRowHtml(r);});return;}
+        var s3=by(s2[k2],mk);
+        Object.keys(s3).sort(function(a,b){if(a==='—')return 1;if(b==='—')return -1;return a.localeCompare(b);}).forEach(function(k3){
+          html+='<tr class="pwt-sub pwt-sub3"><td colspan="11">'+(k3==='—'?'No machine set':pwH(k3))+'<span class="gc">'+s3[k3].length+'</span></td></tr>';
+          bySort(s3[k3]).forEach(function(r){html+=pwRowHtml(r);});
+        });
+      });
     });
   }
-  board.innerHTML=cols.map(function(col){
-    var body=col.groups.map(function(g){
-      return '<div class="pwx-grp"><div class="pwx-grph"><span>'+pwH(g.label)+'</span>'+g.kind+'<span class="n">'+g.items.length+'</span></div>'+g.items.map(pwCard).join('')+'</div>';
-    }).join('')||'<div class="pwx-empty">Nothing here</div>';
-    return '<section class="pwx-col" aria-label="'+pwH(col.title)+'"><div class="pwx-colh"><span class="t">'+pwH(col.title)+'</span><span class="c">'+pwH(col.code)+'</span><span class="n">'+col.count+'</span></div>'+body+'</section>';
-  }).join('');
+  board.innerHTML='<div class="pwt-wrap"><table class="pwt"><thead><tr><th></th><th>Job</th><th>PROs / Product</th><th class="num">Qty (pcs)</th><th>Progress</th><th>Now</th><th>Vendor</th><th>Machine</th><th>Job date</th><th class="num">Days here</th><th class="num">Job age</th></tr></thead><tbody>'+html+'</tbody></table></div>';
 }
+var _pwClosed={},_pwGids=[];
+function pwToggleGrp(g){_pwClosed[g]=!_pwClosed[g];pwRender();}
+function pwExpandAll(open){_pwGids.forEach(function(g){_pwClosed[g]=!open;});pwRender();}
+function pwDays(d){if(!d)return null;var t=new Date();t.setHours(0,0,0,0);return Math.max(0,Math.round((t-new Date(String(d).slice(0,10)+'T00:00:00'))/864e5));}
+function pwRowModel(m,g){
+  var j=m.job,cur=g.plan?null:g.items[0].cur;
+  var ids=g.items.map(function(x){return x.pro[0];});
+  var steps=pwStepsOfMany(ids).filter(function(r){var s=pwStepSt(r);return s!=='cancelled'&&s!=='skipped';});
+  var done=steps.filter(function(r){return pwStepSt(r)==='done';}).length;
+  var ih=cur?pwIsInHouse(cur):true;
+  var jd=String(j[1]||'').slice(0,10),sd=cur?String(cur.date||'').slice(0,10):'';
+  return {m:m,g:g,job:j,cur:cur,items:g.items,proc:g.proc,
+    vendor:g.plan?'To plan':(ih?'In house':pwVendorName(cur.vendor_id)),
+    machine:(cur&&ih&&cur.machine)?String(cur.machine).trim():'—',
+    kind:g.plan?'plan':(pwStepSt(cur)==='in_progress'?(ih?'run':'ven'):'wait'),
+    done:done,n:steps.length,pct:steps.length?Math.round(done/steps.length*100):0,
+    qty:g.items.reduce(function(a,x){return a+(x.pro[4]||0);},0),
+    here:cur?pwDays(sd&&sd>=jd?sd:jd):null,age:j[6]};
+}
+function pwRowHtml(r){
+  var j=r.job,g=r.g;
+  var lbl={run:'Running',ven:'At vendor',wait:'Waiting',plan:'To plan'}[r.kind];
+  var img=getProductImageUrl(r.items[0].pro[17]);
+  var thumb=img?'<img src="'+img+'" loading="lazy" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'pwt-noimg\',textContent:\'🏷\'}))">':'<span class="pwt-noimg">🏷</span>';
+  var pros=r.items.map(function(x){return '<div class="ln"><span class="pid">'+pwH(x.pro[0])+'</span><span class="pn" title="'+pwH(x.pro[2]||'')+'">'+pwH(x.pro[2]||'—')+'</span></div>';}).join('');
+  var qtys=r.items.map(function(x){return '<div class="ln">'+pwFmt(x.pro[4])+'</div>';}).join('');
+  var now=(_pwMode==='none'&&!g.plan)?'<div class="sub">'+pwH(pwProcName(r.proc))+'</div>':'';
+  return '<tr class="pwt-row" onclick="selJob(null,'+pwJS(j[0])+')">'+
+    '<td class="th">'+thumb+'</td>'+
+    '<td><span class="jid">'+pwH(j[0])+'</span>'+(g.branch?'<span class="pwx-split">Split '+g.branch+' · '+g.items.length+'/'+r.m.pros.length+'</span>':'')+'</td>'+
+    '<td>'+pros+'</td><td class="num">'+qtys+'</td>'+
+    '<td><div class="pwt-prog"><div class="tr"><div class="fl'+(r.pct===100?' full':'')+'" style="width:'+r.pct+'%"></div></div><span>'+(r.n?r.done+'/'+r.n:'—')+'</span></div></td>'+
+    '<td><span class="pwt-pill '+r.kind+'">'+lbl+'</span>'+now+'</td>'+
+    '<td class="who" title="'+pwH(r.vendor)+'">'+pwH(g.plan?'—':r.vendor)+'</td>'+
+    '<td class="who">'+pwH(r.machine)+'</td>'+
+    '<td class="dim">'+pwDShort(j[1])+'</td>'+
+    '<td class="num"><b'+(r.here>7?' class="hot"':'')+'>'+(r.here==null?'—':r.here)+'</b></td>'+
+    '<td class="num dim">'+(r.age==null?'—':r.age+'d')+'</td></tr>';
+}
+function pwDShort(d){d=String(d||'').slice(0,10);if(!d)return '—';var p=d.split('-');if(p.length<3)return pwH(d);return (+p[2])+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1]-1]+(p[0]!==String(new Date().getFullYear())?' '+p[0].slice(2):'');}
 function pwCard(c){
   var j=c.m.job,g=c.g;
   var pros=g.items.map(function(x){
