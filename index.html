@@ -167,6 +167,9 @@ tr.sel td{background:var(--acc-lt)}
 .fd-empty{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);margin-top:6px;cursor:pointer}
 .fd-tag-e{border-style:dashed!important;font-style:italic}
 #crud-modal{display:none;position:fixed;inset:0;z-index:3000}
+.fgv{display:inline-flex;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-left:4px}.fgv button{border:0;background:var(--s1);color:var(--t2);font-size:11px;font-weight:600;padding:5px 9px;cursor:pointer}.fgv button.on{background:var(--acc);color:#fff}.fgv button+button{border-left:1px solid var(--bdr)}
+tr.fgg td{background:var(--s2);font-size:12.5px;padding:9px 12px;cursor:pointer;border-top:1px solid var(--bdr)}tr.fgg:hover td{background:var(--s1)}tr.fgg.open td{background:rgba(99,102,241,.07)}
+.fgg-ar{display:inline-block;width:14px;color:var(--t3)}.fgg-c{color:var(--t2);font-size:11.5px;margin-left:10px}.fgg-s{float:right;display:flex;gap:16px;color:var(--t2);font-size:11.5px}.fgg-s b{color:var(--txt)}
 .cm-bg{position:absolute;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow-y:auto}
 .cm-box{background:var(--s1);color:var(--txt);border-radius:14px;width:680px;max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;max-height:92vh}
 .cm-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--bdr);font-size:15px}
@@ -1028,11 +1031,11 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <div class="flt-row">
         <select class="f" id="fgis-cust" onchange="R.fg_instock(1)"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
         <select class="f" id="fgis-prod" onchange="R.fg_instock(1)"><option value="">All Products</option><option value="__EMPTY__">(Empty)</option></select>
-        <input class="f" id="fgis-q" placeholder="Search batch / product / design no…" oninput="R.fg_instock(1)" style="width:200px">
+        <input class="f" id="fgis-q" placeholder="Search batch / product / design no…" oninput="R.fg_instock(1)" style="width:200px"><span id="fgv-fg_instock"></span>
       </div>
     </div>
     <div style="overflow-x:auto"><table><thead><tr>
-      <th>Batch ID</th><th>Packed Date</th><th>Product</th><th>Customer</th>
+      <th>Batch ID</th><th style="cursor:pointer" title="Show as a list by date" onclick="fgSetView('fg_instock','list')">Packed Date ⇅</th><th>Product</th><th>Customer</th>
       <th>Design No</th><th>Ups×Sheets</th><th>Total Pkts</th>
       <th style="background:rgba(16,185,129,.08);color:var(--grn)">Pkts In Stock ✅</th>
       <th style="text-align:right">Pcs In Stock</th><th>Despatched</th><th>PRO</th><th></th>
@@ -1060,12 +1063,12 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
           <option value="despatched">Fully Despatched</option>
         </select>
         <input class="f" id="winv-q" placeholder="Search product / customer / batch / design…" oninput="R.fg_inventory(1)" style="width:200px">
-        <button class="fd-btn" id="fd-btn-fg-inv" onclick="openFD('fg-inv')">⚙ Filters</button>
+        <button class="fd-btn" id="fd-btn-fg-inv" onclick="openFD('fg-inv')">⚙ Filters</button><span id="fgv-fg_inventory"></span>
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-fg-inv"><span id="fd-bar-fg-inv-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('fg-inv')">Clear all</button></div>
     <div style="overflow-x:auto"><table><thead><tr>
-      <th>Batch ID</th><th>Date</th><th>Product</th><th>Customer</th>
+      <th>Batch ID</th><th style="cursor:pointer" title="Show as a list by date" onclick="fgSetView('fg_inventory','list')">Date ⇅</th><th>Product</th><th>Customer</th>
       <th>Design No</th><th>Ups×Sheets</th><th>Total Pkts</th>
       <th>In Stock</th><th>Despatched</th><th>Wastage</th><th>PRO</th><th>Action</th>
     </tr></thead><tbody id="winv-body"></tbody></table></div>
@@ -1087,11 +1090,11 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
         <select class="f" id="fgo-type" onchange="R.fg_out(1)"><option value="">Despatch + Adjustment</option><option value="ds">Despatch</option><option value="adj">Adjustment</option></select>
         <select class="f" id="fgo-cust" onchange="R.fg_out(1)"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
         <input class="f" type="date" id="fgo-from" onchange="R.fg_out(1)" title="From date"><input class="f" type="date" id="fgo-to" onchange="R.fg_out(1)" title="To date">
-        <input class="f" id="fgo-q" placeholder="Search DS / order / batch / PRO / product…" oninput="R.fg_out(1)" style="width:220px">
+        <input class="f" id="fgo-q" placeholder="Search DS / order / batch / PRO / product…" oninput="R.fg_out(1)" style="width:220px"><span id="fgv-fg_out"></span>
       </div>
     </div>
     <div style="overflow-x:auto"><table><thead><tr>
-      <th>Date</th><th>Type</th><th>DS / Ref</th><th>Order</th><th>Customer</th><th>Product</th><th>Batch</th><th>PRO</th>
+      <th style="cursor:pointer" title="Show as a list by date" onclick="fgSetView('fg_out','list')">Date ⇅</th><th>Type</th><th>DS / Ref</th><th>Order</th><th>Customer</th><th>Product</th><th>Batch</th><th>PRO</th>
       <th style="text-align:right">Packets</th><th style="text-align:right">Pcs</th><th>Note</th>
     </tr></thead><tbody id="fgout-body"></tbody></table></div>
     <div class="pg-bar" id="fgo-pg"></div>
@@ -1804,7 +1807,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-041643';
+const APP_BUILD='20261017-042936';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -5119,9 +5122,9 @@ R.fg_instock=function(p){
   const ep=document.getElementById('fgis-pkts');if(ep)ep.textContent=totalPkts.toLocaleString();
   const ec=document.getElementById('fgis-pcs');if(ec)ec.textContent=items.reduce((s,r)=>s+(Number(r[16])||0),0).toLocaleString('en-IN');
   const epr=document.getElementById('fgis-prods');if(epr)epr.textContent=uniqueProds.size;
-  const slice=pgr(items,'fg_instock','R.fg_instock','fgis-pg','fgis-cnt');
   const tbody=document.getElementById('fgis-body');if(!tbody)return;
-  tbody.innerHTML=slice.map(r=>{
+  const _rowFn=r=>{
+  // (rows grouped by product unless list view)
     const upsSheets=(r[12]&&r[13])?r[12]+'×'+r[13]:'—';
     const pktsIn=Number(r[15])||0;
     const pktsDesp=despMap[r[3]]||0;
@@ -5141,9 +5144,44 @@ R.fg_instock=function(p){
       <td class="mono" style="font-size:11px;color:var(--acc);cursor:pointer" onclick="event.stopPropagation();selPR(event,${esc(r[2])})">${r[2]||'—'}</td>
       <td onclick="event.stopPropagation()"><button class="ab" title="Discard / adjust stock of this batch" onclick="fgAdjust(${esc(r[3])})">− Adjust</button></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="12" style="padding:30px;text-align:center;color:var(--t3)">No items in stock</td></tr>';
+  };
+  tbody.innerHTML=fgGroupHtml('fg_instock',items,_rowFn,{cols:12,pg:['R.fg_instock','fgis-pg','fgis-cnt'],sum:r=>[Number(r[15])||0,Number(r[16])||0],name:r=>r[7],cust:r=>r[8],date:r=>r[1],sortBy:'name'})||'<tr><td colspan="12" style="padding:30px;text-align:center;color:var(--t3)">No items in stock</td></tr>';
 };
 
+// ── Inventory tables: grouped by product (collapsed) or a plain list ─────────
+window._fgView=window._fgView||{};window._fgOpen=window._fgOpen||{};
+const FG_RENDER={fg_instock:()=>R.fg_instock(),fg_inventory:()=>R.fg_inventory(),fg_out:()=>R.fg_out()};
+function fgSetView(k,v){_fgView[k]=v;FG_RENDER[k]&&FG_RENDER[k]();}
+function fgToggle(k,name){const o=_fgOpen[k]||(_fgOpen[k]=new Set());o.has(name)?o.delete(name):o.add(name);FG_RENDER[k]&&FG_RENDER[k]();}
+function fgAll(k,open){_fgOpen[k]=open?new Set(_fgLastGroups[k]||[]):new Set();FG_RENDER[k]&&FG_RENDER[k]();}
+const _fgLastGroups={};
+function fgViewBar(k){const g=(_fgView[k]||'group')==='group';
+  return `<span class="fgv"><button class="${g?'on':''}" onclick="fgSetView('${k}','group')">📦 By product</button><button class="${g?'':'on'}" onclick="fgSetView('${k}','list')">☰ List by date</button></span>${g?`<span class="fgv"><button onclick="fgAll('${k}',1)">Expand all</button><button onclick="fgAll('${k}',0)">Collapse all</button></span>`:''}`;}
+function fgGroupHtml(k,items,rowFn,o){
+  const bar=document.getElementById('fgv-'+k);if(bar)bar.innerHTML=fgViewBar(k);
+  const nf=n=>Number(n||0).toLocaleString('en-IN');
+  if((_fgView[k]||'group')==='list'){
+    const its=[...items].sort((a,b)=>String(o.date(b)||'').localeCompare(String(o.date(a)||'')));
+    const slice=pgr(its,k,o.pg[0].replace(/\(.*$/,''),o.pg[1],o.pg[2]);
+    return slice.map(rowFn).join('');
+  }
+  const m=new Map();
+  items.forEach(r=>{const n=o.name(r)||'(No product)';let g=m.get(n);if(!g){g={name:n,rows:[],pk:0,pc:0,last:'',cust:new Set()};m.set(n,g);}
+    g.rows.push(r);const[a,b]=o.sum(r);g.pk+=a;g.pc+=b;const d=String(o.date(r)||'');if(d>g.last)g.last=d;const c=o.cust(r);if(c)g.cust.add(c);});
+  let groups=[...m.values()];
+  groups.sort(o.sortBy==='name'?(a,b)=>a.name.localeCompare(b.name):(a,b)=>b.last.localeCompare(a.last)||a.name.localeCompare(b.name));
+  _fgLastGroups[k]=groups.map(g=>g.name);
+  const open=_fgOpen[k]||new Set();
+  const slice=pgr(groups,k,o.pg[0].replace(/\(.*$/,''),o.pg[1],o.pg[2]);
+  const cnt=document.getElementById(o.pg[2]);if(cnt)cnt.textContent=`${groups.length.toLocaleString('en-IN')} products · ${items.length.toLocaleString('en-IN')} rows`;
+  return slice.map(g=>{const isO=open.has(g.name);const nm=g.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const cust=g.cust.size===1?[...g.cust][0]:(g.cust.size?g.cust.size+' customers':'');
+    const head=`<tr class="fgg${isO?' open':''}" onclick="fgToggle('${k}','${nm}')"><td colspan="${o.cols+1}"><span class="fgg-ar">${isO?'▾':'▸'}</span><b>${g.name.replace(/</g,'&lt;')}</b><span class="fgg-c">${(cust||'').replace(/</g,'&lt;')}</span><span class="fgg-s"><span>${g.rows.length} lot${g.rows.length>1?'s':''}</span><span><b>${nf(g.pk)}</b> pkts</span><span><b>${nf(g.pc)}</b> pcs</span>${g.last?`<span>last ${g.last}</span>`:''}</span></td></tr>`;
+    if(!isO)return head;
+    const rows=[...g.rows].sort((a,b)=>String(o.date(b)||'').localeCompare(String(o.date(a)||'')));
+    return head+rows.map(rowFn).join('');
+  }).join('');
+}
 // Inv Out: every packet that left FG — despatch slip items and adjustments (discards)
 R.fg_out=function(p){
   if(p)pp.fg_out=p;
@@ -5171,8 +5209,8 @@ R.fg_out=function(p){
   document.getElementById('fgo-pk').textContent=nf(items.reduce((s,r)=>s+r.pk,0));
   document.getElementById('fgo-pc').textContent=nf(items.reduce((s,r)=>s+r.pc,0));
   document.getElementById('fgo-adj').textContent=nf(items.filter(r=>r.t==='adj').length);
-  const slice=pgr(items,'fg_out','R.fg_out','fgo-pg','fgo-cnt');
-  document.getElementById('fgout-body').innerHTML=slice.map(r=>`<tr ${r.t==='ds'?`onclick="selDO(event,${esc(r.ref)})" style="cursor:pointer"`:`data-adj="${r.id}" onclick="crudOpen('fg_adj',${esc(r.id)})" style="cursor:pointer"`}>
+  const _rowFn=r=>`<tr ${r.t==='ds'?`onclick="selDO(event,${esc(r.ref)})" style="cursor:pointer"`:`data-adj="${r.id}" onclick="crudOpen('fg_adj',${esc(r.id)})" style="cursor:pointer"`}>
+
     <td style="font-size:11px;color:var(--t2)">${r.date||'—'}</td>
     <td>${r.t==='ds'?'<span class="b bp">Despatch</span>':'<span class="b br">Adjustment</span>'}</td>
     <td class="mono">${r.ref||'—'}</td><td class="mono" style="font-size:11px">${r.order||'—'}</td>
@@ -5180,7 +5218,8 @@ R.fg_out=function(p){
     <td class="mono" style="font-size:11px" onclick="event.stopPropagation();selFG(event,${esc(r.batch)})"><span style="color:var(--acc);cursor:pointer">${r.batch||'—'}</span></td>
     <td class="mono" style="font-size:11px">${r.pro||'—'}</td>
     <td style="text-align:right">${nf(r.pk)}</td><td style="text-align:right;font-weight:600">${r.pc?nf(r.pc):'—'}</td>
-    <td style="font-size:11px;color:var(--t2)">${(r.note||'').replace(/</g,'&lt;')}</td></tr>`).join('')||'<tr><td colspan="11" style="padding:24px;text-align:center;color:var(--t3)">Nothing went out for these filters</td></tr>';
+    <td style="font-size:11px;color:var(--t2)">${(r.note||'').replace(/</g,'&lt;')}</td></tr>`;
+  document.getElementById('fgout-body').innerHTML=fgGroupHtml('fg_out',items,_rowFn,{cols:11,pg:['R.fg_out','fgo-pg','fgo-cnt'],sum:r=>[r.pk,r.pc],name:r=>r.prod,cust:r=>r.cust,date:r=>r.date})||'<tr><td colspan="11" style="padding:24px;text-align:center;color:var(--t3)">Nothing went out for these filters</td></tr>';
 };
 // − Adjust: take packets out of a batch without a despatch (discarded, damaged, count correction)
 function fgAdjust(batch){
@@ -5212,9 +5251,9 @@ R.fg_inventory=function(p){
   if(q)items=items.filter(r=>[r[0],r[2],r[7],r[8],r[3],r[11]].join(' ').toLowerCase().includes(q));
   items=applyFDFilters('fg-inv',items);
   items=sortItems(items,'winv');
-  const slice=pgr(items,'fg_inventory','R.fg_inventory','winv-pg','winv-cnt');
   const el=document.getElementById('winv-body');if(!el)return;
-  el.innerHTML=slice.map(r=>{
+  const _rowFn=r=>{
+
     const upsSheets=(r[12]&&r[13])?r[12]+'×'+r[13]:'—';
     const pktsIn=Number(r[15])||0;
     const pktsDesp=despMap[r[3]]||0;
@@ -5235,7 +5274,8 @@ R.fg_inventory=function(p){
       <td class="mono" style="font-size:11px;color:var(--acc);cursor:pointer" onclick="event.stopPropagation();selPR(event,${esc(r[2])})">${r[2]||'—'}</td>
       <td><button class="ab ab-g" onclick="event.stopPropagation();selFG(event,${esc(r[3]||r[0])})">View</button></td>
     </tr>`;
-  }).join('');
+  };
+  el.innerHTML=fgGroupHtml('fg_inventory',items,_rowFn,{cols:12,pg:['R.fg_inventory','winv-pg','winv-cnt'],sum:r=>[Number(r[4])||0,Number(r[5])||0],name:r=>r[7],cust:r=>r[8],date:r=>r[1]})||'<tr><td colspan="12" style="padding:24px;text-align:center;color:var(--t3)">No lots match</td></tr>';
   const inStockCount=D.fg.filter(r=>(Number(r[15])||0)>0).length;
   const partDespCount=D.fg.filter(r=>(despMap[r[3]]||0)>0&&(Number(r[15])||0)>0).length;
   const fullDespCount=D.fg.filter(r=>(Number(r[15])||0)===0&&(despMap[r[3]]||0)>0).length;
