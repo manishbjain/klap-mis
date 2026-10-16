@@ -1947,6 +1947,42 @@ function getProductImageUrl(productId){
   if(!productId)return null;
   return `${SB_URL}/functions/v1/klap-mis-data/image/${encodeURIComponent(productId)}`;
 }
+// Job images: latest version from the private Drive folder "Jobs - Final", matched by the job ID
+// at the start of the file name (e.g. "JB7043 - V1 - …jpg"). Only shrunken previews are served.
+function getJobImageUrl(jobId,sz){
+  if(!jobId)return null;
+  return `${SB_URL}/functions/v1/klap-mis-data/job-image/${encodeURIComponent(jobId)}?sz=${sz||1200}`;
+}
+function jobImgNone(el,jobId){
+  const box=el.closest('.jimg-box');if(!box)return;
+  box.innerHTML=`<div style="padding:14px;font-size:11px;color:var(--t3);text-align:center">🖼 No job image yet for <b class="mono">${jobId}</b>.<br><span style="opacity:.8">Save it in Drive › Jobs - Final with a file name starting “${jobId} - ”.</span></div>`;
+  box.style.cursor='default';box.onclick=null;
+}
+// html for a job image block; lazy = set src later (for hidden rows)
+function jobImgHtml(jobId,h,lazy){
+  const j=String(jobId).replace(/'/g,"\\'");
+  const src=getJobImageUrl(jobId,1200);
+  return `<div class="jimg-box" onclick="openJobImage('${j}')" title="Click to enlarge" style="border:1px solid var(--bdr);border-radius:10px;overflow:hidden;background:#fff;cursor:zoom-in;margin-bottom:12px;min-height:40px;display:flex;align-items:center;justify-content:center">
+    <img ${lazy?'data-src':'src'}="${src}" alt="Job image ${jobId}" style="display:block;max-width:100%;max-height:${h||260}px;object-fit:contain" onerror="jobImgNone(this,'${j}')">
+  </div>`;
+}
+function openJobImage(jobId){
+  let m=document.getElementById('jimg-modal');
+  if(!m){m=document.createElement('div');m.id='jimg-modal';document.body.appendChild(m);}
+  const j=String(jobId).replace(/'/g,"\\'");
+  m.innerHTML=`<div onclick="if(event.target===this||event.target.id==='jimg-x')document.getElementById('jimg-modal').style.display='none'" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;font-size:13px">
+      <b class="mono">${jobId}</b><span id="jimg-name" style="opacity:.75;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
+      <button onclick="var i=document.getElementById('jimg-big');var f=i.dataset.fit!=='0';i.dataset.fit=f?'0':'1';i.style.maxWidth=f?'none':'100%';i.style.maxHeight=f?'none':'100%';this.textContent=f?'Fit to screen':'Actual size'" style="background:#fff2;color:#fff;border:1px solid #fff5;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">Actual size</button>
+      <button id="jimg-x" style="background:#fff2;color:#fff;border:1px solid #fff5;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">✕ Close</button>
+    </div>
+    <div style="flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:0 14px 14px">
+      <img id="jimg-big" data-fit="1" src="${getJobImageUrl(jobId,2400)}" style="max-width:100%;max-height:100%;object-fit:contain;background:#fff" onerror="this.outerHTML='<div style=&quot;color:#fff;padding:30px&quot;>No job image found for ${j}</div>'">
+    </div>
+  </div>`;
+  m.style.display='block';
+  fetch(`${SB_URL}/functions/v1/klap-mis-data/job-image/${encodeURIComponent(jobId)}?info=1`).then(r=>r.ok?r.json():null).then(d=>{const n=document.getElementById('jimg-name');if(d&&n)n.textContent=d.name+(d.versions>1?`  ·  latest of ${d.versions} versions`:'');}).catch(()=>{});
+}
 
 // Render a product image element
 async function renderProductImage(productId,size=40){
@@ -4006,6 +4042,7 @@ R.jobs=function(p){
         <button onclick="event.stopPropagation();selJob(null,${esc(j[0])})" style="flex-shrink:0;border:1px solid var(--bdr);background:var(--s1);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--t2)">Manage</button>${crudBtns('jobs',j[0])}
       </div>
       <div id="joexp_${jid}" style="display:none;border-top:1px solid var(--bdr);background:var(--s1);padding:10px 12px">
+        ${jobImgHtml(j[0],220,true)}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${pros.length?pros.map(p=>{
           const pProcs=pwStepsOf(p[0]);
@@ -4032,6 +4069,7 @@ function joToggle(jid,rawId){
   const open=exp.style.display==='none';
   exp.style.display=open?'block':'none';
   arr.style.transform=open?'rotate(90deg)':'';
+  if(open)exp.querySelectorAll('img[data-src]').forEach(i=>{i.src=i.dataset.src;i.removeAttribute('data-src');});
 }
 // ── JOB MANAGE PANEL ───────────────────────────────────────
 // Process codes as stored in pro_steps (most used first)
@@ -4136,6 +4174,7 @@ function selJob(e,jid){try{
     </div>
     ${uniqCustomers.length?`<div style="font-size:11px;color:var(--t2)">👤 ${uniqCustomers.join(', ')}</div>`:''}
   </div>
+  ${jobImgHtml(j[0],280)}
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--acc)">${pros.length}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">PROs</div></div>
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--org)">${activePros.length}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Active</div></div>
@@ -6492,7 +6531,7 @@ function pwFlowHtml(jid){
 }
 function closePwModal(){var m=document.getElementById('pw-proc-modal');if(m)m.style.display='none';}
 function closeJcModal(){var m=document.getElementById('pw-jc-modal');if(m)m.style.display='none';}
-function pwNewJob(){toast('New Job form is being built next — it will start with uploading the job image');}
+function pwNewJob(){crudOpen('jobs');}
 function initProdWF(){pwRender();}
 
 // ── DESIGN WORKFLOW ──────────────────────────────────────────────────────────
