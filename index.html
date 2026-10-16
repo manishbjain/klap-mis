@@ -1779,6 +1779,20 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
+const APP_BUILD='20261017-032921';
+// If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
+function appCheckUpdate(){
+  fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
+    const m=t.match(/const APP_BUILD='([^']+)'/);
+    if(!m||m[1]===APP_BUILD||document.getElementById('app-upd'))return;
+    const b=document.createElement('div');b.id='app-upd';
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:10000;background:#1e293b;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;display:flex;gap:12px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25)';
+    b.innerHTML='A newer version of the app is available.<button style="background:#6366f1;color:#fff;border:0;border-radius:6px;padding:6px 12px;font-weight:700;cursor:pointer">Reload now</button>';
+    b.querySelector('button').onclick=()=>location.replace(location.pathname+'?v='+m[1]);
+    document.body.appendChild(b);
+  }).catch(()=>{});
+}
+setTimeout(appCheckUpdate,4000);setInterval(appCheckUpdate,5*60*1000);
 const SB_KEY='sb_publishable_RN89GTohdCC31adWqDZL0w_zlBuVtlk';
 
 // ── AUTH GLOBALS ──────────────────────────────────────────
