@@ -256,6 +256,46 @@ Deno.serve(async(req)=>{
     await supabase.from('audit_log').insert({user_email:email,user_name:user.name,role_id:user.role_id,action:'login',resource:'auth'})
     return new Response(JSON.stringify({user,permissions:perms||[]}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }
+  // ── READ PACKING SLIP: photo of a hand-filled packing slip → numbers for an FG entry (nothing is saved here)
+  if(url.pathname.endsWith('/read-slip')&&req.method==='POST'){
+    const H={'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
+    const J=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s,headers:H})
+    try{
+      const tok=(req.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim()
+      const{data:ud}=await supabase.auth.getUser(tok)
+      const email=ud?.user?.email
+      if(!email)return J({error:'Session expired — please sign in again'},401)
+      const{data:au}=await supabase.from('app_users').select('id,is_active').eq('email',email).single()
+      if(!au||!au.is_active)return J({error:'Not authorised'},403)
+      const body=await req.json().catch(()=>({}))
+      const img=String(body.image||''),mt=String(body.media_type||'image/jpeg')
+      if(!img||img.length>8_000_000)return J({error:'Photo missing or too large'},400)
+      const hint=body.pro_id?`The slip was opened for production order ${body.pro_id} (production qty ${body.prod_qty||'?'} pcs).`:''
+      const tool={name:'record_packing_slip',description:'Record what is written on the packing slip.',input_schema:{type:'object',properties:{
+        pro_id:{type:'string',description:'Production order number printed/written on the slip, e.g. PROD10870'},
+        job_id:{type:'string'},
+        packing_date:{type:'string',description:'Date written for packing, as YYYY-MM-DD (empty if none)'},
+        rows:{type:'array',items:{type:'object',properties:{pcs_per_packet:{type:'number'},packets:{type:'number'},total_pcs:{type:'number'},remarks:{type:'string'}}}},
+        total_packets:{type:'number'},total_pcs:{type:'number'},
+        wastage_pcs:{type:'number'},wastage_reason:{type:'string'},
+        packed_by:{type:'string'},checked_by:{type:'string'},
+        notes:{type:'string',description:'Anything else written, or what was unclear'},
+        confidence:{type:'string',enum:['high','medium','low']}
+      },required:['rows','total_packets','total_pcs','confidence']}}
+      const sys=`You read photos of hand-filled PACKING SLIPS from Krishiv Labels & Packaging. The printed part shows the production order (PRO ID, job, product, production qty). The handwritten part lists packed lots: pieces per packet, number of packets, total pieces, plus totals, wastage, packer and checker names and date. Read only what is written; never invent numbers. Check the arithmetic (pcs per packet × packets = row total; rows add up to the total). If the written total disagrees with the rows, report the written total and say so in notes. Use 0 / empty for anything not filled.`
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':AI_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
+        body:JSON.stringify({model:AI_MODEL_DEFAULT,max_tokens:2000,system:sys+'\n\nAlways respond by calling the record_packing_slip tool exactly once.',tools:[tool],tool_choice:{type:'auto'},
+          messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:img}},{type:'text',text:(hint+' Read this packing slip.').trim()}]}]})})
+      const j=await r.json()
+      if(!r.ok)return J({error:'AI error: '+JSON.stringify(j).slice(0,300)},502)
+      let out:any=(j.content||[]).find((b:any)=>b.type==='tool_use')?.input
+      if(!out){const t=(j.content||[]).filter((b:any)=>b.type==='text').map((b:any)=>b.text).join('\n');const a=t.indexOf('{'),z=t.lastIndexOf('}');if(a>=0&&z>a){try{out=JSON.parse(t.slice(a,z+1))}catch{}}}
+      if(!out)return J({error:'Could not read the slip'},502)
+      if(typeof out.rows==='string'){try{out.rows=JSON.parse(out.rows)}catch{out.rows=[]}}
+      await supabase.from('audit_log').insert({user_email:email,action:'read_slip',resource:'fg_inventory',record_id:body.pro_id||out.pro_id||null,new_data:out})
+      return J({ok:true,slip:out})
+    }catch(e:any){return J({error:e.message||String(e)},500)}
+  }
   // ── WRITE: authenticated, permission-checked saves (production) ─────────────
   if(url.pathname.endsWith('/write')&&req.method==='POST'){
     const H={'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
