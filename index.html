@@ -656,7 +656,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="__EMPTY__">(Empty)</option><option value="active">Active</option><option value="to_process">To Process (last 90 days)</option><option value="to_process_old">No job — older history</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="__EMPTY__">(Empty)</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pr-q" placeholder="Search PRO / product / order…" oninput="R.pros(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-pros" onclick="openFD('pros')">⚙ Filters</button>
       </div>
