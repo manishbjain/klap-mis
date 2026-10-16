@@ -1779,7 +1779,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-032921';
+const APP_BUILD='20261017-033522';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -4720,20 +4720,20 @@ function genPackingSlip(proid){
   const nf=n=>Number(n||0).toLocaleString('en-IN');
   const e=v=>String(v==null||v===''?'—':v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const size=prod.size_l?`${prod.size_l} × ${prod.size_b}${prod.size_h?' × '+prod.size_h:''} ${prod.size_units||'mm'}`:'';
-  const rows=Array.from({length:14},(_,i)=>`<tr><td class="c">${i+1}</td><td></td><td></td><td></td><td></td></tr>`).join('');
+  const rows=Array.from({length:12},(_,i)=>`<tr><td class="c">${i+1}</td><td></td><td></td><td></td><td></td></tr>`).join('');
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to print the slip');return;}
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Packing slip ${e(proid)}</title><style>
-  @page{size:A4;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;font-size:12px}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Packing slip ${e(proid)} (A5)</title><style>
+  @page{size:A5 portrait;margin:7mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0 auto;font-size:10px;max-width:134mm}
   .hd{display:flex;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}
-  .hd h1{font-size:20px;margin:0;letter-spacing:1px}.hd .co{margin-left:auto;text-align:right;font-size:11px}
-  .pro{font-size:26px;font-weight:800;font-family:monospace;letter-spacing:1px}
-  table{border-collapse:collapse;width:100%}td,th{border:1px solid #000;padding:6px 8px;vertical-align:top}
-  .info td{font-size:12px}.info td.l{width:18%;font-weight:700;background:#f2f2f2}
-  .grid th{background:#f2f2f2;font-size:11px;text-transform:uppercase}.grid td{height:30px}.c{text-align:center;width:6%}
-  .tot td{height:34px;font-weight:700}.tot td.l{width:22%;background:#f2f2f2}
-  .sig{display:flex;gap:16px;margin-top:22px}.sig div{flex:1;border-top:1px solid #000;padding-top:4px;text-align:center;font-size:11px}
-  .note{font-size:10px;color:#444;margin-top:6px}.np{margin:10px 0;text-align:center}@media print{.np{display:none}}
+  .hd h1{font-size:14px;margin:0;letter-spacing:1px}.hd .co{margin-left:auto;text-align:right;font-size:9px}
+  .pro{font-size:19px;font-weight:800;font-family:monospace;letter-spacing:1px}
+  table{border-collapse:collapse;width:100%}td,th{border:1px solid #000;padding:3px 5px;vertical-align:top}
+  .info td{font-size:10px}.info td.l{width:18%;font-weight:700;background:#f2f2f2}
+  .grid th{background:#f2f2f2;font-size:8.5px;text-transform:uppercase}.grid td{height:25px}.c{text-align:center;width:6%}
+  .tot td{height:24px;font-weight:700;font-size:9.5px}.tot td.l{width:22%;background:#f2f2f2}
+  .sig{display:flex;gap:10px;margin-top:20px}.sig div{flex:1;border-top:1px solid #000;padding-top:3px;text-align:center;font-size:9px}
+  .note{font-size:8px;color:#444;margin-top:5px}.np{margin:10px 0;text-align:center}@media print{.np{display:none}}
   </style></head><body>
   <div class="np"><button onclick="window.print()" style="font-size:14px;padding:8px 18px">🖨 Print</button></div>
   <div class="hd"><div><h1>PACKING SLIP</h1><div class="pro">${e(proid)}</div></div><div class="co"><b>Krishiv Labels &amp; Packaging</b><br>Printed ${new Date().toLocaleDateString('en-GB')}</div></div>
@@ -4742,10 +4742,10 @@ function genPackingSlip(proid){
     <tr><td class="l">Customer</td><td>${e(p[3])}</td><td class="l">Order</td><td style="font-family:monospace">${e(p[7])}</td></tr>
     <tr><td class="l">Job</td><td style="font-family:monospace">${e(p[9])}${job&&job[2]?' · '+e(job[2]):''}</td><td class="l">PRO date</td><td>${e(p[1])}</td></tr>
     <tr><td class="l">Sheets</td><td>${raw.sheet_qty?nf(raw.sheet_qty):'—'}</td><td class="l">Ups × Blocks</td><td>${raw.ups||1} × ${raw.blocks||1}</td></tr>
-    <tr><td class="l">Production qty</td><td><b style="font-size:15px">${nf(p[4])} pcs</b></td><td class="l">Already packed</td><td>${pk.n?nf(pk.qty)+' pcs ('+pk.n+' lot'+(pk.n>1?'s':'')+')':'—'}</td></tr>
+    <tr><td class="l">Production qty</td><td><b style="font-size:12px">${nf(p[4])} pcs</b></td><td class="l">Already packed</td><td>${pk.n?nf(pk.qty)+' pcs ('+pk.n+' lot'+(pk.n>1?'s':'')+')':'—'}</td></tr>
     ${size||prod.material?`<tr><td class="l">Size</td><td>${e(size)}</td><td class="l">Material</td><td>${e(prod.material)}</td></tr>`:''}
   </table>
-  <div style="display:flex;gap:16px;margin:10px 0 6px;font-size:12px"><div>Packing date: ________________</div><div>☐ Full qty &nbsp; ☐ Part qty (urgent despatch)</div></div>
+  <div style="display:flex;gap:12px;margin:6px 0 4px;font-size:10px"><div>Packing date: ________________</div><div>☐ Full qty &nbsp; ☐ Part qty (urgent despatch)</div></div>
   <table class="grid"><thead><tr><th class="c">#</th><th>Pcs per packet</th><th>No. of packets</th><th>Total pcs</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
   <table class="tot" style="margin-top:8px">
     <tr><td class="l">Total packets</td><td></td><td class="l">Total pcs packed</td><td></td></tr>
