@@ -337,6 +337,7 @@ Deno.serve(async(req)=>{
         delivery_orders:['date','order_id','price','taxation'],
         delivery_order_items:['delivery_order_id','ds_item_pl_id','inv_batch_id','packet_qty'],
         machines:['name','machine_type','processes','location','status','notes'],
+        fg_adjustments:['date','inv_batch_id','packets','qty','reason'],
       }
       const RULES:Record<string,{ops:string[],fields:string[]}>={
         pro_steps:{ops:['get','insert','update','delete','set_pros'],fields:['process_name','prod_order_id','vendor_id','machine','die_id','plate_id','material_id','seq','step_status','process_status','qty_in','qty_out','wastage','done_by','date','varnish','foil']},
@@ -356,7 +357,7 @@ Deno.serve(async(req)=>{
         rm_list:[['rm_in','rm_item_id','id'],['purchase_orders','rm_id','id']],
         rm_in:[['rm_out','rm_in_id','rm_in_id']],
         purchase_orders:[['rm_in','purchase_id','id']],
-        fg_inventory:[['delivery_order_items','inv_batch_id','inv_batch_id']],
+        fg_inventory:[['delivery_order_items','inv_batch_id','inv_batch_id'],['fg_adjustments','inv_batch_id','inv_batch_id']],
         delivery_orders:[['delivery_order_items','delivery_order_id','id']],
         machines:[['pro_steps','machine','name']],
       }
@@ -429,6 +430,7 @@ Deno.serve(async(req)=>{
         if(table==='accounts'&&(!clean.name||!clean.account_type))return J({error:'Name and account type are required'},400)
         if(table==='products'&&!clean.product_name)return J({error:'Product name is required'},400)
         if(table==='machines'&&!clean.name)return J({error:'Machine name is required'},400)
+        if(table==='fg_adjustments'&&(!clean.inv_batch_id||!Number(clean.packets||clean.qty)))return J({error:'Batch and packets/qty are required'},400)
         if(COLS[table].includes('date')&&!clean.date)clean.date=new Date(Date.now()+19800000).toISOString().slice(0,10)
         for(let i=0;i<4&&!row;i++){
           const{data:nid,error:ie}=await supabase.rpc('next_app_id',{p_table:table,p_type:table==='accounts'?clean.account_type:table==='jobs'?clean.job_type:null})
@@ -522,8 +524,9 @@ Deno.serve(async(req)=>{
     const dos=await fetchAll('delivery_orders','id,date,order_id,price,taxation')
     const do_items=await fetchAll('delivery_order_items','id,delivery_order_id,ds_item_pl_id,inv_batch_id,packet_qty','id')
     const machines=await fetchAll('machines','id,name,machine_type,processes,location,status,notes')
+    const fg_adj=await fetchAll('fg_adjustments','id,date,inv_batch_id,packets,qty,reason')
     const pos=await fetchAll('purchase_orders','id,date,rm_id,vendor_id,pur_qty,rate,pur_unit,rate_units,status,bill_ref,comments')
-    return new Response(JSON.stringify({machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
+    return new Response(JSON.stringify({fg_adj,machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }catch(err:any){
     return new Response(JSON.stringify({error:err.message}),{status:500,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }

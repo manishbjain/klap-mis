@@ -1035,7 +1035,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <th>Batch ID</th><th>Packed Date</th><th>Product</th><th>Customer</th>
       <th>Design No</th><th>Ups×Sheets</th><th>Total Pkts</th>
       <th style="background:rgba(16,185,129,.08);color:var(--grn)">Pkts In Stock ✅</th>
-      <th style="text-align:right">Pcs In Stock</th><th>Despatched</th><th>PRO</th>
+      <th style="text-align:right">Pcs In Stock</th><th>Despatched</th><th>PRO</th><th></th>
     </tr></thead><tbody id="fgis-body"></tbody></table></div>
     <div class="pg-bar" id="fgis-pg"></div>
   </div>
@@ -1050,7 +1050,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <div class="sc pur"><div class="l">✓ Fully Despatched</div><div class="v" id="winv-d">—</div></div>
   </div>
   <div class="tc">
-    <div class="th"><h3>All FG Batches</h3><span class="tc-cnt" id="winv-cnt"></span>
+    <div class="th"><h3>Inv In — every packed lot</h3><span class="tc-cnt" id="winv-cnt"></span>
       <div class="flt-row">
         <select class="f" id="winv-cust" onchange="R.fg_inventory(1)"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
         <select class="f" id="winv-status" onchange="R.fg_inventory(1)">
@@ -1070,6 +1070,31 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <th>In Stock</th><th>Despatched</th><th>Wastage</th><th>PRO</th><th>Action</th>
     </tr></thead><tbody id="winv-body"></tbody></table></div>
     <div class="pg-bar" id="winv-pg"></div>
+  </div>
+</div>
+
+<!-- FG OUT -->
+<div id="pg-fgout" class="pg">
+  <div class="sg" style="grid-template-columns:repeat(4,1fr)">
+    <div class="sc acc"><div class="l">🚚 Despatch slips</div><div class="v" id="fgo-ds">—</div></div>
+    <div class="sc grn"><div class="l">📦 Packets out</div><div class="v" id="fgo-pk">—</div></div>
+    <div class="sc org"><div class="l">🔢 Pcs out</div><div class="v" id="fgo-pc">—</div></div>
+    <div class="sc pur"><div class="l">🗑 Adjustments</div><div class="v" id="fgo-adj">—</div></div>
+  </div>
+  <div class="tc">
+    <div class="th"><h3>Inv Out — despatched or adjusted</h3><span class="tc-cnt" id="fgo-cnt"></span>
+      <div class="flt-row">
+        <select class="f" id="fgo-type" onchange="R.fg_out(1)"><option value="">Despatch + Adjustment</option><option value="ds">Despatch</option><option value="adj">Adjustment</option></select>
+        <select class="f" id="fgo-cust" onchange="R.fg_out(1)"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
+        <input class="f" type="date" id="fgo-from" onchange="R.fg_out(1)" title="From date"><input class="f" type="date" id="fgo-to" onchange="R.fg_out(1)" title="To date">
+        <input class="f" id="fgo-q" placeholder="Search DS / order / batch / PRO / product…" oninput="R.fg_out(1)" style="width:220px">
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>Date</th><th>Type</th><th>DS / Ref</th><th>Order</th><th>Customer</th><th>Product</th><th>Batch</th><th>PRO</th>
+      <th style="text-align:right">Packets</th><th style="text-align:right">Pcs</th><th>Note</th>
+    </tr></thead><tbody id="fgout-body"></tbody></table></div>
+    <div class="pg-bar" id="fgo-pg"></div>
   </div>
 </div>
 
@@ -1779,7 +1804,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-040645';
+const APP_BUILD='20261017-041643';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1826,7 +1851,7 @@ function applyNavPermissions(){
     'products':'products','orders':'orders','pros':'production_orders',
     'jobs':'jobs','processes':'pro_steps','dies':'dies','plates':'plates',
     'wflow-order':'orders','wflow-design':'products','wflow-prod':'production_orders',
-    'wpk':'fg_inventory','winv':'rm_in','fg-instock':'fg_instock','wp':'purchase_orders','wdep':'delivery_orders',
+    'wpk':'fg_inventory','winv':'rm_in','fgout':'fg_inventory','fg-instock':'fg_instock','wp':'purchase_orders','wdep':'delivery_orders',
     'settings':'app_users'
   };
   document.querySelectorAll('.ni[data-p],.ni-sub[data-p],.ni-sub2[data-p]').forEach(el=>{
@@ -2090,6 +2115,7 @@ const CRUD={
   fg:{t:'fg_inventory',raw:'fg_inv',title:'FG batch',tbody:'winv-body',idKey:'inv_batch_id',render:['fg_inventory','fg_instock','despatch_live','packing'],fields:[
     'prod_order_id|r:pro|Production order*','date|d|Packed date','d_no|t|Design no.','ups|n|Ups','sheets|n|Sheets','packets|n|Packets','qty|n|Quantity','qty_units|l|Units','qty_wastage|n|Wastage','wastage_problem|t|Wastage problem','last_entry|t|Last entry','comment|a|Comment','fg_status|l|FG status']},
   fg_instock:{alias:'fg',tbody:'fgis-body'},
+  fg_adj:{t:'fg_adjustments',raw:'fg_adj',title:'Adjustment',tbody:'fgout-body',noAdd:true,render:['fg_out','fg_instock','fg_inventory'],fields:['inv_batch_id|t|FG batch (INV_…)*','date|d|Date','packets|n|Packets taken out','qty|n|Pcs taken out','reason|a|Reason (discarded, damaged, count correction…)']},
   despatch:{t:'delivery_orders',raw:'dos',title:'Despatch (DO)',tbody:'wdep-body',render:['despatch_live','despatch','despatched'],fields:['order_id|r:order|Order*','date|d|Date','price|n|Price','taxation|n|Tax']},
   despatched:{alias:'despatch',tbody:'wdep-done-body',noAdd:true},
   pack_pros:{alias:'pros',tbody:'wpk-body',noAdd:true},
@@ -2353,6 +2379,7 @@ function buildData(raw){
     // FG stock per product = pieces still in stock (packed minus despatched), not everything ever packed
     const fgStockQty={};
     {const dsp={};(raw.do_items||[]).forEach(i=>{if(i.inv_batch_id)dsp[i.inv_batch_id]=(dsp[i.inv_batch_id]||0)+(Number(i.packet_qty)||0);});
+     (raw.fg_adj||[]).forEach(a=>{if(a.inv_batch_id)dsp[a.inv_batch_id]=(dsp[a.inv_batch_id]||0)+(Number(a.packets)||0);});
      const proProd={};pros.forEach(p=>{proProd[p.id]=p.product_id;});
      fg_inv.forEach(r=>{const pid=proProd[r.prod_order_id];if(!pid)return;const d=dsp[r.inv_batch_id]||0,pk=r.packets||0;
        const left=pk>0?Math.round((r.qty||0)*Math.max(0,pk-d)/pk):(d?0:(r.qty||0));if(left>0)fgStockQty[pid]=(fgStockQty[pid]||0)+left;});}
@@ -2486,6 +2513,11 @@ function buildData(raw){
     do_items.forEach(i=>{
       if(i.inv_batch_id)despatchedMap[i.inv_batch_id]=(despatchedMap[i.inv_batch_id]||0)+(i.packet_qty||0);
     });
+    // Discards / adjustments also take stock out (fg_adjustments)
+    const adjMap={},adjQty={};
+    (raw.fg_adj||[]).forEach(a=>{if(!a.inv_batch_id)return;adjMap[a.inv_batch_id]=(adjMap[a.inv_batch_id]||0)+(Number(a.packets)||0);adjQty[a.inv_batch_id]=(adjQty[a.inv_batch_id]||0)+(Number(a.qty)||0);});
+    D.fg_adj=raw.fg_adj||[];
+    try{R._fgOut=null;}catch(e){}
 
     // D.fg: [0]id [1]date [2]prod_order_id [3]inv_batch_id [4]packets [5]qty [6]qty_units [7]pname [8]cname [9]qty_wastage [10]last_entry [11]d_no [12]ups [13]sheets [14]fg_status [15]pkts_in_stock
     D.fg=fg_inv.map(r=>{
@@ -2493,9 +2525,10 @@ function buildData(raw){
       const pname=prodMap[pro.product_id]?.product_name||pro.job_name||r.prod_order_id||'';
       const cname=prodMap[pro.product_id]?.customer_name||'';
       const pktsDespatched=despatchedMap[r.inv_batch_id]||0;
-      const pktsInStock=Math.max(0,(r.packets||0)-pktsDespatched);
+      const pktsOut=pktsDespatched+(adjMap[r.inv_batch_id]||0);
+      const pktsInStock=Math.max(0,(r.packets||0)-pktsOut);
       // pieces still in stock: packets left × pieces per packet (whole lot if the batch has no packet count and nothing despatched)
-      const pcsInStock=(r.packets||0)>0?Math.round((r.qty||0)*pktsInStock/(r.packets||1)):(pktsDespatched?0:(r.qty||0));
+      const pcsInStock=(r.packets||0)>0?Math.round((r.qty||0)*pktsInStock/(r.packets||1)):(pktsDespatched?0:Math.max(0,(r.qty||0)-(adjQty[r.inv_batch_id]||0)));
       return [r.id,r.date,r.prod_order_id,r.inv_batch_id,r.packets||0,r.qty||0,r.qty_units||'',pname,cname,r.qty_wastage||0,r.last_entry,r.d_no||'',r.ups||0,r.sheets||0,r.fg_status||'',pktsInStock,pcsInStock,pro.product_id||''];
     });
 
@@ -2549,7 +2582,7 @@ const pp={};
 const titles={dash:'Dashboard','wflow-order':'📋 Order Workflow','wflow-design':'Design Workflow','wflow-prod':'Production Workflow',orders:'Orders',dq:'Design Queue',products:'Products',
   customers:'Customers',pros:'Production Orders (PROs)',jobs:'Jobs',dies:'Dies',
   plates:'Plates',machines:'Machines',vendors:'Vendors & Transporters',
-  wp:'Purchase Workflow',wpk:'Packing + QR',winv:'FG Inventory','fg-instock':'FG In Stock',wdep:'Despatch Workflow',transporters:'Transporters',processes:'Processes','rm-cat':'RM Categories','rm-subcat':'RM Sub-Categories','rm-inv':'RM Inventory'};
+  wp:'Purchase Workflow',wpk:'Packing + QR',winv:'FG Inventory — In',fgout:'FG Inventory — Out','fg-instock':'FG In Stock',wdep:'Despatch Workflow',transporters:'Transporters',processes:'Processes','rm-cat':'RM Categories','rm-subcat':'RM Sub-Categories','rm-inv':'RM Inventory'};
 
 // GROUP TOGGLES
 function ngToggle(id){
@@ -2618,10 +2651,11 @@ const SECTIONS={
   },
   'fg-inv-sec':{
     tabs:[
-      {id:'fg-instock',label:'✅ In Stock'},
-      {id:'winv',label:'📋 All Batches'}
+      {id:'fg-instock',label:'✅ Inv In Stock'},
+      {id:'winv',label:'📥 Inv In'},
+      {id:'fgout',label:'📤 Inv Out'}
     ],
-    pages:['fg-instock','winv']
+    pages:['fg-instock','winv','fgout']
   },
   'despatch-sec':{tabs:null,pages:['wdep']},
   'purchase-sec':{tabs:null,pages:['wp']},
@@ -2682,6 +2716,7 @@ function activateTab(tabId){
     if(realPg==='wpk'){R.packing(1);}
     if(realPg==='fg-instock'){R.fg_instock(1);}
     if(realPg==='winv'){R.fg_inventory(1);}
+    if(realPg==='fgout'){R.fg_out(1);}
     if(realPg==='wdep'){R.despatch_live(1);}
     if(realPg==='settings'&&R.settings)R.settings();
   }
@@ -5104,9 +5139,57 @@ R.fg_instock=function(p){
       <td style="text-align:right;font-weight:600">${(Number(r[16])||0).toLocaleString('en-IN')}</td>
       <td style="text-align:right;color:var(--t2)">${pktsDesp||0}</td>
       <td class="mono" style="font-size:11px;color:var(--acc);cursor:pointer" onclick="event.stopPropagation();selPR(event,${esc(r[2])})">${r[2]||'—'}</td>
+      <td onclick="event.stopPropagation()"><button class="ab" title="Discard / adjust stock of this batch" onclick="fgAdjust(${esc(r[3])})">− Adjust</button></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="11" style="padding:30px;text-align:center;color:var(--t3)">No items in stock</td></tr>';
+  }).join('')||'<tr><td colspan="12" style="padding:30px;text-align:center;color:var(--t3)">No items in stock</td></tr>';
 };
+
+// Inv Out: every packet that left FG — despatch slip items and adjustments (discards)
+R.fg_out=function(p){
+  if(p)pp.fg_out=p;
+  const type=document.getElementById('fgo-type')?.value||'';
+  const custF=document.getElementById('fgo-cust')?.value||'';
+  const from=document.getElementById('fgo-from')?.value||'',to=document.getElementById('fgo-to')?.value||'';
+  const q=(document.getElementById('fgo-q')?.value||'').toLowerCase();
+  const fgB={};(D.fg||[]).forEach(f=>{fgB[f[3]]=f;});
+  const dsM={};(D.dos||[]).forEach(d=>{dsM[d[0]]=d;});
+  const pcs=(f,pk)=>f&&Number(f[4])?Math.round((Number(f[5])||0)*pk/Number(f[4])):0;
+  if(!R._fgOut||R._fgOutN!==(D.do_items.length+'/'+(D.fg_adj||[]).length+'/'+D.fg.length)){
+    const rows=[];
+    D.do_items.forEach(i=>{const f=fgB[i.inv_batch_id],d=dsM[i.delivery_order_id]||[];const pk=Number(i.packet_qty)||0;
+      rows.push({t:'ds',date:d[1]||'',ref:i.delivery_order_id||'',order:d[2]||'',cust:d[3]||(f?f[8]:'')||'',prod:f?f[7]:'',batch:i.inv_batch_id||'',pro:f?f[2]:'',pk,pc:pcs(f,pk),note:''});});
+    (D.fg_adj||[]).forEach(a=>{const f=fgB[a.inv_batch_id];const pk=Number(a.packets)||0;
+      rows.push({t:'adj',id:a.id,date:a.date||'',ref:a.id,order:'',cust:f?f[8]:'',prod:f?f[7]:'',batch:a.inv_batch_id,pro:f?f[2]:'',pk,pc:Number(a.qty)||pcs(f,pk),note:a.reason||''});});
+    rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.ref).localeCompare(String(a.ref)));
+    R._fgOut=rows;R._fgOutN=D.do_items.length+'/'+(D.fg_adj||[]).length+'/'+D.fg.length;
+  }
+  const cs=document.getElementById('fgo-cust');
+  if(cs&&cs.options.length<=2){[...new Set(R._fgOut.map(r=>r.cust).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cs.appendChild(o);});}
+  let items=R._fgOut.filter(r=>(!type||r.t===type)&&fm(custF,r.cust)&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!q||[r.ref,r.order,r.batch,r.pro,r.prod,r.cust,r.note].join(' ').toLowerCase().includes(q)));
+  const nf=n=>Number(n||0).toLocaleString('en-IN');
+  document.getElementById('fgo-ds').textContent=nf(new Set(items.filter(r=>r.t==='ds').map(r=>r.ref)).size);
+  document.getElementById('fgo-pk').textContent=nf(items.reduce((s,r)=>s+r.pk,0));
+  document.getElementById('fgo-pc').textContent=nf(items.reduce((s,r)=>s+r.pc,0));
+  document.getElementById('fgo-adj').textContent=nf(items.filter(r=>r.t==='adj').length);
+  const slice=pgr(items,'fg_out','R.fg_out','fgo-pg','fgo-cnt');
+  document.getElementById('fgout-body').innerHTML=slice.map(r=>`<tr ${r.t==='ds'?`onclick="selDO(event,${esc(r.ref)})" style="cursor:pointer"`:`data-adj="${r.id}" onclick="crudOpen('fg_adj',${esc(r.id)})" style="cursor:pointer"`}>
+    <td style="font-size:11px;color:var(--t2)">${r.date||'—'}</td>
+    <td>${r.t==='ds'?'<span class="b bp">Despatch</span>':'<span class="b br">Adjustment</span>'}</td>
+    <td class="mono">${r.ref||'—'}</td><td class="mono" style="font-size:11px">${r.order||'—'}</td>
+    <td>${tr(r.cust||'—',18)}</td><td title="${(r.prod||'').replace(/"/g,'')}">${tr(r.prod||'—',24)}</td>
+    <td class="mono" style="font-size:11px" onclick="event.stopPropagation();selFG(event,${esc(r.batch)})"><span style="color:var(--acc);cursor:pointer">${r.batch||'—'}</span></td>
+    <td class="mono" style="font-size:11px">${r.pro||'—'}</td>
+    <td style="text-align:right">${nf(r.pk)}</td><td style="text-align:right;font-weight:600">${r.pc?nf(r.pc):'—'}</td>
+    <td style="font-size:11px;color:var(--t2)">${(r.note||'').replace(/</g,'&lt;')}</td></tr>`).join('')||'<tr><td colspan="11" style="padding:24px;text-align:center;color:var(--t3)">Nothing went out for these filters</td></tr>';
+};
+// − Adjust: take packets out of a batch without a despatch (discarded, damaged, count correction)
+function fgAdjust(batch){
+  const f=(D.fg||[]).find(x=>x[3]===batch);if(!f)return;
+  const c=CRUD.fg_adj,old=c.defaults;
+  c.defaults={inv_batch_id:batch,date:new Date(Date.now()+19800000).toISOString().slice(0,10),packets:f[15]||null,qty:f[16]||null};
+  try{crudOpen('fg_adj',null);}finally{c.defaults=old;}
+  toast(`${batch}: ${f[15]} packets / ${Number(f[16]||0).toLocaleString('en-IN')} pcs in stock — change to what is being taken out`);
+}
 
 R.fg_inventory=function(p){
   if(p)pp.fg_inventory=p;
