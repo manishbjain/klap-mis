@@ -2143,16 +2143,19 @@ async function crudQuickDelete(key,id){
 function crudRowId(cfg,tr,ids){
   // Each list shows the record's id in one of its cells; find it
   for(const td of tr.cells){const t=(td.textContent||'').trim();if(ids.has(t))return t;const m=t.match(/^[A-Za-z0-9_\/-]+/);if(m&&ids.has(m[0]))return m[0];}
+  // id not shown? it is usually in the row's click handler
+  const oc=(tr.getAttribute('onclick')||'')+' '+[...tr.querySelectorAll('[onclick]')].map(e=>e.getAttribute('onclick')).join(' ');
+  for(const m of oc.matchAll(/['"]([^'"]{2,40})['"]/g))if(ids.has(m[1]))return m[1];
   return null;
 }
 function crudDecorate(){
   Object.keys(CRUD).forEach(k=>{
     const cfg=crudCfg(k);
-    if(cfg.addTo){const at=document.querySelector(cfg.addTo);if(at&&!at.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+String(cfg.title).toLowerCase();b.onclick=()=>crudOpen(k,null);at.appendChild(b);}}
+    if(cfg.addTo){const at=document.querySelector(cfg.addTo);if(at&&!at.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+cfg.title;b.onclick=()=>crudOpen(k,null);at.appendChild(b);}}
     if(!cfg.tbody)return;const tb=document.getElementById(cfg.tbody);if(!tb)return;
     // header: one "+ Add" button per list, and an empty header cell for the buttons column
     const tc=tb.closest('.tc')||tb.closest('.pg');const th=tc&&tc.querySelector('.th');
-    if(th&&!CRUD[k].noAdd&&!th.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+String(cfg.title).toLowerCase();b.onclick=()=>crudOpen(k,null);const fr=th.querySelector('.flt-row');(fr||th).appendChild(b);}
+    if(th&&!CRUD[k].noAdd&&!th.querySelector('.crud-add[data-k="'+k+'"]')){const b=document.createElement('button');b.className='btn btn-p crud-add';b.dataset.k=k;b.textContent='+ Add '+cfg.title;b.onclick=()=>crudOpen(k,null);const fr=th.querySelector('.flt-row');(fr||th).appendChild(b);}
     const table=tb.closest('table');const hr=table&&table.tHead&&table.tHead.rows[0];
     if(hr&&!hr.querySelector('.crud-th')){const h=document.createElement('th');h.className='crud-th';hr.appendChild(h);}
     const ids=new Set(((window._RAW||{})[cfg.raw]||[]).map(r=>String(cfg.idKey?r[cfg.idKey]:r.id)));
