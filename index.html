@@ -164,6 +164,8 @@ tr.sel td{background:var(--acc-lt)}
 .pwx-cf .w{font-size:11px;color:var(--t2);font-weight:600}
 .pwx-cf .tq{margin-left:auto;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
 .pwx-empty{padding:16px 8px;text-align:center;color:var(--t3);font-size:12px}
+.fd-empty{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);margin-top:6px;cursor:pointer}
+.fd-tag-e{border-style:dashed!important;font-style:italic}
 .pwt-wrap{width:100%;overflow-x:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:12px}
 .pwt{width:100%;min-width:1100px;border-collapse:collapse;font-size:13px}
 .pwt th{position:sticky;top:0;background:var(--s2);text-align:left;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--bdr);white-space:nowrap;z-index:1}
@@ -580,8 +582,8 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Orders</h3><span class="tc-cnt" id="o-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option value="active">Active</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
-        <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option></select>
+        <select class="f" id="o-st" onchange="R.orders(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="active">Active</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="o-yr" onchange="R.orders(1)"><option value="">All Years</option><option value="__EMPTY__">(Empty)</option></select>
         <input class="f" id="o-q" placeholder="Search OID / customer / product…" oninput="R.orders(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-orders" onclick="openFD('orders')">⚙ Filters</button>
         <div style="display:flex;gap:2px;margin-left:auto;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:2px">
@@ -602,7 +604,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Design Queue</h3><span class="tc-cnt" id="dq-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="dq-st" onchange="R.dq(1)"><option value="">All Stages</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option></select>
+        <select class="f" id="dq-st" onchange="R.dq(1)"><option value="">All Stages</option><option value="__EMPTY__">(Empty)</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option></select>
         <input class="f" id="dq-q" placeholder="Search code / product / customer…" oninput="R.dq(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-dq" onclick="openFD('dq')">⚙ Filters</button>
       </div>
@@ -618,7 +620,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Products</h3><span class="tc-cnt" id="pd-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option><option value="file_ready">File Ready</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="pd-ds" onchange="R.products(1)"><option value="">All Design Status</option><option value="__EMPTY__">(Empty)</option><option value="to_process">To Process</option><option value="in_process">In Process</option><option value="internal_approval">Internal Approval</option><option value="on_approval">On Approval</option><option value="approved">Approved</option><option value="file_ready">File Ready</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pd-q" placeholder="Search code / product / customer…" oninput="R.products(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-products" onclick="openFD('products')">⚙ Filters</button>
         <div style="display:flex;gap:2px;margin-left:auto;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:2px">
@@ -654,7 +656,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Production Orders (PROs)</h3><span class="tc-cnt" id="pr-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="pr-st" onchange="R.pros(1)"><option value="">All</option><option value="__EMPTY__">(Empty)</option><option value="active">Active</option><option value="to_process">To Process</option><option value="in_production">In Production</option><option value="packing">In Packing</option><option value="complete">Complete</option><option value="on_hold">On Hold</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="pr-q" placeholder="Search PRO / product / order…" oninput="R.pros(1)" style="width:200px">
         <button class="fd-btn" id="fd-btn-pros" onclick="openFD('pros')">⚙ Filters</button>
       </div>
@@ -677,7 +679,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Jobs</h3><span class="tc-cnt" id="jo-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All PPC</option><option value="Machine">PPC1 — Flexo</option><option value="Sheet">PPC2 — Hybrid</option><option value="Tupax">PPC3 — TUPAX</option><option value="Direct">PPC4 — Direct</option><option value="Direct5">PPC5 — Direct</option><option value="none">No PPC set</option></select>
+        <select class="f" id="jo-t" onchange="R.jobs(1)"><option value="">All PPC</option><option value="__EMPTY__">(Empty)</option><option value="Machine">PPC1 — Flexo</option><option value="Sheet">PPC2 — Hybrid</option><option value="Tupax">PPC3 — TUPAX</option><option value="Direct">PPC4 — Direct</option><option value="Direct5">PPC5 — Direct</option><option value="none">No PPC set</option></select>
         <input class="f" id="jo-q" placeholder="Search job ID / name…" oninput="R.jobs(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-jobs" onclick="openFD('jobs')">⚙ Filters</button>
       </div>
@@ -693,7 +695,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Dies</h3><span class="tc-cnt" id="di-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="di-st" onchange="R.dies(1)"><option value="">All Status</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
+        <select class="f" id="di-st" onchange="R.dies(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
         <input class="f" id="di-q" placeholder="Search code / name…" oninput="R.dies(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-dies" onclick="openFD('dies')">⚙ Filters</button>
       </div>
@@ -709,7 +711,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Plates</h3><span class="tc-cnt" id="pl-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="pl-st" onchange="R.plates(1)"><option value="">All Status</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
+        <select class="f" id="pl-st" onchange="R.plates(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="in_stock">In Stock</option><option value="out">Out</option></select>
         <input class="f" id="pl-q" placeholder="Search code / name…" oninput="R.plates(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-plates" onclick="openFD('plates')">⚙ Filters</button>
       </div>
@@ -732,7 +734,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>Vendors &amp; Transporters</h3><span class="tc-cnt" id="ve-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="ve-type" onchange="R.vendors(1)"><option value="">All Types</option><option value="vendor">Vendors</option><option value="transporter">Transporters</option></select>
+        <select class="f" id="ve-type" onchange="R.vendors(1)"><option value="">All Types</option><option value="__EMPTY__">(Empty)</option><option value="vendor">Vendors</option><option value="transporter">Transporters</option></select>
         <input class="f" id="ve-q" placeholder="Search name / alias…" oninput="R.vendors(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-vendors" onclick="openFD('vendors')">⚙ Filters</button>
       </div>
@@ -746,8 +748,8 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <!-- PLACEHOLDER PAGES -->
 <div id="pg-wflow-order" class="pg">
 <div class="kb-filters" style="margin-bottom:12px">
-  <select class="f" id="kb-cust" onchange="kbCustChange()"><option value="">All Customers</option></select>
-  <select class="f" id="kb-prod" onchange="kbFilter()"><option value="">All Products</option></select>
+  <select class="f" id="kb-cust" onchange="kbCustChange()"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
+  <select class="f" id="kb-prod" onchange="kbFilter()"><option value="">All Products</option><option value="__EMPTY__">(Empty)</option></select>
   <select class="f" id="kb-age" onchange="kbFilter()">
     <option value="">Any Age</option>
     <option value="7">Within 7d</option>
@@ -775,7 +777,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
 <div id="pg-wflow-design" class="pg">
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
   <input class="f" id="dw-q" placeholder="Search product / customer / code…" oninput="initDesignWF()" style="width:210px">
-  <select class="f" id="dw-cust" onchange="initDesignWF()"><option value="">All Customers</option></select>
+  <select class="f" id="dw-cust" onchange="initDesignWF()"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
   <button class="btn" style="background:var(--s2);border:1px solid var(--bdr);font-size:11px" onclick="document.getElementById('dw-q').value='';document.getElementById('dw-cust').value='';initDesignWF()">Clear</button>
 </div>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="dw-stats"></div>
@@ -829,7 +831,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>⚙️ Processes</h3><span class="tc-cnt" id="proc-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option><option value="skipped">Skipped</option><option value="cancelled">Cancelled</option></select>
+        <select class="f" id="proc-st" onchange="R.processes(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="done">Done</option><option value="skipped">Skipped</option><option value="cancelled">Cancelled</option></select>
         <input class="f" id="proc-q" placeholder="Search PRO / process…" oninput="R.processes(1)" style="width:180px">
         <button class="fd-btn" id="fd-btn-processes" onclick="openFD('processes')">⚙ Filters</button>
       </div>
@@ -876,7 +878,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <div class="tc">
       <div class="th"><h3>Raw Material Master</h3>
         <div class="flt-row">
-          <select class="f" id="rmi-cat-f" onchange="R.rm_list(1)"><option value="">All Categories</option></select>
+          <select class="f" id="rmi-cat-f" onchange="R.rm_list(1)"><option value="">All Categories</option><option value="__EMPTY__">(Empty)</option></select>
           <input class="f" id="rmi-q" placeholder="Search name / brand / vendor…" oninput="R.rm_list(1)" style="width:180px">
           <button class="fd-btn" id="fd-btn-rm-master" onclick="openFD('rm-master')">⚙ Filters</button>
         </div>
@@ -931,7 +933,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <div class="tc">
       <div class="th"><h3>Purchase Orders</h3><span class="tc-cnt" id="po-cnt"></span>
         <div class="flt-row">
-          <select class="f" id="po-st" onchange="R.po_list(1)"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="received">Received</option></select>
+          <select class="f" id="po-st" onchange="R.po_list(1)"><option value="">All Status</option><option value="__EMPTY__">(Empty)</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="received">Received</option></select>
           <input class="f" id="po-q" placeholder="Search material / vendor / bill…" oninput="R.po_list(1)" style="width:180px">
           <button class="fd-btn" id="fd-btn-purchase" onclick="openFD('purchase')">⚙ Filters</button>
         </div>
@@ -1005,8 +1007,8 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>FG Stock — Currently In Stock</h3><span class="tc-cnt" id="fgis-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="fgis-cust" onchange="R.fg_instock(1)"><option value="">All Customers</option></select>
-        <select class="f" id="fgis-prod" onchange="R.fg_instock(1)"><option value="">All Products</option></select>
+        <select class="f" id="fgis-cust" onchange="R.fg_instock(1)"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
+        <select class="f" id="fgis-prod" onchange="R.fg_instock(1)"><option value="">All Products</option><option value="__EMPTY__">(Empty)</option></select>
         <input class="f" id="fgis-q" placeholder="Search batch / product / design no…" oninput="R.fg_instock(1)" style="width:200px">
       </div>
     </div>
@@ -1031,7 +1033,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   <div class="tc">
     <div class="th"><h3>All FG Batches</h3><span class="tc-cnt" id="winv-cnt"></span>
       <div class="flt-row">
-        <select class="f" id="winv-cust" onchange="R.fg_inventory(1)"><option value="">All Customers</option></select>
+        <select class="f" id="winv-cust" onchange="R.fg_inventory(1)"><option value="">All Customers</option><option value="__EMPTY__">(Empty)</option></select>
         <select class="f" id="winv-status" onchange="R.fg_inventory(1)">
           <option value="">All Status</option>
           <option value="instock">In Stock</option>
@@ -2454,6 +2456,11 @@ function wt(prefix,el,show){
   const p=document.getElementById(show);if(p)p.style.display='block';
 }
 
+// ── EMPTY FILTER HELPERS ── every filter offers "(Empty)" to find rows still to be filled
+const FE='__EMPTY__';
+function isE(x){return x==null||(Array.isArray(x)?x.length===0:String(x).trim()===''||String(x).trim()==='—');}
+function fm(v,x){return !v||(v===FE?isE(x):x===v);}
+
 // ── FILTER DRAWER ──
 let FD_STATE={};
 let _fdTable='';
@@ -2514,7 +2521,7 @@ const FD_CFG={
     title:'Filter Jobs',
     renderFn:()=>R.jobs(1),
     fields:[
-      {id:'fd_jo_type',label:'Job Type',type:'tags',opts:()=>['Sheet','Machine','Direct']},
+      {id:'fd_jo_type',label:'PPC (job type)',type:'tags',opts:()=>['Machine','Sheet','Tupax','Direct','Direct5']},
       {id:'fd_jo_d1',label:'Date From',type:'date',pair:'fd_jo_d2'},
       {id:'fd_jo_d2',label:'Date To',type:'date',pair:'fd_jo_d1'},
     ]
@@ -2635,23 +2642,22 @@ function openFD(tableKey){
   const saved=FD_STATE[tableKey]||{};
   let html='';
   const dateFields=[];
+  const emptyChk=(id,lbl)=>`<label class="fd-empty"><input type="checkbox" id="${id}__e"${saved[id+'__e']?' checked':''}> ${lbl||'Only empty'}</label>`;
   cfg.fields.forEach(f=>{
+    if(f.type==='date'){dateFields.push(f);return;} // handled in pairs below
     html+=`<div class="fd-group">`;
     html+=`<div class="fd-label">${f.label}</div>`;
     if(f.type==='select'){
       const opts=f.opts?f.opts():[];
-      html+=`<div class="fd-row-1"><select class="fd-f" id="${f.id}"><option value="">All</option>${opts.map(o=>`<option value="${o}"${saved[f.id]===o?' selected':''}>${o}</option>`).join('')}</select></div>`;
+      html+=`<div class="fd-row-1"><select class="fd-f" id="${f.id}"><option value="">All</option><option value="${FE}"${saved[f.id]===FE?' selected':''}>(Empty)</option>${opts.map(o=>`<option value="${o}"${saved[f.id]===o?' selected':''}>${o}</option>`).join('')}</select></div>`;
     } else if(f.type==='text'){
-      html+=`<div class="fd-row-1"><input class="fd-f" id="${f.id}" type="text" placeholder="${f.placeholder||''}" value="${saved[f.id]||''}"></div>`;
+      html+=`<div class="fd-row-1"><input class="fd-f" id="${f.id}" type="text" placeholder="${f.placeholder||''}" value="${saved[f.id]||''}"></div>`+emptyChk(f.id);
     } else if(f.type==='number'){
-      html+=`<div class="fd-row-1"><input class="fd-f" id="${f.id}" type="number" placeholder="${f.placeholder||''}" value="${saved[f.id]||''}"></div>`;
-    } else if(f.type==='date'){
-      dateFields.push(f);
-      return; // handled in pairs below
+      html+=`<div class="fd-row-1"><input class="fd-f" id="${f.id}" type="number" placeholder="${f.placeholder||''}" value="${saved[f.id]||''}"></div>`+emptyChk(f.id);
     } else if(f.type==='tags'){
       const opts=f.opts?f.opts():[];
       const sel=saved[f.id]||[];
-      html+=`<div class="fd-tag-row">${opts.map(o=>`<span class="fd-tag${sel.includes(o)?' on':''}" data-fid="${f.id}" data-val="${o}" onclick="toggleFDTag(this)">${o.replace(/_/g,' ')}</span>`).join('')}</div>`;
+      html+=`<div class="fd-tag-row">${opts.map(o=>`<span class="fd-tag${sel.includes(o)?' on':''}" data-fid="${f.id}" data-val="${o}" onclick="toggleFDTag(this)">${o.replace(/_/g,' ')}</span>`).join('')}<span class="fd-tag fd-tag-e${sel.includes(FE)?' on':''}" data-fid="${f.id}" data-val="${FE}" onclick="toggleFDTag(this)">(Empty)</span></div>`;
     }
     html+=`</div>`;
   });
@@ -2672,7 +2678,7 @@ function openFD(tableKey){
     html+=`<div class="${f2?'fd-row':'fd-row-1'}">`;
     html+=`<input class="fd-f" id="${f1.id}" type="date" value="${saved[f1.id]||''}">`;
     if(f2) html+=`<input class="fd-f" id="${f2.id}" type="date" value="${saved[f2.id]||''}">`;
-    html+=`</div></div>`;
+    html+=`</div>${emptyChk(f1.id,'Only rows with no date')}</div>`;
   });
   document.getElementById('fd-body').innerHTML=html;
   document.getElementById('fd').classList.add('open');
@@ -2693,6 +2699,8 @@ function applyFD(){
       const el=document.getElementById(f.id);
       if(el) vals[f.id]=el.value||'';
     }
+    const ce=document.getElementById(f.id+'__e');
+    if(ce) vals[f.id+'__e']=ce.checked?'1':'';
   });
   FD_STATE[_fdTable]=vals;
   closeFD();
@@ -2733,26 +2741,37 @@ function applyFDFilters(tableKey, arr){
     const cfg=FD_CFG[tableKey];
     if(!cfg)return true;
     for(const f of cfg.fields){
+      if(s[f.id+'__e']){ // "Only empty" ticked for this field
+        const ev=f.type==='date'?dateFieldVal(tableKey,f.id,row):f.type==='number'?numFieldVal(tableKey,f.id,row):textFieldVal(tableKey,f.id,row);
+        if(ev!==undefined&&!isE(ev))return false;
+        continue;
+      }
       const v=s[f.id];
       if(!v||(Array.isArray(v)&&v.length===0))continue;
       if(f.type==='tags'){
         // tag filter: check row field by convention
         const val=tagFieldVal(tableKey,f.id,row);
-        if(val!==null&&!v.includes(val))return false;
+        if(val===undefined)continue;
+        const ok=(v.includes(FE)&&isE(val))||(!isE(val)&&v.includes(String(val)));
+        if(!ok)return false;
       } else if(f.type==='select'||f.type==='text'){
         if(!v)continue;
-        const val=String(textFieldVal(tableKey,f.id,row)||'').toLowerCase();
+        const raw=textFieldVal(tableKey,f.id,row);
+        if(raw===undefined)continue;
+        if(v===FE){if(!isE(raw))return false;continue;}
+        const val=String(raw||'').toLowerCase();
         if(!val.includes(String(v).toLowerCase()))return false;
       } else if(f.type==='number'){
         if(!v)continue;
         const fval=numFieldVal(tableKey,f.id,row);
-        if(fval===null)continue;
+        if(fval==null)continue;
         if(f.id.includes('min')&&fval<Number(v))return false;
         if(f.id.includes('max')&&fval>Number(v))return false;
       } else if(f.type==='date'){
         if(!v)continue;
         const dval=dateFieldVal(tableKey,f.id,row);
-        if(!dval)continue;
+        if(dval===undefined)continue;
+        if(!dval)return false; // a date range was set: rows without a date don't match it
         if(f.id.endsWith('1')&&dval<v)return false;
         if(f.id.endsWith('2')&&dval>v)return false;
       }
@@ -2767,7 +2786,7 @@ function tagFieldVal(tk,fid,row){
     'dq':{'fd_dq_st':3},
     'products':{'fd_pd_st':3},
     'pros':{'fd_pr_st':8},
-    'jobs':{},
+    'jobs':{'fd_jo_type':2},
     'dies':{'fd_di_st':3},
     'plates':{'fd_pl_st':2},
     'vendors':{'fd_ve_type':3},
@@ -2775,11 +2794,11 @@ function tagFieldVal(tk,fid,row){
     'rm-grn':{'fd_grn_st':8},
     'purchase':{'fd_po_st':7},
   };
-  const idx=m[tk]?.[fid];
-  if(idx===undefined)return null;
   // special: orders type
   if(tk==='orders'&&fid==='fd_o_type') return row[6]?'Repeat':'New';
-  return row[idx]!=null?String(row[idx]):null;
+  const idx=m[tk]?.[fid];
+  if(idx===undefined)return undefined; // not wired to a column: filter ignored
+  return row[idx]!=null?String(row[idx]):'';
 }
 function textFieldVal(tk,fid,row){
   const m={
@@ -2802,9 +2821,9 @@ function textFieldVal(tk,fid,row){
     // Special: processes vendor_id → vendor name lookup
     if(tk==='processes'&&fid==='fd_proc_vendor'){
       const vm={};D.ve.forEach(v=>{vm[v[0]]=v[1];});
-      return vm[row[7]]||row[7]||null;
+      return vm[row[7]]||row[7]||'';
     }
-    return null;
+    return undefined;
   }
   return row[idx];
 }
@@ -2814,7 +2833,7 @@ function numFieldVal(tk,fid,row){
     const d=new Date(row[1]);const now=new Date();
     return Math.floor((now-d)/(86400000));
   }
-  return null;
+  return undefined;
 }
 function dateFieldVal(tk,fid,row){
   const dateIdxMap={
@@ -2823,12 +2842,12 @@ function dateFieldVal(tk,fid,row){
     'despatched':'fd_done_d'
   };
   const pfx=dateIdxMap[tk];
-  if(!pfx||!fid.startsWith(pfx))return null;
+  if(!pfx||!fid.startsWith(pfx))return undefined;
   const dateIdxes={'orders':1,'pros':1,'jobs':1,'processes':3,'rm-grn':1,'purchase':1,'fg-inv':1,'rm-out':1,'despatched':1};
   const idx=dateIdxes[tk];
-  if(idx===undefined)return null;
+  if(idx===undefined)return undefined;
   const d=row[idx];
-  return d?d.slice(0,10):null;
+  return d?String(d).slice(0,10):'';
 }
 
 // ── SORT STATE ── (all tables default: descending)
@@ -2934,7 +2953,7 @@ R.orders=function(p){
   const yr=document.getElementById('o-yr')?.value||'';
   const q=(document.getElementById('o-q')?.value||'').toLowerCase();
   const now=new Date();
-  let items=D.o.filter(o=>(!st||o[5]===st)&&(!yr||o[1].startsWith(yr))&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.o.filter(o=>fm(st,o[5])&&(!yr||(yr===FE?isE(o[1]):String(o[1]||'').startsWith(yr)))&&(!q||[o[0],o[2],o[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('orders',items);
   // Augment with age at index 8 for sorting
   items=items.map(o=>{const age=o[1]?Math.floor((now-new Date(o[1]))/86400000):0;return o.length>8?o:[...o,age];});
@@ -3143,7 +3162,7 @@ R.dq=function(p){
   if(p)pp.dq=p;
   const st=document.getElementById('dq-st')?.value||'';
   const q=(document.getElementById('dq-q')?.value||'').toLowerCase();
-  let items=D.dq.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.dq.filter(x=>fm(st,x[3])&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('dq',items);
   items=sortItems(items,'dq');
   const slice=pgr(items,'dq','R.dq','dq-pg','dq-cnt');
@@ -3157,7 +3176,7 @@ R.products=function(p){
   if(p)pp.products=p;
   const ds=document.getElementById('pd-ds')?.value||'';
   const q=(document.getElementById('pd-q')?.value||'').toLowerCase();
-  let items=D.pd.filter(x=>(!ds||x[3]===ds)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.pd.filter(x=>fm(ds,x[3])&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('products',items);
   items=sortItems(items,'products');
   const slice=pgr(items,'products','R.products','pd-pg','pd-cnt');
@@ -3522,6 +3541,7 @@ R.pros=function(p){
   const st=document.getElementById('pr-st')?.value||'';
   const q=(document.getElementById('pr-q')?.value||'').toLowerCase();
   let items=D.pr.filter(x=>{
+    if(st===FE) return isE(x[8]);
     if(st==='cancelled') return x[5];
     if(st==='on_hold')   return x[6];
     if(st==='active')    return !x[5]&&!x[6]&&(x[8]!=='complete');
@@ -3694,7 +3714,7 @@ R.jobs=function(p){
   if(p)pp.jobs=p;
   const t=document.getElementById('jo-t')?.value||'';
   const q=(document.getElementById('jo-q')?.value||'').toLowerCase();
-  let items=D.jo.filter(x=>(!t||(t==='none'?!['Machine','Sheet','Tupax','Direct','Direct5'].includes(x[2]):x[2]===t))&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
+  let items=D.jo.filter(x=>(!t||(t===FE?isE(x[2]):t==='none'?!['Machine','Sheet','Tupax','Direct','Direct5'].includes(x[2]):x[2]===t))&&(!q||[x[0],x[3]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('jobs',items);
   items=sortItems(items,'jobs');
   const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
@@ -3994,7 +4014,7 @@ R.dies=function(p){
   if(p)pp.dies=p;
   const st=document.getElementById('di-st')?.value||'';
   const q=(document.getElementById('di-q')?.value||'').toLowerCase();
-  let items=D.di.filter(x=>(!st||x[3]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  let items=D.di.filter(x=>fm(st,x[3])&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('dies',items);
   items=sortItems(items,'dies');
   const slice=pgr(items,'dies','R.dies','di-pg','di-cnt');
@@ -4007,7 +4027,7 @@ R.plates=function(p){
   if(p)pp.plates=p;
   const st=document.getElementById('pl-st')?.value||'';
   const q=(document.getElementById('pl-q')?.value||'').toLowerCase();
-  let items=D.pl.filter(x=>(!st||x[2]===st)&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
+  let items=D.pl.filter(x=>fm(st,x[2])&&(!q||[x[0],x[1]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('plates',items);
   items=sortItems(items,'plates');
   const slice=pgr(items,'plates','R.plates','pl-pg','pl-cnt');
@@ -4153,7 +4173,7 @@ R.vendors=function(p){
   if(p)pp.vendors=p;
   const vtype=document.getElementById('ve-type')?.value||'';
   const q=(document.getElementById('ve-q')?.value||'').toLowerCase();
-  let items=D.ve.filter(x=>(!vtype||x[3]===vtype)&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
+  let items=D.ve.filter(x=>fm(vtype,x[3])&&(!q||[x[0],x[1],x[2]].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('vendors',items);
   items=sortItems(items,'vendors');
   const slice=pgr(items,'vendors','R.vendors','ve-pg','ve-cnt');
@@ -4385,7 +4405,8 @@ R.processes=function(p){
   const toArr=r=>[r.id,r.process_name,r.prod_order_id,r.date,r.material_id,r.qty_out,r.machine,r.vendor_id,r.step_status||r.process_status];
   let items=D.procs_raw.filter(r=>{
     const effStatus=r.step_status||r.process_status||'pending';
-    if(st&&effStatus!==st)return false;
+    if(st===FE){if(!isE(r.step_status)||!isE(r.process_status))return false;}
+    else if(st&&effStatus!==st)return false;
     if(q&&![r.id,r.process_name,r.prod_order_id,proMap[r.prod_order_id]?.pname||'',proMap[r.prod_order_id]?.cname||''].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
@@ -4481,7 +4502,7 @@ R.rm_list=function(p){
   const cat=document.getElementById('rmi-cat-f')?.value||'';
   const q=(document.getElementById('rmi-q')?.value||'').toLowerCase();
   let items=D.rm_list.filter(r=>{
-    if(cat&&r[3]!==cat)return false;
+    if(!fm(cat,r[3]))return false;
     if(q&&![r[0],r[1],r[2],r[3],r[4],r[5]].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
@@ -4496,7 +4517,7 @@ R.rm_list=function(p){
   const tot=document.getElementById('rmi-total');if(tot)tot.textContent=D.rm_list.length;
   // populate cat filter
   const cf=document.getElementById('rmi-cat-f');
-  if(cf&&cf.options.length===1){D.rm_cats.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;cf.appendChild(o);});}
+  if(cf&&cf.options.length<=2){D.rm_cats.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;cf.appendChild(o);});}
 };
 
 R.rm_in=function(p){
@@ -4537,7 +4558,7 @@ R.po_list=function(p){
   const st=document.getElementById('po-st')?.value||'';
   const q=(document.getElementById('po-q')?.value||'').toLowerCase();
   let items=D.pos.filter(r=>{
-    if(st&&r[7]!==st)return false;
+    if(!fm(st,r[7]))return false;
     if(q&&![r[0],r[2],r[3],r[8]].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
@@ -4575,25 +4596,25 @@ R.fg_instock=function(p){
   // Populate customer dropdown once; always cascade product dropdown from selected customer
   const custSel=document.getElementById('fgis-cust');
   const prodSel=document.getElementById('fgis-prod');
-  if(custSel&&custSel.options.length<=1){
+  if(custSel&&custSel.options.length<=2){
     const custs=[...new Set(D.fg.map(r=>r[8]).filter(Boolean))].sort();
     custs.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;custSel.appendChild(o);});
     if(custF)custSel.value=custF;
   }
   // Always repopulate product dropdown based on selected customer (cascade)
   if(prodSel){
-    const srcItems=custF?D.fg.filter(r=>r[8]===custF):D.fg;
+    const srcItems=custF?D.fg.filter(r=>fm(custF,r[8])):D.fg;
     const prods=[...new Set(srcItems.map(r=>r[7]).filter(Boolean))].sort();
     const prevProd=prodF;
-    while(prodSel.options.length>1)prodSel.remove(1);
+    while(prodSel.options.length>2)prodSel.remove(2);
     prods.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=tr(c,40);prodSel.appendChild(o);});
-    if(prods.includes(prevProd))prodSel.value=prevProd;
+    if(prevProd===FE||prods.includes(prevProd))prodSel.value=prevProd;
   }
   const despMap=_fgDespMap();
   // Only items with stock
   let items=D.fg.filter(r=>(Number(r[15])||0)>0);
-  if(custF)items=items.filter(r=>r[8]===custF);
-  if(prodF)items=items.filter(r=>r[7]===prodF);
+  if(custF)items=items.filter(r=>fm(custF,r[8]));
+  if(prodF)items=items.filter(r=>fm(prodF,r[7]));
   if(q)items=items.filter(r=>[r[0],r[3],r[7],r[8],r[11],r[2]].join(' ').toLowerCase().includes(q));
   // Sort: most packets in stock first
   items=[...items].sort((a,b)=>(Number(b[15])||0)-(Number(a[15])||0));
@@ -4634,14 +4655,14 @@ R.fg_inventory=function(p){
   const statusF=(document.getElementById('winv-status')?.value||'');
   // Populate customer dropdown once
   const custSel=document.getElementById('winv-cust');
-  if(custSel&&custSel.options.length<=1){
+  if(custSel&&custSel.options.length<=2){
     const custs=[...new Set(D.fg.map(r=>r[8]).filter(Boolean))].sort();
     custs.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;custSel.appendChild(o);});
     if(custF)custSel.value=custF;
   }
   const despMap=_fgDespMap();
   let items=D.fg;
-  if(custF)items=items.filter(r=>r[8]===custF);
+  if(custF)items=items.filter(r=>fm(custF,r[8]));
   if(statusF==='instock')items=items.filter(r=>(Number(r[15])||0)>0);
   else if(statusF==='partial')items=items.filter(r=>{const d=despMap[r[3]]||0;return d>0&&(Number(r[15])||0)>0;});
   else if(statusF==='despatched')items=items.filter(r=>(Number(r[15])||0)===0&&(despMap[r[3]]||0)>0);
@@ -5751,7 +5772,7 @@ function kbRenderBoard(data){
   const cs=document.getElementById('kb-cust');
   const ps=document.getElementById('kb-prod');
   // Always rebuild customer dropdown from ALL KB data (not just filtered)
-  if(cs&&cs.options.length===1){
+  if(cs&&cs.options.length<=2){
     const allCards=Object.values(KB||data).flat();
     const custs=[...new Set(allCards.map(c=>c[2]).filter(Boolean))].sort();
     custs.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;cs.appendChild(o);});
@@ -5760,12 +5781,12 @@ function kbRenderBoard(data){
   if(ps){
     const selCust=cs?.value||'';
     const allCards=Object.values(KB||data).flat();
-    const filteredCards=selCust?allCards.filter(c=>c[2]===selCust):allCards;
+    const filteredCards=selCust?allCards.filter(c=>fm(selCust,c[2])):allCards;
     const prods=[...new Set(filteredCards.map(c=>c[3]).filter(Boolean))].sort();
     const prevProd=ps.value;
-    while(ps.options.length>1)ps.remove(1);
+    while(ps.options.length>2)ps.remove(2);
     prods.slice(0,60).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=tr(x,28);ps.appendChild(o);});
-    if(prods.includes(prevProd))ps.value=prevProd;
+    if(prevProd===FE||prods.includes(prevProd))ps.value=prevProd;
   }
   const board=document.getElementById('kb-board');
   if(!board) return;
@@ -5896,7 +5917,7 @@ function kbFilter(){
   const filtered={};
   KB_COLS.forEach(col=>{
     filtered[col.key]=(KB[col.key]||[]).filter(c=>
-      (!cust||c[2]===cust)&&(!prod||c[3]===prod)&&
+      fm(cust,c[2])&&fm(prod,c[3])&&
       (!age||(age==='old'?c[6]>30:Number(c[6])<=Number(age)))
     );
   });
@@ -5909,9 +5930,9 @@ function kbCustChange(){
     const cs=document.getElementById('kb-cust');
     const selCust=cs?.value||'';
     const allCards=Object.values(KB||{}).flat();
-    const filteredCards=selCust?allCards.filter(c=>c[2]===selCust):allCards;
+    const filteredCards=selCust?allCards.filter(c=>fm(selCust,c[2])):allCards;
     const prods=[...new Set(filteredCards.map(c=>c[3]).filter(Boolean))].sort();
-    while(ps.options.length>1)ps.remove(1);
+    while(ps.options.length>2)ps.remove(2);
     prods.slice(0,60).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=tr(x,28);ps.appendChild(o);});
     ps.value='';
   }
@@ -6309,14 +6330,14 @@ function initDesignWF(){
   }).filter(d=>{
     const st=d[3]||'';
     if(DW_DONE.includes(st))return false; // separate section, skip for main board
-    if(custF&&d[2]!==custF)return false;
+    if(!fm(custF,d[2]))return false;
     if(q&&![d[0],d[1],d[2]].join(' ').toLowerCase().includes(q))return false;
     return true;
   });
 
   // Populate customer dropdown (once)
   const dc=document.getElementById('dw-cust');
-  if(dc&&dc.options.length===1){
+  if(dc&&dc.options.length<=2){
     [...new Set(allItems.map(x=>x[2]).filter(Boolean))].sort().forEach(c=>{
       const o=document.createElement('option');o.value=c;o.textContent=c;dc.appendChild(o);
     });
