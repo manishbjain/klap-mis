@@ -334,6 +334,7 @@ Deno.serve(async(req)=>{
         rm_out:['date','rm_in_id','out_for','prod_proc_id','conversion_vendor','temp_prod_proc_id','qty','comments'],
         purchase_orders:['date','rm_id','vendor_id','pur_unit','pur_qty','rate','rate_units','bill_ref','status','comments'],
         fg_inventory:['date','prod_order_id','d_no','ups','sheets','packets','qty','qty_units','qty_wastage','wastage_problem','last_entry','comment','fg_status'],
+        locations:['name','door_no','street','city','state','pincode','country','shipping_mark','contact','account_id'],
         ds:['date','customer_id','despatch_status','ds_printed','del_location','transport_id','due_today','print','bt','ledger_id','freight','freight_amt','b_no','processing','delivered','despatched_dt','extra','comment'],
         ds_items:['ds_id','order_id','price','taxation'],
         ds_items_pl:['ds_id','ds_item_id','ds_item_pl_id','inv_batch_id','packet_qty'],
@@ -523,7 +524,8 @@ Deno.serve(async(req)=>{
     const rm_in=await fetchAll('rm_in','id,rm_in_id,date,rm_item_id,vendor_id,qty,qty_units,vendor_ref,status,category_id,subcategory_id,purchase_id,recd_date,freight_amt,carton_no','rm_in_id')
     const rm_out=await fetchAll('rm_out','id,date,rm_in_id,prod_proc_id,out_for,qty','id')
     const fg_inv=await fetchAll('fg_inventory','id,date,prod_order_id,inv_batch_id,d_no,ups,sheets,packets,qty,qty_units,qty_wastage,last_entry,fg_status,old_data','id')
-    const ds=await fetchAll('ds','id,date,customer_id,despatch_status,ds_printed,del_location,transport_id,due_today,b_no,freight,freight_amt,delivered,despatched_dt,comment')
+    const ds=await fetchAll('ds','id,date,customer_id,despatch_status,ds_printed,del_location,transport_id,due_today,b_no,freight,freight_amt,delivered,despatched_dt,comment,bt,ledger_id')
+    const locations=await fetchAll('locations','id,name,city,state,account_id','id')
     const ds_items=await fetchAll('ds_items','id,ds_id,order_id,price,taxation','id')
     const ds_items_pl=await fetchAll('ds_items_pl','id,ds_id,ds_item_id,ds_item_pl_id,inv_batch_id,packet_qty','id')
     // old shape for app copies still open in a browser (remove later)
@@ -533,7 +535,7 @@ Deno.serve(async(req)=>{
     const machines=await fetchAll('machines','id,name,machine_type,processes,location,status,notes')
     const fg_adj=await fetchAll('fg_adjustments','id,date,inv_batch_id,packets,qty,reason')
     const pos=await fetchAll('purchase_orders','id,date,rm_id,vendor_id,pur_qty,rate,pur_unit,rate_units,status,bill_ref,comments')
-    return new Response(JSON.stringify({fg_adj,machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,ds,ds_items,ds_items_pl,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,ds:ds.length,ds_items:ds_items.length,ds_items_pl:ds_items_pl.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
+    return new Response(JSON.stringify({locations,fg_adj,machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,ds,ds_items,ds_items_pl,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,ds:ds.length,ds_items:ds_items.length,ds_items_pl:ds_items_pl.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }catch(err:any){
     return new Response(JSON.stringify({error:err.message}),{status:500,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }

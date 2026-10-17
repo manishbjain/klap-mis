@@ -279,6 +279,21 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 .dp-grid .dv{padding:5px 10px;font-size:12px;border-bottom:1px solid var(--bdr);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-grid .dp-sec{grid-column:1/-1;padding:5px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);background:rgba(79,99,240,.06);border-bottom:1px solid var(--bdr)}
 .dp-grid .dk:last-of-type,.dp-grid .dv:last-of-type{border-bottom:none}
+.ds-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:2px 0 12px;border-bottom:1px solid var(--bdr);margin-bottom:6px}
+.ds-cust{font-size:19px;font-weight:700;color:var(--txt)}.ds-sub{font-size:12px;color:var(--t2);margin-top:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ds-cnt{display:inline-block;background:var(--s2);border:1px solid var(--bdr);border-radius:4px;padding:0 6px;color:var(--txt);font-size:11px}
+.ds-wrap{overflow-x:auto;border:1px solid var(--bdr);border-radius:8px;margin-bottom:12px}
+.ds-tab,.ds-lots{width:100%;border-collapse:collapse;font-size:12px}
+.ds-tab th,.ds-lots th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t2);text-align:left;padding:7px 10px;background:var(--s2);border-bottom:1px solid var(--bdr);white-space:nowrap}
+.ds-tab td{padding:8px 10px;border-bottom:1px solid var(--bdr);vertical-align:top}
+.ds-tab .n,.ds-lots .n{text-align:right;white-space:nowrap}
+.ds-it{cursor:pointer}.ds-it:hover{background:var(--s2)}
+.ds-car{display:inline-block;width:10px;color:var(--t3)}.ds-oid{color:var(--acc);font-weight:600;cursor:pointer}
+.ds-pn{font-size:11px;color:var(--t2);margin:2px 0 0 14px;max-width:260px;white-space:normal;overflow-wrap:anywhere}
+.ds-tab tfoot td{padding:7px 10px;font-weight:700;background:var(--s2)}.ds-tab tfoot .ds-sm td{font-weight:400;color:var(--t2)}
+@media(max-width:600px){.ds-tab .ds-hide,.ds-lots .ds-hide{display:none}.ds-pn{max-width:118px;margin-left:0}.ds-tab,.ds-lots{font-size:11px}.ds-car{display:none}.ds-tab td,.ds-tab th{padding:7px 5px}.ds-lotcell{padding-left:10px!important}}
+.ds-lotcell{padding:0 0 0 24px!important;background:var(--bg)}
+.ds-lots td{padding:5px 10px;border-bottom:1px solid var(--bdr);font-size:11px}.ds-lots tr{cursor:pointer}.ds-lots tbody tr:hover{background:var(--s2)}
 .dp-sec-title{font-size:10px;font-weight:700;color:var(--t2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
 .dp-tbl{width:100%;border-collapse:collapse;border:1px solid var(--bdr);border-radius:6px;overflow:hidden;margin-bottom:14px;font-size:11px}
 .dp-tbl th{padding:4px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);background:var(--s1);border-bottom:1px solid var(--bdr);white-space:nowrap}
@@ -1808,7 +1823,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-122718';
+const APP_BUILD='20261017-130242';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2390,12 +2405,13 @@ function buildData(raw){
     // FG stock: map product_id → total qty in hand (no status — fg_inventory is just stock count)
     // FG stock per product = pieces still in stock (packed minus despatched), not everything ever packed
     const fgStockQty={};
-    {const dsp={};(raw.do_items||[]).forEach(i=>{if(i.inv_batch_id)dsp[i.inv_batch_id]=(dsp[i.inv_batch_id]||0)+(Number(i.packet_qty)||0);});
+    {const dsp={};(raw.ds_items_pl||raw.do_items||[]).forEach(i=>{if(i.inv_batch_id)dsp[i.inv_batch_id]=(dsp[i.inv_batch_id]||0)+(Number(i.packet_qty)||0);});
      (raw.fg_adj||[]).forEach(a=>{if(a.inv_batch_id)dsp[a.inv_batch_id]=(dsp[a.inv_batch_id]||0)+(Number(a.packets)||0);});
      const proProd={};pros.forEach(p=>{proProd[p.id]=p.product_id;});
      fg_inv.forEach(r=>{const pid=proProd[r.prod_order_id];if(!pid||String(r.old_data||'').toUpperCase()==='TRUE')return;const d=dsp[r.inv_batch_id]||0;
        const per=(Number(r.sheets)||0)*(Number(r.ups)||0)||((r.packets||0)>0?(r.qty||0)/r.packets:0);
        const left=Math.round((r.qty||0)-d*per);if(left>0)fgStockQty[pid]=(fgStockQty[pid]||0)+left;});}
+    D.fgStockQty=fgStockQty;
     ordersExt.filter(o=>o[5]==='active').forEach(o=>{
       const oid=o[0];
       const orderRow=orders.find(x=>x.id===oid);
@@ -5816,7 +5832,7 @@ function selFG(e,batchId){
 }
 
 function selDO(e,did){
-  // DS → DS Items (orders) → DS Items PL (FG lots + packets)
+  // DS (the slip) → DS_Items (orders on it) → DS_Items_PL (FG lots + packets), laid out like the old app
   const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
@@ -5825,44 +5841,48 @@ function selDO(e,did){
   const its=(D.dsOrders||{})[did]||[];
   const lots=D.do_items.filter(i=>i.delivery_order_id===did);
   const fgMap={};D.fg.forEach(f=>{fgMap[f[3]]=f;});
-  const ordMap={};D.o.forEach(o=>{ordMap[o[0]]=o;});
   const nf=n=>Number(n||0).toLocaleString('en-IN');
+  const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   const pcsOf=i=>{const f=fgMap[i.inv_batch_id];if(!f)return 0;const per=(Number(f[13])||0)*(Number(f[12])||0)||(Number(f[4])?Number(f[5])/Number(f[4]):0);return Math.round((Number(i.packet_qty)||0)*per);};
-  const lotRows=ls=>ls.map(i=>{const f=fgMap[i.inv_batch_id]||[];return `<tr onclick="selFG(event,${esc(i.inv_batch_id)})" style="cursor:pointer">
-      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${i.inv_batch_id||'—'}</td>
-      <td style="padding:4px 8px;font-size:11px">${tr(f[7]||'—',26)}</td>
-      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${f[2]||'—'}</td>
-      <td style="padding:4px 8px;font-size:11px;text-align:right">${nf(i.packet_qty)} pkts</td>
-      <td style="padding:4px 8px;font-size:11px;text-align:right">${pcsOf(i)?nf(pcsOf(i)):'—'}</td></tr>`;}).join('');
-  const head=`<thead><tr style="background:var(--s1)"><th style="font-size:10px;padding:4px 8px;text-align:left">FG lot</th><th style="font-size:10px;padding:4px 8px;text-align:left">Product</th><th style="font-size:10px;padding:4px 8px;text-align:left">PRO</th><th style="font-size:10px;padding:4px 8px;text-align:right">Packets</th><th style="font-size:10px;padding:4px 8px;text-align:right">Pcs</th></tr></thead>`;
+  const rawOrd={};((window._RAW||{}).orders||[]).forEach(o=>{rawOrd[o.id]=o;});
+  const prodName=pid=>(((window._RAW||{}).products||[]).find(p=>p.id===pid)||{}).product_name;
+  const pName=o=>{const ro=rawOrd[o]||{};const ow=(D.o||[]).find(x=>x[0]===o)||[];return ow[3]||prodName(ro.product_id)||'';};
   const used=new Set();
-  let blocks=its.map((it,n)=>{
+  const items=its.map(it=>{
     const mine=lots.filter(l=>l.ds_item_id===it.id||(!l.ds_item_id&&its.length===1));mine.forEach(l=>used.add(l));
-    const o=ordMap[it.order_id]||[];
-    return `<div class="dp-sec-title">DS item ${n+1}: Order <span class="mono" style="color:var(--acc);cursor:pointer" onclick="selO(null,${esc(it.order_id||'')})">${it.order_id||'—'}</span> · ${tr(o[3]||'',30)}${it.price!=null?` · Price ${it.price}`:''}${it.taxation!=null?` · Tax ${it.taxation}`:''}</div>
-      <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:10px"><table style="width:100%;border-collapse:collapse">${head}<tbody>${lotRows(mine)||'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No lots linked to this order</td></tr>'}</tbody></table></div>`;
-  }).join('');
+    const pk=mine.reduce((s,l)=>s+(Number(l.packet_qty)||0),0),qty=mine.reduce((s,l)=>s+pcsOf(l),0);
+    const price=Number(it.price)||0,ro=rawOrd[it.order_id]||{};
+    return {it,mine,pk,qty,price,amt:qty*price,tax:Number(it.taxation)||0,stock:ro.product_id?((D.fgStockQty||{})[ro.product_id]||0):0};
+  });
   const rest=lots.filter(l=>!used.has(l));
-  if(rest.length)blocks+=`<div class="dp-sec-title">Lots not linked to an order (${rest.length})</div><div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
-    <table style="width:100%;border-collapse:collapse">${head}<tbody>${lotRows(rest)}</tbody></table></div>`;
+  const lotTable=ls=>`<table class="ds-lots"><thead><tr><th>FG lot</th><th class="ds-hide">Date</th><th class="ds-hide">PRO</th><th class="n">Packets</th><th class="n">Pcs</th></tr></thead><tbody>${ls.map(i=>{const f=fgMap[i.inv_batch_id]||[];return `<tr onclick="selFG(event,${esc(i.inv_batch_id)})"><td class="mono">${i.inv_batch_id||'—'}</td><td class="ds-hide">${f[1]||'—'}</td><td class="mono ds-hide">${f[2]||'—'}</td><td class="n">${nf(i.packet_qty)}</td><td class="n">${pcsOf(i)?nf(pcsOf(i)):'—'}</td></tr>`;}).join('')}</tbody></table>`;
+  const tPk=items.reduce((s,x)=>s+x.pk,0),tQty=items.reduce((s,x)=>s+x.qty,0),tAmt=items.reduce((s,x)=>s+x.amt,0),tTax=items.reduce((s,x)=>s+x.amt*x.tax,0);
+  const nc=window.innerWidth<=600?4:6;
+  const rows=items.map((x,n)=>`<tr class="ds-it" onclick="dsToggleLots(${n})"><td><span class="ds-car" id="ds-car-${n}">▸</span> <span class="mono ds-oid" onclick="event.stopPropagation();selO(null,${esc(x.it.order_id||'')})">${x.it.order_id||'—'}</span><div class="ds-pn">${dsH(pName(x.it.order_id))}</div></td>
+      <td class="n ds-hide">${nf(x.stock)}</td><td class="n ds-hide">${nf(x.pk)}</td><td class="n" style="font-weight:600">${nf(x.qty)}</td><td class="n">${x.it.price!=null?'₹'+x.price.toFixed(3):'—'}</td><td class="n">${x.it.price!=null?money(x.amt):'—'}</td></tr>
+      <tr id="ds-lots-${n}" style="display:none"><td colspan="${nc}" class="ds-lotcell">${x.mine.length?lotTable(x.mine):'<div style="padding:6px;color:var(--t3)">No lots linked to this order</div>'}</td></tr>`).join('');
+  const st=r[7]?`<span class="b ${dsIsToDespatch(r)?'by':'bg'}">${r[7]}</span>`:'';
+  const loc=raw.del_location?(()=>{const l=((window._RAW||{}).locations||[]).find(x=>x.id===raw.del_location);return l?[l.name,l.city].filter(Boolean).join(' - '):raw.del_location;})():'';
+  const trn=raw.transport_id?((D.ve||[]).find(v=>v[0]===raw.transport_id)||[])[1]||raw.transport_id:'';
+  const dt=r[1]?new Date(r[1]+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  const det=[['Delivery location',loc],['Transport',trn],['BT',raw.bt],['Bill no.',raw.b_no],['Freight',[raw.freight,raw.freight_amt?money(raw.freight_amt):''].filter(Boolean).join(' · ')],['Delivered',raw.delivered],['Despatched on',raw.despatched_dt],['Comment',raw.comment]];
   const html=`
-  ${dpGrid(dpSec('DS details'),
-    dpRow('DS',`<span class="mono">${r[0]}</span>`),
-    dpRow('Date',r[1]||'—'),
-    dpRow('Customer',r[3]||'—'),
-    dpRow('Despatch status',r[7]||'—'),
-    dpRow('Orders',(r[8]||[]).join(', ')||'—'),
-    dpRow('Lots / Packets',`${lots.length} / ${nf(r[11])}`),
-    dpRow('Transport',raw.transport_id?((D.ve||[]).find(v=>v[0]===raw.transport_id)||[])[1]||raw.transport_id:'—'),
-    dpRow('Bill no.',raw.b_no||'—'),
-    dpRow('Freight',[raw.freight,raw.freight_amt?'₹'+nf(raw.freight_amt):''].filter(Boolean).join(' · ')||'—'),
-    dpRow('Delivered',raw.delivered||'—'),
-    dpRow('Despatched on',raw.despatched_dt||'—'),
-    dpRow('Comment',raw.comment||'—'))}
-  <div style="margin-bottom:10px">${crudBtns('despatch',r[0])}${dsIsToDespatch(r)?` <button class="ab ab-g" onclick="dsMarkDespatched(${esc(r[0])})">✓ Mark despatched</button>`:''}</div>
-  ${blocks||'<div style="color:var(--t3);font-size:12px">No items on this DS</div>'}`;
-  openRP(html,'DS: '+r[0]);
+  <div class="ds-hd">
+    <div><div class="ds-cust">${dsH(r[3]||'—')}</div><div class="ds-sub">${dt} · <span class="mono">${r[0]}</span> ${st}</div></div>
+    <div class="ds-act">${crudBtns('despatch',r[0])}${dsIsToDespatch(r)?` <button class="ab ab-g" onclick="dsMarkDespatched(${esc(r[0])})">✓ Despatched</button>`:''}</div>
+  </div>
+  <div class="dp-sec-title">Items <span class="ds-cnt">${items.length}</span> <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--t3)">· tap an item to see its lots</span></div>
+  <div class="ds-wrap"><table class="ds-tab"><thead><tr><th>Order</th><th class="n ds-hide">In stock</th><th class="n ds-hide">Pkts</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Amount</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="${nc}" style="padding:12px;color:var(--t3)">No items on this DS</td></tr>'}</tbody>
+    ${items.length?`<tfoot><tr><td>Total</td><td class="ds-hide"></td><td class="n ds-hide">${nf(tPk)}</td><td class="n">${nf(tQty)}</td><td></td><td class="n">${money(tAmt)}</td></tr>
+      ${tTax?`<tr class="ds-sm"><td colspan="${nc-1}">GST</td><td class="n">${money(tTax)}</td></tr><tr><td colspan="${nc-1}">Total with GST</td><td class="n">${money(tAmt+tTax)}</td></tr>`:''}</tfoot>`:''}</table></div>
+  ${rest.length?`<div class="dp-sec-title">Lots not linked to an order (${rest.length})</div><div class="ds-wrap">${lotTable(rest)}</div>`:''}
+  <div class="dp-sec-title">Despatch details</div>
+  ${dpGrid(...det.map(([k,v])=>dpRow(k,v?dsH(String(v)):'—')))}`;
+  openRP(html,'DS '+r[0]);
 }
+function dsH(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function dsToggleLots(n){const t=document.getElementById('ds-lots-'+n),c=document.getElementById('ds-car-'+n);if(!t)return;const o=t.style.display==='none';t.style.display=o?'':'none';if(c)c.textContent=o?'▾':'▸';}
 
 // ── ORDER WORKFLOW ────────────────────────────────────────
 let OWF={active:[],on_hold:[],desp:[],cancelled:[],captured:[]};
