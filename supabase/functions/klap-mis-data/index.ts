@@ -334,8 +334,9 @@ Deno.serve(async(req)=>{
         rm_out:['date','rm_in_id','out_for','prod_proc_id','conversion_vendor','temp_prod_proc_id','qty','comments'],
         purchase_orders:['date','rm_id','vendor_id','pur_unit','pur_qty','rate','rate_units','bill_ref','status','comments'],
         fg_inventory:['date','prod_order_id','d_no','ups','sheets','packets','qty','qty_units','qty_wastage','wastage_problem','last_entry','comment','fg_status'],
-        delivery_orders:['date','order_id','price','taxation'],
-        delivery_order_items:['delivery_order_id','ds_item_pl_id','inv_batch_id','packet_qty'],
+        ds:['date','customer_id','despatch_status','ds_printed','del_location','transport_id','due_today','print','bt','ledger_id','freight','freight_amt','b_no','processing','delivered','despatched_dt','extra','comment'],
+        ds_items:['ds_id','order_id','price','taxation'],
+        ds_items_pl:['ds_id','ds_item_id','ds_item_pl_id','inv_batch_id','packet_qty'],
         machines:['name','machine_type','processes','location','status','notes'],
         fg_adjustments:['date','inv_batch_id','packets','qty','reason'],
       }
@@ -347,7 +348,7 @@ Deno.serve(async(req)=>{
       const REFS:Record<string,[string,string,string][]>={
         accounts:[['orders','customer_id','id'],['orders','transport_id','id'],['products','customer_id','id'],['pro_steps','vendor_id','id'],['rm_list','vendor_id','id'],['rm_in','vendor_id','id'],['purchase_orders','vendor_id','id'],['dies','vendor_id','id']],
         products:[['orders','product_id','id'],['production_orders','product_id','id']],
-        orders:[['production_orders','order_id','id'],['delivery_orders','order_id','id']],
+        orders:[['production_orders','order_id','id'],['ds_items','order_id','id']],
         production_orders:[['pro_step_orders','prod_order_id','id'],['fg_inventory','prod_order_id','id']],
         jobs:[['production_orders','job_id','id']],
         dies:[['pro_steps','die_id','id']],
@@ -357,11 +358,12 @@ Deno.serve(async(req)=>{
         rm_list:[['rm_in','rm_item_id','id'],['purchase_orders','rm_id','id']],
         rm_in:[['rm_out','rm_in_id','rm_in_id']],
         purchase_orders:[['rm_in','purchase_id','id']],
-        fg_inventory:[['delivery_order_items','inv_batch_id','inv_batch_id'],['fg_adjustments','inv_batch_id','inv_batch_id']],
-        delivery_orders:[['delivery_order_items','delivery_order_id','id']],
+        fg_inventory:[['ds_items_pl','inv_batch_id','inv_batch_id'],['fg_adjustments','inv_batch_id','inv_batch_id']],
+        ds:[['ds_items','ds_id','id'],['ds_items_pl','ds_id','id']],
+        ds_items:[['ds_items_pl','ds_item_id','id']],
         machines:[['pro_steps','machine','name']],
       }
-      const LABEL:Record<string,string>={orders:'orders',products:'products',production_orders:'production orders',pro_steps:'processes',pro_step_orders:'processes',rm_list:'RM items',rm_in:'GRNs',rm_out:'RM issues',purchase_orders:'purchase orders',dies:'dies',fg_inventory:'FG batches',delivery_orders:'despatches',delivery_order_items:'despatch items',rm_subcategories:'sub-categories'}
+      const LABEL:Record<string,string>={orders:'orders',products:'products',production_orders:'production orders',pro_steps:'processes',pro_step_orders:'processes',rm_list:'RM items',rm_in:'GRNs',rm_out:'RM issues',purchase_orders:'purchase orders',dies:'dies',fg_inventory:'FG batches',ds:'DS',ds_items:'DS items',ds_items_pl:'DS item lots',rm_subcategories:'sub-categories'}
       const rule=RULES[table]
       if(!rule||!rule.ops.includes(op))return J({error:`Not allowed: ${op} on ${table}`},400)
       if(au.role_id!=='owner'){
@@ -521,12 +523,17 @@ Deno.serve(async(req)=>{
     const rm_in=await fetchAll('rm_in','id,rm_in_id,date,rm_item_id,vendor_id,qty,qty_units,vendor_ref,status,category_id,subcategory_id,purchase_id,recd_date,freight_amt,carton_no','rm_in_id')
     const rm_out=await fetchAll('rm_out','id,date,rm_in_id,prod_proc_id,out_for,qty','id')
     const fg_inv=await fetchAll('fg_inventory','id,date,prod_order_id,inv_batch_id,d_no,ups,sheets,packets,qty,qty_units,qty_wastage,last_entry,fg_status,old_data','id')
-    const dos=await fetchAll('delivery_orders','id,date,order_id,price,taxation')
-    const do_items=await fetchAll('delivery_order_items','id,delivery_order_id,ds_item_pl_id,inv_batch_id,packet_qty','id')
+    const ds=await fetchAll('ds','id,date,customer_id,despatch_status,ds_printed,del_location,transport_id,due_today,b_no,freight,freight_amt,delivered,despatched_dt,comment')
+    const ds_items=await fetchAll('ds_items','id,ds_id,order_id,price,taxation','id')
+    const ds_items_pl=await fetchAll('ds_items_pl','id,ds_id,ds_item_id,ds_item_pl_id,inv_batch_id,packet_qty','id')
+    // old shape for app copies still open in a browser (remove later)
+    const _first:Record<string,any>={};for(const i of ds_items){if(!_first[i.ds_id])_first[i.ds_id]=i}
+    const dos=ds.map((d:any)=>({id:d.id,date:d.date,order_id:_first[d.id]?.order_id??null,price:_first[d.id]?.price??null,taxation:_first[d.id]?.taxation??null}))
+    const do_items=ds_items_pl.map((p:any)=>({...p,delivery_order_id:p.ds_id}))
     const machines=await fetchAll('machines','id,name,machine_type,processes,location,status,notes')
     const fg_adj=await fetchAll('fg_adjustments','id,date,inv_batch_id,packets,qty,reason')
     const pos=await fetchAll('purchase_orders','id,date,rm_id,vendor_id,pur_qty,rate,pur_unit,rate_units,status,bill_ref,comments')
-    return new Response(JSON.stringify({fg_adj,machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,dos:dos.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
+    return new Response(JSON.stringify({fg_adj,machines,orders,pros,products,accounts,jobs,dies,plates,procs,step_links,rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,ds,ds_items,ds_items_pl,dos,do_items,pos,_counts:{orders:orders.length,pros:pros.length,products:products.length,accounts:accounts.length,jobs:jobs.length,procs:procs.length,rm_in:rm_in.length,fg_inv:fg_inv.length,ds:ds.length,ds_items:ds_items.length,ds_items_pl:ds_items_pl.length}}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }catch(err:any){
     return new Response(JSON.stringify({error:err.message}),{status:500,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})
   }

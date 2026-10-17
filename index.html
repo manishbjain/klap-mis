@@ -1101,40 +1101,40 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
   </div>
 </div>
 
-<!-- DESPATCH -->
+<!-- DESPATCH (DS) -->
 <div id="pg-wdep" class="pg">
   <div class="sg" style="grid-template-columns:repeat(3,1fr)">
-    <div class="sc grn"><div class="l">✅ Ready to Despatch</div><div class="v" id="wdep-r">—</div></div>
-    <div class="sc ylw"><div class="l">⏳ Partial</div><div class="v" id="wdep-p">—</div></div>
-    <div class="sc acc"><div class="l">🚚 Despatched</div><div class="v" id="wdep-d">—</div></div>
+    <div class="sc org"><div class="l">📦 To Despatch</div><div class="v" id="wdep-r">—</div></div>
+    <div class="sc grn"><div class="l">🚚 Despatched — last 30 days</div><div class="v" id="wdep-p">—</div></div>
+    <div class="sc acc"><div class="l">🧾 All DS</div><div class="v" id="wdep-d">—</div></div>
   </div>
   <div class="wft-row">
-    <div class="wft on" onclick="wt('wdep',this,'wdep-r-list')">✅ Ready to Despatch</div>
+    <div class="wft on" onclick="wt('wdep',this,'wdep-r-list')">📦 To Despatch</div>
     <div class="wft" onclick="wt('wdep',this,'wdep-done')">🚚 Despatched</div>
   </div>
   <div id="wdep-r-list" class="wp">
     <div class="tc">
-      <div class="th"><h3>Ready to Despatch</h3><span class="tc-cnt" id="wdep-cnt"></span>
+      <div class="th"><h3>DS — To Despatch</h3><span class="tc-cnt" id="wdep-cnt"></span>
         <div class="flt-row">
-          <input class="f" id="wdep-q" placeholder="Search OID / customer / product…" oninput="R.despatch_live(1)" style="width:220px">
+          <input class="f" id="wdep-q" placeholder="Search DS / order / customer…" oninput="R.despatch_live(1)" style="width:220px">
           <button class="fd-btn" id="fd-btn-despatch" onclick="openFD('despatch')">⚙ Filters</button>
         </div>
       </div>
       <div class="fd-active-bar" id="fd-bar-despatch"><span id="fd-bar-despatch-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatch')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>DO #</th><th>Date</th><th>Customer</th><th>Order</th><th>Items</th><th>Price / Tax</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>DS</th><th>Date</th><th>Customer</th><th>Orders</th><th style="text-align:right">Lots</th><th style="text-align:right">Packets</th><th>Status</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-pg"></div>
     </div>
   </div>
   <div id="wdep-done" class="wp" style="display:none">
     <div class="tc">
-      <div class="th"><h3>Despatched Orders</h3><span class="tc-cnt" id="wdep-done-cnt"></span>
+      <div class="th"><h3>DS — Despatched</h3><span class="tc-cnt" id="wdep-done-cnt"></span>
         <div class="flt-row">
-          <input class="f" id="wdep-dq" placeholder="Search OID / customer / DC…" oninput="R.despatched(1)" style="width:220px">
+          <input class="f" id="wdep-dq" placeholder="Search DS / order / customer…" oninput="R.despatched(1)" style="width:220px">
           <button class="fd-btn" id="fd-btn-despatched" onclick="openFD('despatched')">⚙ Filters</button>
         </div>
       </div>
       <div class="fd-active-bar" id="fd-bar-despatched"><span id="fd-bar-despatched-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatched')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>DO #</th><th>Date</th><th>Customer</th><th>Order</th><th>Items</th><th>Price / Tax</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>DS</th><th>Date</th><th>Customer</th><th>Orders</th><th style="text-align:right">Lots</th><th style="text-align:right">Packets</th><th>Status</th><th>Delivered</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-done-pg"></div>
     </div>
   </div>
@@ -1445,8 +1445,9 @@ const RESOURCE_FIELDS={
   rm_out:['id','date','rm_in_id','out_for','prod_proc_id','conversion_vendor','temp_prod_proc_id','qty','comments'],
   rm_list:['id','date','category_id','subcategory_id','alias','brand','vendor_id','vendor_ref','color','top_or_base','top_coating','base_coating','inner_dia','outer_dia','height_mm','inner_circum','outer_circum','inner_liner'],
   fg_inventory:['id','date','prod_order_id','inv_batch_id','d_no','ups','sheets','packets','qty','qty_units','qty_wastage','wastage_problem','last_entry','comment','old_data','fg_status'],
-  delivery_orders:['id','date','order_id','price','taxation','created_at'],
-  delivery_order_items:['id','delivery_order_id','ds_item_pl_id','inv_batch_id','packet_qty','created_at'],
+  ds:['id','date','customer_id','despatch_status','ds_printed','del_location','transport_id','due_today','print','bt','ledger_id','freight','freight_amt','b_no','processing','delivered','despatched_dt','extra','comment','created_at'],
+  ds_items:['id','ds_id','order_id','price','taxation','created_at'],
+  ds_items_pl:['id','ds_id','ds_item_id','ds_item_pl_id','inv_batch_id','packet_qty','created_at'],
   purchase_orders:['id','date','rm_id','vendor_id','pur_unit','pur_qty','rate','rate_units','bill_ref','status','comments','created_at'],
   rm_categories:['id','name'],
   rm_subcategories:['id','name','category_id','description'],
@@ -1807,7 +1808,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-044822';
+const APP_BUILD='20261017-122718';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1854,7 +1855,7 @@ function applyNavPermissions(){
     'products':'products','orders':'orders','pros':'production_orders',
     'jobs':'jobs','processes':'pro_steps','dies':'dies','plates':'plates',
     'wflow-order':'orders','wflow-design':'products','wflow-prod':'production_orders',
-    'wpk':'fg_inventory','winv':'rm_in','fgout':'fg_inventory','fg-instock':'fg_instock','wp':'purchase_orders','wdep':'delivery_orders',
+    'wpk':'fg_inventory','winv':'rm_in','fgout':'fg_inventory','fg-instock':'fg_instock','wp':'purchase_orders','wdep':'ds',
     'settings':'app_users'
   };
   document.querySelectorAll('.ni[data-p],.ni-sub[data-p],.ni-sub2[data-p]').forEach(el=>{
@@ -2082,6 +2083,7 @@ const CRUD_LISTS={
   acct:[['Customer','Customer'],['Vendor','Vendor'],['Transport','Transporter']],
   jobst:[['planned','Planned'],['in_progress','In progress'],['done','Done']],
   mstat:[['active','Active'],['inactive','Not in use']],
+  dsst:[['To Despatch','To Despatch'],['Despatched','Despatched']],
   // read lazily: these lists are defined further down the file
   pstat:()=>PS_LIST.map(x=>[x,x]),
   proc:()=>JO_PROC_CODES.map(x=>[x,(PROC_LABEL[x]||x)+' ('+x+')'])
@@ -2119,11 +2121,12 @@ const CRUD={
     'prod_order_id|r:pro|Production order*','date|d|Packed date','d_no|t|Design no.','ups|n|Ups','sheets|n|Sheets','packets|n|Packets','qty|n|Quantity','qty_units|l|Units','qty_wastage|n|Wastage','wastage_problem|t|Wastage problem','last_entry|t|Last entry','comment|a|Comment','fg_status|l|FG status']},
   fg_instock:{alias:'fg',tbody:'fgis-body'},
   fg_adj:{t:'fg_adjustments',raw:'fg_adj',title:'Adjustment',tbody:'fgout-body',noAdd:true,render:['fg_out','fg_instock','fg_inventory'],fields:['inv_batch_id|t|FG batch (INV_…)*','date|d|Date','packets|n|Packets taken out','qty|n|Pcs taken out','reason|a|Reason (discarded, damaged, count correction…)']},
-  despatch:{t:'delivery_orders',raw:'dos',title:'Despatch (DO)',tbody:'wdep-body',render:['despatch_live','despatch','despatched'],fields:['order_id|r:order|Order*','date|d|Date','price|n|Price','taxation|n|Tax']},
+  despatch:{t:'ds',raw:'ds',title:'DS',tbody:'wdep-body',render:['despatch_live','despatched','fg_out','fg_instock'],defaults:{despatch_status:'To Despatch'},fields:['date|d|Date','customer_id|r:customer|Customer','despatch_status|s:dsst|Despatch status','transport_id|r:transport|Transport','del_location|t|Delivery location','b_no|t|Bill no.','freight|t|Freight','freight_amt|n|Freight amount','delivered|t|Delivered','despatched_dt|d|Despatched date','comment|a|Comment']},
+  ds_items:{t:'ds_items',raw:'ds_items',title:'DS item (order)',noAdd:true,render:['despatch_live','despatched'],fields:['ds_id|r:ds|DS*','order_id|r:order|Order*','price|n|Price','taxation|n|Tax']},
   despatched:{alias:'despatch',tbody:'wdep-done-body',noAdd:true},
   pack_pros:{alias:'pros',tbody:'wpk-body',noAdd:true},
   machines:{t:'machines',raw:'machines',title:'Machine',tbody:'ma-body',render:['machines'],fields:['name|t|Machine name*','machine_type|l|Type','processes|t|Processes it does (codes, e.g. PRT,RW)','location|t|Location','status|s:mstat|Status','notes|a|Notes']},
-  do_items:{t:'delivery_order_items',addTo:'#pg-wdep .th .flt-row',raw:'do_items',title:'Despatch item',render:['despatch_live'],fields:['delivery_order_id|r:do|Despatch (DO)*','inv_batch_id|r:batch|FG batch*','packet_qty|n|Packets','ds_item_pl_id|t|Packing list item']}
+  ds_items_pl:{t:'ds_items_pl',raw:'ds_items_pl',title:'DS item lot',noAdd:true,render:['despatch_live','despatched','fg_out','fg_instock'],fields:['ds_id|r:ds|DS*','ds_item_id|t|DS item','inv_batch_id|r:batch|FG lot (INV_…)*','packet_qty|n|Packets']}
 };
 function crudCfg(k){const c=CRUD[k];if(!c)return null;if(!c.alias)return Object.assign({key:k},c);const b=CRUD[c.alias];return Object.assign({key:c.alias},b,c,{key:c.alias,tbody:c.tbody,title:c.title||b.title,defaults:c.defaults||b.defaults});}
 // Reference pickers: [value,label] from the loaded data
@@ -2145,7 +2148,7 @@ function crudRefs(ref){
     case 'step':return (R_.procs||[]).slice(0,3000).map(r=>[r.id,(r.process_name||'')+' · '+(r.prod_order_id||'')]);
     case 'die':return (R_.dies||[]).map(r=>[r.id,r.die_name||'']);
     case 'plate':return (R_.plates||[]).map(r=>[r.id,r.plate_name||'']);
-    case 'do':return (R_.dos||[]).slice(0,3000).map(r=>[r.id,(r.date||'')+' · '+(r.order_id||'')]);
+    case 'ds':return (R_.ds||[]).slice(0,3000).map(r=>[r.id,(r.date||'')+' · '+(r.despatch_status||'')]);
     case 'batch':return (R_.fg_inv||[]).slice(0,3000).map(r=>[r.inv_batch_id,(r.prod_order_id||'')+' · '+(r.packets||'')+' pkts']);
   }
   return [];
@@ -2296,7 +2299,13 @@ function hideLoader(){const el=document.getElementById('sb-loader');if(el)el.rem
 // Builds every D.* view array from the raw tables. Re-run after a save to refresh without reloading.
 function buildData(raw){
     const {orders,pros,products,accounts,jobs,dies,plates,procs,
-      rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,dos,do_items,pos}=raw;
+      rm_cats,rm_subcats,rm_list,rm_in,rm_out,fg_inv,pos}=raw;
+    // Despatch: DS (slip) → DS_Items (orders on the slip) → DS_Items_PL (FG lots + packets), same as the old app
+    const dsRows=raw.ds||[],dsItemRows=raw.ds_items||[],dsPlRows=raw.ds_items_pl||[];
+    const _dsOrders={};dsItemRows.forEach(i=>{(_dsOrders[i.ds_id]=_dsOrders[i.ds_id]||[]).push(i);});
+    D.ds_items=dsItemRows;D.dsOrders=_dsOrders;
+    const do_items=dsPlRows.map(p=>Object.assign({delivery_order_id:p.ds_id},p));
+    const dos=dsRows.map(d=>{const its=_dsOrders[d.id]||[];return Object.assign({},d,{order_id:its[0]?its[0].order_id:null,price:its[0]?its[0].price:null,taxation:its[0]?its[0].taxation:null});});
     // Step ↔ PRO links (pro_step_orders, from the sheet's Prod_Process_Items). One step can cover several PROs.
     // A step that has link rows uses ONLY those; a step without any falls back to its prod_order_id.
     D.step_links=raw.step_links||[];
@@ -2543,11 +2552,14 @@ function buildData(raw){
     });
 
     // D.dos: delivery orders [0]id [1]date [2]order_id [3]customer_name [4]price [5]taxation [6]item_count
+    const _plCount={};do_items.forEach(i=>{_plCount[i.delivery_order_id]=(_plCount[i.delivery_order_id]||0)+1;});
+    // D.dos (DS list): [0]DS [1]date [2]first order [3]customer [4]price [5]tax [6]lot rows [7]despatch status [8]order ids [9]delivered [10]despatched date [11]packets
+    const _ordById={};orders.forEach(o=>{_ordById[o.id]=o;});
+    const _plPk={};do_items.forEach(i=>{_plPk[i.delivery_order_id]=(_plPk[i.delivery_order_id]||0)+(Number(i.packet_qty)||0);});
     D.dos=dos.map(r=>{
-      const ord=orders.find(o=>o.id===r.order_id)||{};
-      const cname=accMap[ord.customer_id]?.name||'';
-      const itemCount=do_items.filter(i=>i.delivery_order_id===r.id).length;
-      return [r.id,r.date,r.order_id,cname,r.price||0,r.taxation||'',itemCount];
+      const ord=_ordById[r.order_id]||{};
+      const cname=accMap[r.customer_id]?.name||accMap[ord.customer_id]?.name||'';
+      return [r.id,r.date,r.order_id,cname,r.price||0,r.taxation||'',_plCount[r.id]||0,r.despatch_status||'',(_dsOrders[r.id]||[]).map(i=>i.order_id).filter(Boolean),r.delivered||'',r.despatched_dt||'',_plPk[r.id]||0];
     });
     D.do_items=do_items;
     // D.ma: machines table [0]name [1]type [2]id [3]processes [4]status [5]location [6]notes
@@ -2727,7 +2739,7 @@ function activateTab(tabId){
     if(realPg==='fg-instock'){R.fg_instock(1);}
     if(realPg==='winv'){R.fg_inventory(1);}
     if(realPg==='fgout'){R.fg_out(1);}
-    if(realPg==='wdep'){R.despatch_live(1);}
+    if(realPg==='wdep'){R.despatch_live(1);R.despatched(1);}
     if(realPg==='settings'&&R.settings)R.settings();
   }
 }
@@ -3443,7 +3455,7 @@ function selO(e,oid){try{
   const totalPROQty=linkedPros.reduce((s,p)=>s+(Number(p[4])||0),0);
   const completedQty=linkedPros.filter(p=>p[8]==='complete'&&!p[5]).reduce((s,p)=>s+(Number(p[4])||0),0);
   // Delivery orders for this order
-  const doRecs=D.dos?.filter(x=>x[2]===oid)||[];
+  const doRecs=D.dos?.filter(x=>(x[8]||[]).includes(oid))||[];
   // Sum despatched qty from do_items if available, else use count of DOs as proxy
   let totalDespatched=0;
   if(D.do_items&&D.do_items.length){
@@ -3645,7 +3657,7 @@ function selPD(e,code){try{
   const activePros=relPros.filter(pr=>!pr[5]&&!pr[6]&&pr[8]!=='complete');
   // Delivery orders for this product (via linked orders)
   const relOrderIds=new Set(relOrders.map(o=>o[0]));
-  const relDos=D.dos?.filter(d=>relOrderIds.has(d[2]))||[];
+  const relDos=D.dos?.filter(d=>(d[8]||[]).some(o=>relOrderIds.has(o)))||[];
   const totalDeliveredPcs=relDos.reduce((s,d)=>s+Math.round((Number(d[4])||0)*100000),0);
   // FG inventory for this product
   const fgRecs=D.fg.filter(f=>f[7]===p[1]||f[8]===p[2]);
@@ -4883,21 +4895,13 @@ R.despatch=function(p){
 R.despatched=function(p){
   if(p)pp.despatched=p;
   const q=(document.getElementById('wdep-dq')?.value||'').toLowerCase();
-  let items=D.dos.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  let items=D.dos.filter(r=>!dsIsToDespatch(r)&&(!q||[r[0],r[3],(r[8]||[]).join(' ')].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('despatched',items);
-  items=sortItems(items,'despatched');
+  items=[...items].sort(dsSortDesc);
   const slice=pgr(items,'despatched','R.despatched','wdep-done-pg','wdep-done-cnt');
-  document.getElementById('wdep-done-body').innerHTML=slice.map(r=>{
-    const taxBadge=r[5]?`<span class="b" style="font-size:9px;background:var(--s1);color:var(--t2);margin-left:4px">${r[5]}</span>`:'';
-    return `<tr onclick="selDO(event,${esc(r[0])})" style="cursor:pointer">
-      <td class="mono">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
-      <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
-      <td style="text-align:right">${r[6]||0} items</td>
-      <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
-      <td><button class="ab ab-g" onclick="event.stopPropagation();selDO(event,${esc(r[0])})">📄 View DC</button></td>
-    </tr>`;
-  }).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--t3)">No despatched orders</td></tr>';
+  document.getElementById('wdep-done-body').innerHTML=slice.map(r=>dsRowHtml(r,true)).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No DS</td></tr>';
 };
+
 
 
 // ── NEW DATA RENDER FUNCTIONS ─────────────────────────────
@@ -5292,26 +5296,45 @@ R.fg_inventory=function(p){
   const d=document.getElementById('winv-d');if(d)d.textContent=fullDespCount;
 };
 
+// DS rows: D.dos [0]DS [1]date [2]first order [3]customer [4]price [5]tax [6]lots [7]status [8]orders [9]delivered [10]despatched date [11]packets
+const dsIsToDespatch=r=>String(r[7]||'').toLowerCase()==='to despatch';
+function dsSortDesc(a,b){return (parseInt(String(b[0]).replace(/\D/g,''))||0)-(parseInt(String(a[0]).replace(/\D/g,''))||0);}
+function dsRowHtml(r,done){
+  const st=r[7]?`<span class="b ${dsIsToDespatch(r)?'by':'bg'}">${r[7]}</span>`:'<span style="color:var(--t3);font-size:11px">—</span>';
+  const ords=(r[8]||[]);
+  return `<tr onclick="selDO(event,${esc(r[0])})" style="cursor:pointer">
+    <td class="mono" style="font-weight:600">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
+    <td>${tr(r[3]||'—',22)}</td>
+    <td class="mono" style="font-size:11px">${ords.length?ords.slice(0,3).join(', ')+(ords.length>3?` +${ords.length-3}`:''):'—'}</td>
+    <td style="text-align:right">${r[6]||0}</td><td style="text-align:right">${Number(r[11]||0).toLocaleString('en-IN')}</td>
+    <td>${st}</td>${done?`<td style="font-size:11px">${r[9]||'—'}</td>`:''}
+    <td style="white-space:nowrap" onclick="event.stopPropagation()">${!done&&dsIsToDespatch(r)?`<button class="ab ab-g" onclick="dsMarkDespatched(${esc(r[0])})">✓ Despatched</button> `:''}<button class="ab" onclick="selDO(event,${esc(r[0])})">📄 View DS</button></td>
+  </tr>`;
+}
 R.despatch_live=function(p){
   if(p)pp.despatch_live=p;
   const q=(document.getElementById('wdep-q')?.value||'').toLowerCase();
-  let items=D.dos.filter(r=>!q||[r[0],r[2],r[3]].join(' ').toLowerCase().includes(q));
+  let items=D.dos.filter(r=>dsIsToDespatch(r)&&(!q||[r[0],r[3],(r[8]||[]).join(' ')].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('despatch',items);
-  items=sortItems(items,'despatch_live');
+  items=[...items].sort(dsSortDesc);
   const slice=pgr(items,'despatch_live','R.despatch_live','wdep-pg','wdep-cnt');
   const el=document.getElementById('wdep-body');if(!el)return;
-  el.innerHTML=slice.map(r=>{
-    const taxBadge=r[5]?`<span class="b" style="font-size:9px;background:var(--s1);color:var(--t2);margin-left:4px">${r[5]}</span>`:'';
-    return `<tr onclick="selDO(event,${esc(r[0])})" style="cursor:pointer">
-      <td class="mono">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
-      <td>${tr(r[3]||'—',20)}</td><td class="mono">${r[2]||'—'}</td>
-      <td style="text-align:right">${r[6]||0} items</td>
-      <td style="text-align:right">${r[4]?'₹'+Number(r[4]).toLocaleString():'—'}${taxBadge}</td>
-      <td><button class="ab ab-g" onclick="event.stopPropagation();selDO(event,${esc(r[0])})">📄 View DC</button></td>
-    </tr>`;
-  }).join('');
-  const rv=document.getElementById('wdep-r');if(rv)rv.textContent=D.dos.length;
+  const anyStatus=D.dos.some(r=>r[7]);
+  el.innerHTML=slice.map(r=>dsRowHtml(r,false)).join('')||`<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">${anyStatus?'Nothing waiting to be despatched':'Despatch status has not been copied from the old app yet — this list fills once it is.'}</td></tr>`;
+  const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=Number(v).toLocaleString('en-IN');};
+  set('wdep-r',D.dos.filter(dsIsToDespatch).length);
+  set('wdep-p',D.dos.filter(r=>!dsIsToDespatch(r)&&String(r[10]||r[1]||'')>=since).length);
+  set('wdep-d',D.dos.length);
 };
+async function dsMarkDespatched(id){
+  try{
+    const today=new Date(Date.now()+19800000).toISOString().slice(0,10);
+    const row=await apiWrite('ds','update',id,{despatch_status:'Despatched',despatched_dt:today});
+    crudPatch(crudCfg('despatch'),row,false);toast('✓ '+id+' marked despatched');
+  }catch(e){toast('❌ '+e.message);}
+}
+
 
 function selRM(e,rmid){
   const tr2=e?.target?.closest('tr');
@@ -5793,62 +5816,52 @@ function selFG(e,batchId){
 }
 
 function selDO(e,did){
+  // DS → DS Items (orders) → DS Items PL (FG lots + packets)
   const tr2=e?.target?.closest('tr');
   document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
   if(tr2)tr2.classList.add('sel');
-  // D.dos: [id, date, order_id, cust_name, price_in_lakhs, tax_rate, item_count]
-  const r=D.dos.find(x=>x[0]===did);
-  if(!r)return;
-  const items=D.do_items.filter(i=>i.delivery_order_id===did);
+  const r=D.dos.find(x=>x[0]===did);if(!r)return;
+  const raw=((window._RAW||{}).ds||[]).find(x=>x.id===did)||{};
+  const its=(D.dsOrders||{})[did]||[];
+  const lots=D.do_items.filter(i=>i.delivery_order_id===did);
   const fgMap={};D.fg.forEach(f=>{fgMap[f[3]]=f;});
-  const order=r[2]?D.o.find(x=>x[0]===r[2]):null;
-  const totalPkts=items.reduce((s,i)=>s+(Number(i.packet_qty)||0),0);
-  // Unique products in this DO
-  const uniqueProds=[...new Set(items.map(i=>{const fg=fgMap[i.inv_batch_id];return fg?fg[7]:'';}).filter(Boolean))];
-  // Price: dos[4] is in lakhs (e.g. 0.31 = ₹31,000)
-  const priceRaw=Number(r[4])||0;
-  const priceDisplay=priceRaw?'₹'+Math.round(priceRaw*100000).toLocaleString()+' (₹'+priceRaw+'L)':'—';
-  // Tax: dos[5] is rate (e.g. 0.18 = 18%)
-  const taxRaw=Number(r[5])||0;
-  const taxDisplay=taxRaw?(taxRaw*100).toFixed(0)+'%  (₹'+Math.round(priceRaw*100000*taxRaw).toLocaleString()+')':'—';
-  const totalWithTax=priceRaw?'₹'+Math.round(priceRaw*100000*(1+taxRaw)).toLocaleString():'—';
-  const itemRows=items.length?items.map(i=>{
-    const fg=fgMap[i.inv_batch_id]||[];
-    return `<tr onclick="selFG(event,${esc(i.inv_batch_id)})" style="cursor:pointer">
+  const ordMap={};D.o.forEach(o=>{ordMap[o[0]]=o;});
+  const nf=n=>Number(n||0).toLocaleString('en-IN');
+  const pcsOf=i=>{const f=fgMap[i.inv_batch_id];if(!f)return 0;const per=(Number(f[13])||0)*(Number(f[12])||0)||(Number(f[4])?Number(f[5])/Number(f[4]):0);return Math.round((Number(i.packet_qty)||0)*per);};
+  const lotRows=ls=>ls.map(i=>{const f=fgMap[i.inv_batch_id]||[];return `<tr onclick="selFG(event,${esc(i.inv_batch_id)})" style="cursor:pointer">
       <td style="padding:4px 8px;font-size:11px;font-family:monospace">${i.inv_batch_id||'—'}</td>
-      <td style="padding:4px 8px;font-size:11px">${fg[7]||'—'}</td>
-      <td style="padding:4px 8px;font-size:11px">${fg[11]||'—'}</td>
-      <td style="padding:4px 8px;font-size:11px;text-align:right">${i.packet_qty||'—'} pkts</td>
-      <td style="padding:4px 8px;font-size:11px;text-align:right;color:var(--t3)">${fg[5]?Number(fg[5]).toLocaleString()+' '+(fg[6]||''):''}</td>
-    </tr>`;
-  }).join(''):'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No items</td></tr>';
+      <td style="padding:4px 8px;font-size:11px">${tr(f[7]||'—',26)}</td>
+      <td style="padding:4px 8px;font-size:11px;font-family:monospace">${f[2]||'—'}</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${nf(i.packet_qty)} pkts</td>
+      <td style="padding:4px 8px;font-size:11px;text-align:right">${pcsOf(i)?nf(pcsOf(i)):'—'}</td></tr>`;}).join('');
+  const head=`<thead><tr style="background:var(--s1)"><th style="font-size:10px;padding:4px 8px;text-align:left">FG lot</th><th style="font-size:10px;padding:4px 8px;text-align:left">Product</th><th style="font-size:10px;padding:4px 8px;text-align:left">PRO</th><th style="font-size:10px;padding:4px 8px;text-align:right">Packets</th><th style="font-size:10px;padding:4px 8px;text-align:right">Pcs</th></tr></thead>`;
+  const used=new Set();
+  let blocks=its.map((it,n)=>{
+    const mine=lots.filter(l=>l.ds_item_id===it.id||(!l.ds_item_id&&its.length===1));mine.forEach(l=>used.add(l));
+    const o=ordMap[it.order_id]||[];
+    return `<div class="dp-sec-title">DS item ${n+1}: Order <span class="mono" style="color:var(--acc);cursor:pointer" onclick="selO(null,${esc(it.order_id||'')})">${it.order_id||'—'}</span> · ${tr(o[3]||'',30)}${it.price!=null?` · Price ${it.price}`:''}${it.taxation!=null?` · Tax ${it.taxation}`:''}</div>
+      <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px;margin-bottom:10px"><table style="width:100%;border-collapse:collapse">${head}<tbody>${lotRows(mine)||'<tr><td colspan="5" style="padding:8px;font-size:11px;color:var(--t3)">No lots linked to this order</td></tr>'}</tbody></table></div>`;
+  }).join('');
+  const rest=lots.filter(l=>!used.has(l));
+  if(rest.length)blocks+=`<div class="dp-sec-title">Lots not linked to an order (${rest.length})</div><div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse">${head}<tbody>${lotRows(rest)}</tbody></table></div>`;
   const html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:12px">
-    ${rpRow('DO / DC ID',`<span class="mono">${r[0]}</span>`)}
-    ${rpRow('Date',r[1]||'—')}
-    ${rpRow('Customer',r[3]||'—')}
-    ${rpRow('Order',r[2]?`<span class="mono" onclick="${order?`selO(null,${esc(r[2])})`:''}event.stopPropagation()" style="${order?'cursor:pointer;color:var(--acc)':''}">${r[2]}</span>`:'—')}
-    ${rpRow('Products',uniqueProds.length?uniqueProds.map(p=>tr(p,20)).join(', '):'—')}
-    ${rpRow('Line Items',r[6]||0)}
-    ${rpRow('Total Packets',totalPkts.toLocaleString())}
-    ${rpRow('Basic Price',priceDisplay)}
-    ${rpRow('GST Rate',taxDisplay)}
-    ${rpRow('Total with GST',totalWithTax)}
-  </div>
-  <div class="dp-sec-title">Items Despatched (${items.length})</div>
-  <div style="overflow-x:auto;border:1px solid var(--bdr);border-radius:6px">
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--s1)">
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Batch ID</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Product</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:left">Design No</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:right">Packets</th>
-        <th style="font-size:10px;padding:4px 8px;text-align:right">Qty</th>
-      </tr></thead>
-      <tbody>${itemRows}</tbody>
-    </table>
-  </div>`;
-  openRP(html,'DC: '+r[0]);
+  ${dpGrid(dpSec('DS details'),
+    dpRow('DS',`<span class="mono">${r[0]}</span>`),
+    dpRow('Date',r[1]||'—'),
+    dpRow('Customer',r[3]||'—'),
+    dpRow('Despatch status',r[7]||'—'),
+    dpRow('Orders',(r[8]||[]).join(', ')||'—'),
+    dpRow('Lots / Packets',`${lots.length} / ${nf(r[11])}`),
+    dpRow('Transport',raw.transport_id?((D.ve||[]).find(v=>v[0]===raw.transport_id)||[])[1]||raw.transport_id:'—'),
+    dpRow('Bill no.',raw.b_no||'—'),
+    dpRow('Freight',[raw.freight,raw.freight_amt?'₹'+nf(raw.freight_amt):''].filter(Boolean).join(' · ')||'—'),
+    dpRow('Delivered',raw.delivered||'—'),
+    dpRow('Despatched on',raw.despatched_dt||'—'),
+    dpRow('Comment',raw.comment||'—'))}
+  <div style="margin-bottom:10px">${crudBtns('despatch',r[0])}${dsIsToDespatch(r)?` <button class="ab ab-g" onclick="dsMarkDespatched(${esc(r[0])})">✓ Mark despatched</button>`:''}</div>
+  ${blocks||'<div style="color:var(--t3);font-size:12px">No items on this DS</div>'}`;
+  openRP(html,'DS: '+r[0]);
 }
 
 // ── ORDER WORKFLOW ────────────────────────────────────────
@@ -6363,7 +6376,7 @@ const KB_ACTION_LABELS={
   production:'→ Production Workflow',pro:'📄 View PRO',create_pro:'➕ Create PRO',
   slip:'📋 Generate Slip',packing:'→ Packing Workflow',
   despatch:'🚚 Despatch Now',dc:'📄 Generate DC',
-  viewdc:'📄 View DC',wa:'📲 WA Update',
+  viewdc:'📄 View DS',wa:'📲 WA Update',
 };
 
 function kbAge(age,desp){
