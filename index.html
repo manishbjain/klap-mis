@@ -1028,9 +1028,11 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       <div class="flt-row">
         <select class="f" id="wpk-st" onchange="R.packing(1)"><option value="">In Production + In Packing</option><option value="in_production">In Production</option><option value="packing">In Packing</option></select>
         <input class="f" id="wpk-sq" placeholder="Search PRO / product / customer / job…" oninput="R.packing(1)" style="width:240px">
+        <button class="fd-btn" id="fd-btn-packing" onclick="openFD('packing')">⚙ Filters</button>
       </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr>
+    <div class="fd-active-bar" id="fd-bar-packing"><span id="fd-bar-packing-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('packing')">Clear all</button></div>
+    <div style="overflow-x:auto"><table><thead id="wpk-thead"><tr>
       <th>PRO ID</th><th>Date</th><th>Product</th><th>Customer</th><th>Job</th><th>Status</th>
       <th style="text-align:right">Production Qty</th><th style="text-align:right">Packed Qty</th><th style="text-align:right">Balance</th><th>Actions</th>
     </tr></thead><tbody id="wpk-body"></tbody></table></div>
@@ -3029,6 +3031,18 @@ const FD_CFG={
       {id:'fd_dep_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.dos.map(x=>x[3]).filter(Boolean))].sort()},
     ]
   },
+  packing:{
+    title:'Filter PROs in process',
+    renderFn:()=>R.packing(1),
+    fields:[
+      {id:'fd_pk_cust',label:'Customer',type:'select',opts:()=>[...new Set(D.pr.filter(x=>!x[5]&&!x[6]&&(x[8]==='in_production'||x[8]==='packing')).map(x=>x[3]).filter(Boolean))].sort()},
+      {id:'fd_pk_prod',label:'Product',type:'select',opts:()=>[...new Set(D.pr.filter(x=>!x[5]&&!x[6]&&(x[8]==='in_production'||x[8]==='packing')).map(x=>x[2]).filter(Boolean))].sort()},
+      {id:'fd_pk_job',label:'Job',type:'text',placeholder:'JB…'},
+      {id:'fd_pk_bal',label:'Balance',type:'tags',opts:()=>['Nothing packed','Part packed','Fully packed']},
+      {id:'fd_pk_d1',label:'Date From',type:'date',pair:'fd_pk_d2'},
+      {id:'fd_pk_d2',label:'Date To',type:'date',pair:'fd_pk_d1'},
+    ]
+  },
   despatched:{
     title:'Filter Despatched Orders',
     renderFn:()=>R.despatched(1),
@@ -3201,6 +3215,7 @@ function tagFieldVal(tk,fid,row){
   };
   // special: orders type
   if(tk==='orders'&&fid==='fd_o_type') return row[6]?'Repeat':'New';
+  if(tk==='packing'&&fid==='fd_pk_bal'){const pk=(pkPackedMap()[row[0]]||{}).qty||0,prod=Number(row[4])||0;return !pk?'Nothing packed':(prod&&pk<prod)?'Part packed':'Fully packed';}
   const idx=m[tk]?.[fid];
   if(idx===undefined)return undefined; // not wired to a column: filter ignored
   return row[idx]!=null?String(row[idx]):'';
@@ -3219,6 +3234,7 @@ function textFieldVal(tk,fid,row){
     'fg-inv':{'fd_fg_cust':8,'fd_fg_prod':7},
     'despatch':{'fd_dep_cust':3},
     'despatched':{'fd_done_cust':3},
+    'packing':{'fd_pk_cust':3,'fd_pk_prod':2,'fd_pk_job':9},
     'transporters':{'fd_tr_name':1},
   };
   const idx=m[tk]?.[fid];
@@ -3244,11 +3260,11 @@ function dateFieldVal(tk,fid,row){
   const dateIdxMap={
     'orders':'fd_o_d','pros':'fd_pr_d','jobs':'fd_jo_d','processes':'fd_proc_d',
     'rm-grn':'fd_grn_d','purchase':'fd_po_d','fg-inv':'fd_fg_d','rm-out':'fd_rmo_d',
-    'despatched':'fd_done_d'
+    'despatched':'fd_done_d','packing':'fd_pk_d'
   };
   const pfx=dateIdxMap[tk];
   if(!pfx||!fid.startsWith(pfx))return undefined;
-  const dateIdxes={'orders':1,'pros':1,'jobs':1,'processes':3,'rm-grn':1,'purchase':1,'fg-inv':1,'rm-out':1,'despatched':1};
+  const dateIdxes={'orders':1,'pros':1,'jobs':1,'processes':3,'rm-grn':1,'purchase':1,'fg-inv':1,'rm-out':1,'despatched':1,'packing':1};
   const idx=dateIdxes[tk];
   if(idx===undefined)return undefined;
   const d=row[idx];
@@ -3274,7 +3290,8 @@ const _SORT={
   winv:{col:1,dir:'desc'},
   despatched:{col:1,dir:'desc'},
   despatch_live:{col:1,dir:'desc'},
-  processes:{col:3,dir:'desc'}
+  processes:{col:3,dir:'desc'},
+  packing:{col:1,dir:'desc'}
 };
 function thSort(tableKey,col,rfn){
   if(_SORT[tableKey]?.col===col){_SORT[tableKey].dir=_SORT[tableKey].dir==='asc'?'desc':'asc';}
@@ -4646,8 +4663,13 @@ R.packing=function(p){
   const packed=pkPackedMap();
   // D.pr: [id,date,product,customer,qty(sheets×ups×blocks),cancelled,on_hold,order_id,status,job_id,product_id]
   const all=D.pr.filter(x=>!x[5]&&!x[6]&&(x[8]==='in_production'||x[8]==='packing'));
-  const items=all.filter(x=>(!st||x[8]===st)&&(!q||[x[0],x[2],x[3],x[9]].join(' ').toLowerCase().includes(q)))
+  const base=applyFDFilters('packing',all.filter(x=>(!st||x[8]===st)&&(!q||[x[0],x[2],x[3],x[9]].join(' ').toLowerCase().includes(q))))
     .sort((a,b)=>String(b[1]||'').localeCompare(String(a[1]||''))||String(b[0]).localeCompare(String(a[0])));
+  // sortable columns: [PRO, date, product, customer, job, status, prod qty, packed qty, balance] + the row
+  const items=sortItems(base.map(x=>{const prod=Number(x[4])||0,pk=packed[x[0]]?.qty||0;return [x[0],x[1]||'',x[2]||'',x[3]||'',x[9]||'',x[8]==='packing'?'In Packing':'In Production',prod,pk,prod-pk,x];}),'packing').map(a=>a[9]);
+  const th=document.getElementById('wpk-thead');
+  if(th){const R_='R.packing',n=(l,c,r)=>r?mkTh(l,'packing',c,R_).replace('style="','style="text-align:right;'):mkTh(l,'packing',c,R_);
+    th.innerHTML='<tr>'+n('PRO ID',0)+n('Date',1)+n('Product',2)+n('Customer',3)+n('Job',4)+n('Status',5)+n('Production Qty',6,1)+n('Packed Qty',7,1)+n('Balance',8,1)+'<th>Actions</th></tr>';}
   const nf=n=>Number(n||0).toLocaleString('en-IN');
   document.getElementById('wpk-n-prod').textContent=all.filter(x=>x[8]==='in_production').length;
   document.getElementById('wpk-n-pack').textContent=all.filter(x=>x[8]==='packing').length;
