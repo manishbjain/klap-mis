@@ -2319,6 +2319,8 @@ function buildData(raw){
     // Despatch: DS (slip) → DS_Items (orders on the slip) → DS_Items_PL (FG lots + packets), same as the old app
     const dsRows=raw.ds||[],dsItemRows=raw.ds_items||[],dsPlRows=raw.ds_items_pl||[];
     const _dsOrders={};dsItemRows.forEach(i=>{(_dsOrders[i.ds_id]=_dsOrders[i.ds_id]||[]).push(i);});
+    // Old migration made one placeholder line per slip (id DSI_<ds>). Hide it when the slip has its real order lines (sheet DO).
+    Object.keys(_dsOrders).forEach(k=>{const a=_dsOrders[k],real=a.filter(i=>!String(i.id).startsWith('DSI_'));if(real.length)_dsOrders[k]=real;});
     D.ds_items=dsItemRows;D.dsOrders=_dsOrders;
     const do_items=dsPlRows.map(p=>Object.assign({delivery_order_id:p.ds_id},p));
     const dos=dsRows.map(d=>{const its=_dsOrders[d.id]||[];return Object.assign({},d,{order_id:its[0]?its[0].order_id:null,price:its[0]?its[0].price:null,taxation:its[0]?its[0].taxation:null});});
