@@ -730,7 +730,7 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
       </div>
     </div>
     <div class="fd-active-bar" id="fd-bar-jobs"><span id="fd-bar-jobs-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('jobs')">Clear all</button></div>
-    <div id="jo-body" style="display:flex;flex-direction:column;gap:6px;padding:4px 0"></div>
+    <div style="overflow-x:auto"><table><thead><tr><th onclick="thSort('jobs',0,'R.jobs')" style="cursor:pointer;user-select:none;white-space:nowrap">Job ID<span id="jo-arr-0" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th onclick="thSort('jobs',1,'R.jobs')" style="cursor:pointer;user-select:none;white-space:nowrap">Date<span id="jo-arr-1" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th>PPC</th><th onclick="thSort('jobs',3,'R.jobs')" style="cursor:pointer;user-select:none;white-space:nowrap">Job name<span id="jo-arr-3" style="font-size:9px;margin-left:3px;color:var(--t3)">⇅</span></th><th>Processes</th><th style="text-align:right">PROs</th><th style="text-align:right">Open</th><th></th></tr></thead><tbody id="jo-body"></tbody></table></div>
     <div class="pg-bar" id="jo-pg"></div>
   </div>
 </div>
@@ -4137,45 +4137,29 @@ R.jobs=function(p){
   items=sortItems(items,'jobs');
   const slice=pgr(items,'jobs','R.jobs','jo-pg','jo-cnt');
   const veMap={};D.ve.forEach(v=>{veMap[v[0]]=v[1];});
+  [0,1,3].forEach(i=>{const el=document.getElementById('jo-arr-'+i);if(el){const s=_SORT['jobs'];el.textContent=s&&s.col===i?(s.dir==='asc'?'▲':'▼'):'⇅';el.style.color=s&&s.col===i?'inherit':'var(--t3)';}});
+  // Plain list like the PROs page; clicking a row opens the same job panel as Production › Live
   document.getElementById('jo-body').innerHTML=slice.map(j=>{
-    const pros=D.pr.filter(p=>p[9]===j[0]);
-    const activePros=pros.filter(p=>!p[5]&&!p[6]&&p[8]!=='complete');
+    const pros=D.pr.filter(p=>p[9]===j[0]&&!p[5]);
+    const openPros=pros.filter(p=>!p[6]&&p[8]!=='complete').length;
     const allProcs=pwStepsOfMany(pros.map(p=>p[0]));
-    const doneProcs=allProcs.filter(r=>(r.step_status||'')==='done').length;
-    const statusCol=activePros.length>0?'var(--org)':pros.length?'#22c55e':'var(--t3)';
-    const jid=j[0].replace(/[^a-zA-Z0-9]/g,'_');
-    return`<div id="jocard_${jid}" style="border:1px solid var(--bdr);border-radius:10px;overflow:hidden;background:var(--bg)">
-      <div onclick="joToggle('${jid}',${esc(j[0])})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;user-select:none">
-        <span id="joarr_${jid}" style="font-size:11px;color:var(--t3);transition:transform .15s;flex-shrink:0">▶</span>
-        <span class="mono" style="font-size:11px;font-weight:700;color:var(--acc);flex-shrink:0;min-width:60px">${j[0]}</span>
-        <span style="font-size:10px;color:var(--t3);flex-shrink:0">${j[1]||'—'}</span>
-        ${pwPPCB(j[2],j[1])}
-        <span style="font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j[3]||''}">${j[3]||'—'}</span>
-        <span style="display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0;max-width:260px">${joProcChips(allProcs)}</span>
-        <span style="flex-shrink:0;font-size:11px;font-weight:700;color:${statusCol};min-width:28px;text-align:right">${activePros.length||'✓'}</span>
-        <button onclick="event.stopPropagation();selJob(null,${esc(j[0])})" style="flex-shrink:0;border:1px solid var(--bdr);background:var(--s1);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--t2)">Manage</button>${crudBtns('jobs',j[0])}
-      </div>
-      <div id="joexp_${jid}" style="display:none;border-top:1px solid var(--bdr);background:var(--s1);padding:10px 12px">
-        ${jobImgHtml(j[0],220,true)}
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${pros.length?pros.map(p=>{
-          const pProcs=pwStepsOf(p[0]);
-          const pDone=pProcs.filter(r=>r.process_status==='Complete'||r.process_status==='Moved').length;
-          return`<div style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;min-width:200px;flex:1;cursor:pointer" onclick="selPR(null,${esc(p[0])})">
-            <div style="font-size:10px;font-weight:700;color:var(--acc);font-family:monospace;margin-bottom:4px">${p[0]}</div>
-            <div style="font-size:11px;color:var(--t2);margin-bottom:4px">${p[2]||'—'} · ${p[3]||'—'}</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              ${proSubStatus(p)}
-              ${pProcs.length?`<span style="font-size:10px;color:var(--t3)">${pDone}/${pProcs.length} procs</span>`:''}
-              ${pProcs.length?pProcs.map(r=>{const v=veMap[r.vendor_id]||r.machine||'';return`<span style="font-size:9px;background:${r.process_status==='Moved'||r.process_status==='Complete'?'#f0fdf4':'var(--s2)'};border:1px solid ${r.process_status==='Moved'||r.process_status==='Complete'?'#86efac':'var(--bdr)'};border-radius:3px;padding:1px 4px;color:var(--t2)">${PROC_LABEL[r.process_name]||r.process_name||'?'}${v?' · '+tr(v,10):''}</span>`;}).join(''):'<span style="font-size:10px;color:var(--t3)">No processes</span>'}
-            </div>
-          </div>`;
-        }).join(''):'<span style="font-size:11px;color:var(--t3);padding:8px">No PROs linked to this job</span>'}
-        </div>
-      </div>
-    </div>`;
-  }).join('')||'<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No jobs match</div>';
+    return`<tr onclick="joRowOpen(event,${esc(j[0])})">
+      <td class="mono" style="font-weight:700">${j[0]}</td>
+      <td>${j[1]||'—'}</td>
+      <td>${pwPPCB(j[2],j[1])}</td>
+      <td title="${String(j[3]||'').replace(/"/g,'&quot;')}" style="max-width:520px">${j[3]||'—'}</td>
+      <td style="max-width:280px"><span style="display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden">${joProcChips(allProcs)}</span></td>
+      <td style="text-align:right">${pros.length||'—'}</td>
+      <td style="text-align:right;font-weight:700;color:${openPros?'var(--org)':'var(--grn)'}">${openPros||'✓'}</td>
+      <td style="text-align:right;white-space:nowrap">${crudBtns('jobs',j[0])}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">No jobs match</td></tr>';
 };
+function joRowOpen(e,jid){
+  document.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));
+  const tr=e?.target?.closest('tr');if(tr)tr.classList.add('sel');
+  selJob(e,jid);
+}
 function joToggle(jid,rawId){
   const exp=document.getElementById('joexp_'+jid);
   const arr=document.getElementById('joarr_'+jid);
@@ -4277,6 +4261,7 @@ function selJob(e,jid){try{
 
   const sec=t=>`<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin:4px 0 8px">${t}</div>`;
   const html=`
+  ${jobImgHtml(j[0],320)}
   <datalist id="jo-machines">${joMachines().map(m=>`<option value="${m.replace(/"/g,'&quot;')}">`).join('')}</datalist>
   <div style="margin-bottom:12px">
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
@@ -4288,7 +4273,6 @@ function selJob(e,jid){try{
     </div>
     ${uniqCustomers.length?`<div style="font-size:11px;color:var(--t2)">👤 ${uniqCustomers.join(', ')}</div>`:''}
   </div>
-  ${jobImgHtml(j[0],280)}
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--acc)">${pros.length}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">PROs</div></div>
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:var(--org)">${activePros.length}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Active</div></div>
