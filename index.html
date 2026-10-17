@@ -5850,7 +5850,9 @@ function selDO(e,did){
   const loc=raw.del_location?(()=>{const l=((window._RAW||{}).locations||[]).find(x=>x.id===raw.del_location);return l?[l.name,l.city].filter(Boolean).join(' - '):raw.del_location;})():'';
   const trn=raw.transport_id?((D.ve||[]).find(v=>v[0]===raw.transport_id)||[])[1]||raw.transport_id:'';
   const dt=r[1]?new Date(r[1]+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-  const det=[['Delivery location',loc],['Transport',trn],['BT',raw.bt],['Bill no.',raw.b_no],['Freight',[raw.freight,raw.freight_amt?money(raw.freight_amt):''].filter(Boolean).join(' · ')],['Delivered',raw.delivered],['Despatched on',raw.despatched_dt],['Comment',raw.comment]];
+  const yn=v=>v==null||v===''?'':String(v).toUpperCase()==='TRUE'?'Yes':String(v).toUpperCase()==='FALSE'?'No':v;
+  const ddt=raw.despatched_dt?new Date(raw.despatched_dt+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'';
+  const det=[['Delivery location',loc],['Transport',trn],['BT',raw.bt],['Bill no.',raw.b_no&&raw.b_no!=='0'?raw.b_no:''],['Freight',[yn(raw.freight),raw.freight_amt?money(raw.freight_amt):''].filter(Boolean).join(' · ')],['Delivered',yn(raw.delivered)],['Despatched on',ddt],['Comment',raw.comment]];
   const html=`
   <div class="ds-hd">
     <div><div class="ds-cust">${dsH(r[3]||'—')}</div><div class="ds-sub">${dt} · <span class="mono">${r[0]}</span> ${st}</div></div>
@@ -5863,7 +5865,7 @@ function selDO(e,did){
       ${tTax?`<tr class="ds-sm"><td colspan="${nc-1}">GST</td><td class="n">${money(tTax)}</td></tr><tr><td colspan="${nc-1}">Total with GST</td><td class="n">${money(tAmt+tTax)}</td></tr>`:''}</tfoot>`:''}</table></div>
   ${rest.length?`<div class="dp-sec-title">Lots not linked to an order (${rest.length})</div><div class="ds-wrap">${lotTable(rest)}</div>`:''}
   <div class="dp-sec-title">Despatch details</div>
-  ${dpGrid(...det.map(([k,v])=>dpRow(k,v?dsH(String(v)):'—')))}`;
+  ${dpGrid(...det.map(([k,v])=>dpRow(k,v?dsH(String(v)).replace(/\n/g,'<br>'):'—')))}`;
   openRP(html,'DS '+r[0]);
 }
 function dsH(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
