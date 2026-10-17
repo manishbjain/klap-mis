@@ -3306,8 +3306,9 @@ function sortItems(items,tableKey){
     if(typeof col==='string'){va=a[col];vb=b[col];}
     else{va=Array.isArray(a)?a[col]:a;vb=Array.isArray(b)?b[col]:b;}
     if(va==null)va='';if(vb==null)vb='';
+    const isNum=v=>typeof v==='number'||/^\s*[₹]?\s*-?[\d,]*\.?\d+\s*%?\s*$/.test(String(v));
     const na=Number(String(va).replace(/[^0-9.-]/g,'')),nb=Number(String(vb).replace(/[^0-9.-]/g,''));
-    let cmp=(!isNaN(na)&&!isNaN(nb)&&String(va)!==''&&String(vb)!=='')?na-nb:String(va).localeCompare(String(vb));
+    let cmp=(isNum(va)&&isNum(vb)&&String(va)!==''&&String(vb)!=='')?na-nb:String(va).localeCompare(String(vb),undefined,{numeric:true,sensitivity:'base'});
     return dir==='desc'?-cmp:cmp;
   });
 }
