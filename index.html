@@ -1812,7 +1812,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-143643';
+const APP_BUILD='20261017-143822';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2087,7 +2087,8 @@ const CRUD_LISTS={
   acct:[['Customer','Customer'],['Vendor','Vendor'],['Transport','Transporter']],
   jobst:[['planned','Planned'],['in_progress','In progress'],['done','Done']],
   mstat:[['active','Active'],['inactive','Not in use']],
-  dsst:[['To Despatch','To Despatch'],['Despatched','Despatched']],
+  dsst:[['To Despatch','To Despatch'],['Despatched','Despatched'],['Cancelled','Cancelled']],
+  yn:[['TRUE','Yes'],['FALSE','No']],
   // read lazily: these lists are defined further down the file
   pstat:()=>PS_LIST.map(x=>[x,x]),
   proc:()=>JO_PROC_CODES.map(x=>[x,(PROC_LABEL[x]||x)+' ('+x+')'])
@@ -2125,7 +2126,7 @@ const CRUD={
     'prod_order_id|r:pro|Production order*','date|d|Packed date','d_no|t|Design no.','ups|n|Ups','sheets|n|Sheets','packets|n|Packets','qty|n|Quantity','qty_units|l|Units','qty_wastage|n|Wastage','wastage_problem|t|Wastage problem','last_entry|t|Last entry','comment|a|Comment','fg_status|l|FG status']},
   fg_instock:{alias:'fg',tbody:'fgis-body'},
   fg_adj:{t:'fg_adjustments',raw:'fg_adj',title:'Adjustment',tbody:'fgout-body',noAdd:true,render:['fg_out','fg_instock','fg_inventory'],fields:['inv_batch_id|t|FG batch (INV_…)*','date|d|Date','packets|n|Packets taken out','qty|n|Pcs taken out','reason|a|Reason (discarded, damaged, count correction…)']},
-  despatch:{t:'ds',raw:'ds',title:'DS',tbody:'wdep-body',render:['despatch_live','despatched','fg_out','fg_instock'],defaults:{despatch_status:'To Despatch'},fields:['date|d|Date','customer_id|r:customer|Customer','despatch_status|s:dsst|Despatch status','transport_id|r:transport|Transport','del_location|t|Delivery location','b_no|t|Bill no.','freight|t|Freight','freight_amt|n|Freight amount','delivered|t|Delivered','despatched_dt|d|Despatched date','comment|a|Comment']},
+  despatch:{t:'ds',raw:'ds',title:'DS',tbody:'wdep-body',render:['despatch_live','despatched','fg_out','fg_instock'],defaults:{despatch_status:'To Despatch'},fields:['date|d|Date','customer_id|r:customer|Customer','despatch_status|s:dsst|Despatch status','transport_id|r:transport|Transport','del_location|r:location|Delivery location','b_no|t|Bill no.','freight|s:yn|Freight','freight_amt|n|Freight amount','delivered|s:yn|Delivered','despatched_dt|d|Despatched date','comment|a|Comment']},
   ds_items:{t:'ds_items',raw:'ds_items',title:'DS item (order)',noAdd:true,render:['despatch_live','despatched'],fields:['ds_id|r:ds|DS*','order_id|r:order|Order*','price|n|Price','taxation|n|Tax']},
   despatched:{alias:'despatch',tbody:'wdep-done-body',noAdd:true},
   pack_pros:{alias:'pros',tbody:'wpk-body',noAdd:true},
@@ -2140,6 +2141,7 @@ function crudRefs(ref){
     case 'customer':return acc('Customer');
     case 'vendor':return acc('Vendor');
     case 'transport':return acc('Transport');
+    case 'location':{const am={};(R_.accounts||[]).forEach(a=>am[a.id]=a.name);return (R_.locations||[]).map(l=>[l.id,[l.name,l.city].filter(Boolean).join(' - ')+(am[l.account_id]&&am[l.account_id]!==l.name?' · '+am[l.account_id]:'')]).sort((a,b)=>a[1].localeCompare(b[1]));}
     case 'product':return (R_.products||[]).map(p=>[p.id,p.product_name+(p.customer_name?' · '+p.customer_name:'')]);
     case 'order':{const am={};(R_.accounts||[]).forEach(a=>am[a.id]=a.name);const pm={};(R_.products||[]).forEach(p=>pm[p.id]=p.product_name);return (R_.orders||[]).slice(0,3000).map(o=>[o.id,(am[o.customer_id]||'')+' · '+(pm[o.product_id]||'')]);}
     case 'job':return (R_.jobs||[]).slice(0,3000).map(j=>[j.id,j.job_name||'']);
