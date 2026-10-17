@@ -279,6 +279,10 @@ hr.rs{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 .dp-grid .dv{padding:5px 10px;font-size:12px;border-bottom:1px solid var(--bdr);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-grid .dp-sec{grid-column:1/-1;padding:5px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);background:rgba(79,99,240,.06);border-bottom:1px solid var(--bdr)}
 .dp-grid .dk:last-of-type,.dp-grid .dv:last-of-type{border-bottom:none}
+.ds-fl{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--bdr)}
+.ds-fb{border:1px solid var(--bdr);background:var(--s1);color:var(--t2);border-radius:16px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.ds-fb span{font-weight:500;color:var(--t3);margin-left:3px}
+.ds-fb.on{background:var(--acc);border-color:var(--acc);color:#fff}.ds-fb.on span{color:rgba(255,255,255,.85)}
 .ds-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:2px 0 12px;border-bottom:1px solid var(--bdr);margin-bottom:6px}
 .ds-cust{font-size:19px;font-weight:700;color:var(--txt)}.ds-sub{font-size:12px;color:var(--t2);margin-top:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .ds-cnt{display:inline-block;background:var(--s2);border:1px solid var(--bdr);border-radius:4px;padding:0 6px;color:var(--txt);font-size:11px}
@@ -1124,34 +1128,18 @@ select.fd-f:focus,input.fd-f:focus{border-color:var(--acc)}
     <div class="sc grn"><div class="l">🚚 Despatched — last 30 days</div><div class="v" id="wdep-p">—</div></div>
     <div class="sc acc"><div class="l">🧾 All DS</div><div class="v" id="wdep-d">—</div></div>
   </div>
-  <div class="wft-row">
-    <div class="wft on" onclick="wt('wdep',this,'wdep-r-list')">📦 To Despatch</div>
-    <div class="wft" onclick="wt('wdep',this,'wdep-done')">🚚 Despatched</div>
-  </div>
   <div id="wdep-r-list" class="wp">
     <div class="tc">
-      <div class="th"><h3>DS — To Despatch</h3><span class="tc-cnt" id="wdep-cnt"></span>
+      <div class="th"><h3>DS</h3><span class="tc-cnt" id="wdep-cnt"></span>
         <div class="flt-row">
           <input class="f" id="wdep-q" placeholder="Search DS / order / customer…" oninput="R.despatch_live(1)" style="width:220px">
           <button class="fd-btn" id="fd-btn-despatch" onclick="openFD('despatch')">⚙ Filters</button>
         </div>
       </div>
+      <div class="ds-fl" id="wdep-fl"></div>
       <div class="fd-active-bar" id="fd-bar-despatch"><span id="fd-bar-despatch-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatch')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>DS</th><th>Date</th><th>Customer</th><th>Orders</th><th style="text-align:right">Lots</th><th style="text-align:right">Packets</th><th>Status</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>DS</th><th>Date</th><th>Customer</th><th>Orders</th><th style="text-align:right">Lots</th><th style="text-align:right">Packets</th><th>Status</th><th>Delivered</th><th>Action</th></tr></thead><tbody id="wdep-body"></tbody></table></div>
       <div class="pg-bar" id="wdep-pg"></div>
-    </div>
-  </div>
-  <div id="wdep-done" class="wp" style="display:none">
-    <div class="tc">
-      <div class="th"><h3>DS — Despatched</h3><span class="tc-cnt" id="wdep-done-cnt"></span>
-        <div class="flt-row">
-          <input class="f" id="wdep-dq" placeholder="Search DS / order / customer…" oninput="R.despatched(1)" style="width:220px">
-          <button class="fd-btn" id="fd-btn-despatched" onclick="openFD('despatched')">⚙ Filters</button>
-        </div>
-      </div>
-      <div class="fd-active-bar" id="fd-bar-despatched"><span id="fd-bar-despatched-txt"></span><button class="btn" style="font-size:10px;padding:2px 8px;background:var(--s1);border:1px solid var(--bdr)" onclick="clearFD('despatched')">Clear all</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>DS</th><th>Date</th><th>Customer</th><th>Orders</th><th style="text-align:right">Lots</th><th style="text-align:right">Packets</th><th>Status</th><th>Delivered</th><th>Action</th></tr></thead><tbody id="wdep-done-body"></tbody></table></div>
-      <div class="pg-bar" id="wdep-done-pg"></div>
     </div>
   </div>
 </div>
@@ -1824,7 +1812,7 @@ document.querySelector('.ni[data-p="settings"]').addEventListener('click',()=>{
 
 <script>
 const SB_URL='https://clthyxztmsfumfzxbmvf.supabase.co';
-const APP_BUILD='20261017-130242';
+const APP_BUILD='20261017-142903';
 // If a newer version of the app is published while this tab is open (or the browser kept an old copy), offer a reload
 function appCheckUpdate(){
   fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2758,7 +2746,7 @@ function activateTab(tabId){
     if(realPg==='fg-instock'){R.fg_instock(1);}
     if(realPg==='winv'){R.fg_inventory(1);}
     if(realPg==='fgout'){R.fg_out(1);}
-    if(realPg==='wdep'){R.despatch_live(1);R.despatched(1);}
+    if(realPg==='wdep'){R.despatch_live(1);}
     if(realPg==='settings'&&R.settings)R.settings();
   }
 }
@@ -4895,15 +4883,7 @@ R.despatch=function(p){
     </td>
   </tr>`).join('')||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--t3)">No orders ready</td></tr>';
 };
-R.despatched=function(p){
-  if(p)pp.despatched=p;
-  const q=(document.getElementById('wdep-dq')?.value||'').toLowerCase();
-  let items=D.dos.filter(r=>!dsIsToDespatch(r)&&(!q||[r[0],r[3],(r[8]||[]).join(' ')].join(' ').toLowerCase().includes(q)));
-  items=applyFDFilters('despatched',items);
-  items=[...items].sort(dsSortDesc);
-  const slice=pgr(items,'despatched','R.despatched','wdep-done-pg','wdep-done-cnt');
-  document.getElementById('wdep-done-body').innerHTML=slice.map(r=>dsRowHtml(r,true)).join('')||'<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No DS</td></tr>';
-};
+R.despatched=function(){R.despatch_live();};
 
 
 
@@ -5302,32 +5282,42 @@ R.fg_inventory=function(p){
 // DS rows: D.dos [0]DS [1]date [2]first order [3]customer [4]price [5]tax [6]lots [7]status [8]orders [9]delivered [10]despatched date [11]packets
 const dsIsToDespatch=r=>String(r[7]||'').toLowerCase()==='to despatch';
 function dsSortDesc(a,b){return (parseInt(String(b[0]).replace(/\D/g,''))||0)-(parseInt(String(a[0]).replace(/\D/g,''))||0);}
-function dsRowHtml(r,done){
-  const st=r[7]?`<span class="b ${dsIsToDespatch(r)?'by':'bg'}">${r[7]}</span>`:'<span style="color:var(--t3);font-size:11px">—</span>';
+const dsIsDelivered=r=>['true','yes','y'].includes(String(r[9]||'').trim().toLowerCase());
+const dsIsDespatched=r=>String(r[7]||'').toLowerCase()==='despatched';
+const DS_FL=[['all','All',()=>true],['to_despatch','To Despatch',dsIsToDespatch],['despatched','Despatched',dsIsDespatched],['to_deliver','To Deliver',r=>dsIsDespatched(r)&&!dsIsDelivered(r)],['delivered','Delivered',dsIsDelivered]];
+let _dsFl='all';
+function dsSetFilter(k){_dsFl=k;R.despatch_live(1);}
+function dsRowHtml(r){
+  const stc=dsIsToDespatch(r)?'by':dsIsDespatched(r)?'bg':'';
+  const st=r[7]?`<span class="b ${stc}">${r[7]}</span>`:'<span style="color:var(--t3);font-size:11px">—</span>';
+  const dl=dsIsDelivered(r)?'<span class="b bg">Delivered</span>':dsIsDespatched(r)?'<span class="b by">To deliver</span>':'<span style="color:var(--t3)">—</span>';
   const ords=(r[8]||[]);
   return `<tr onclick="selDO(event,${esc(r[0])})" style="cursor:pointer">
     <td class="mono" style="font-weight:600">${r[0]}</td><td style="font-size:11px;color:var(--t2)">${r[1]||'—'}</td>
     <td>${tr(r[3]||'—',22)}</td>
     <td class="mono" style="font-size:11px">${ords.length?ords.slice(0,3).join(', ')+(ords.length>3?` +${ords.length-3}`:''):'—'}</td>
     <td style="text-align:right">${r[6]||0}</td><td style="text-align:right">${Number(r[11]||0).toLocaleString('en-IN')}</td>
-    <td>${st}</td>${done?`<td style="font-size:11px">${r[9]||'—'}</td>`:''}
-    <td style="white-space:nowrap" onclick="event.stopPropagation()">${!done&&dsIsToDespatch(r)?`<button class="ab ab-g" onclick="dsMarkDespatched(${esc(r[0])})">✓ Despatched</button> `:''}<button class="ab" onclick="selDO(event,${esc(r[0])})">📄 View DS</button></td>
+    <td>${st}</td><td>${dl}</td>
+    <td style="white-space:nowrap" onclick="event.stopPropagation()">${dsIsToDespatch(r)?`<button class="ab ab-g" onclick="dsMarkDespatched(${esc(r[0])})">✓ Despatched</button>`:''}</td>
   </tr>`;
 }
+// One DS list, newest first, with status filters
 R.despatch_live=function(p){
   if(p)pp.despatch_live=p;
   const q=(document.getElementById('wdep-q')?.value||'').toLowerCase();
-  let items=D.dos.filter(r=>dsIsToDespatch(r)&&(!q||[r[0],r[3],(r[8]||[]).join(' ')].join(' ').toLowerCase().includes(q)));
+  const fl=(DS_FL.find(f=>f[0]===_dsFl)||DS_FL[0])[2];
+  const fb=document.getElementById('wdep-fl');
+  if(fb)fb.innerHTML=DS_FL.map(([k,l,f])=>`<button class="ds-fb${k===_dsFl?' on':''}" onclick="dsSetFilter('${k}')">${l} <span>${D.dos.filter(f).length.toLocaleString('en-IN')}</span></button>`).join('');
+  let items=D.dos.filter(r=>fl(r)&&(!q||[r[0],r[3],(r[8]||[]).join(' ')].join(' ').toLowerCase().includes(q)));
   items=applyFDFilters('despatch',items);
   items=[...items].sort(dsSortDesc);
   const slice=pgr(items,'despatch_live','R.despatch_live','wdep-pg','wdep-cnt');
   const el=document.getElementById('wdep-body');if(!el)return;
-  const anyStatus=D.dos.some(r=>r[7]);
-  el.innerHTML=slice.map(r=>dsRowHtml(r,false)).join('')||`<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--t3)">${anyStatus?'Nothing waiting to be despatched':'Despatch status has not been copied from the old app yet — this list fills once it is.'}</td></tr>`;
+  el.innerHTML=slice.map(r=>dsRowHtml(r)).join('')||`<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--t3)">No DS</td></tr>`;
   const since=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=Number(v).toLocaleString('en-IN');};
   set('wdep-r',D.dos.filter(dsIsToDespatch).length);
-  set('wdep-p',D.dos.filter(r=>!dsIsToDespatch(r)&&String(r[10]||r[1]||'')>=since).length);
+  set('wdep-p',D.dos.filter(r=>dsIsDespatched(r)&&String(r[10]||r[1]||'')>=since).length);
   set('wdep-d',D.dos.length);
 };
 async function dsMarkDespatched(id){
@@ -6574,6 +6564,7 @@ function kbClear(){
 function kbNavCol(p,tab,e){
   e&&e.stopPropagation();
   document.querySelector('.ni[data-p="'+p+'"]')?.click();
+  if(p==='despatch-sec'){setTimeout(()=>dsSetFilter(tab==='done'?'despatched':'to_despatch'),150);return;}
   if(tab) setTimeout(()=>typeof owTab==='function'&&owTab(tab),150);
 }
 
